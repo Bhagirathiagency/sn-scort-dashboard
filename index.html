@@ -1,1 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SN SCORT — 90-Day Execution Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14213D;
+    --paper:#F7F5F0;
+    --paper-2:#EFEBE1;
+    --teal:#2A6F77;
+    --teal-dark:#1D4F55;
+    --amber:#D68C45;
+    --sage:#6E8F73;
+    --slate:#5B6570;
+    --line: rgba(20,33,61,0.12);
+    --card-shadow: 0 1px 2px rgba(20,33,61,0.06), 0 2px 8px rgba(20,33,61,0.04);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:32px 24px 80px;}
 
+  /* Header */
+  header{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:28px; flex-wrap:wrap;}
+  .brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--teal-dark); margin:0 0 6px;}
+  h1{font-family:'Fraunces',serif; font-weight:600; font-size:32px; margin:0; letter-spacing:-0.01em;}
+  .sync-status{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--slate); text-align:right;}
+  .sync-dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; background:var(--sage);}
+  .sync-dot.bad{background:#B4523F;}
+  .sync-dot.pending{background:var(--amber);}
+
+  /* Stats */
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:28px;}
+  .stat{background:var(--paper); padding:16px 18px;}
+  .stat .num{font-family:'Fraunces',serif; font-size:28px; font-weight:600; line-height:1;}
+  .stat .lbl{font-size:12px; color:var(--slate); margin-top:6px;}
+
+  /* Business tabs */
+  .biz-tabs{display:flex; gap:8px; margin-bottom:18px; border-bottom:1px solid var(--line); padding-bottom:0;}
+  .biz-tab{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase;
+    padding:10px 16px; cursor:pointer; border:none; background:none; color:var(--slate);
+    border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s;
+  }
+  .biz-tab.active{color:var(--ink); border-bottom-color:var(--teal);}
+  .biz-tab:hover{color:var(--ink);}
+
+  /* Phase tabs */
+  .phase-row{display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;}
+  .phase-pill{
+    font-size:12px; font-weight:500; padding:6px 14px; border-radius:20px; cursor:pointer;
+    border:1px solid var(--line); background:var(--paper); color:var(--slate); transition:all .15s;
+  }
+  .phase-pill.active{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+  .phase-days{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--slate); margin-left:auto;}
+
+  /* Board */
+  .board{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:36px;}
+  .col{background:var(--paper-2); border-radius:10px; padding:14px; min-height:120px;}
+  .col h3{font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--slate); margin:0 0 12px; display:flex; justify-content:space-between; align-items:center;}
+  .col h3 .count{font-family:'IBM Plex Mono',monospace; background:var(--paper); border-radius:10px; padding:1px 8px; color:var(--ink);}
+  .card{
+    background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:12px 12px 10px;
+    margin-bottom:10px; box-shadow:var(--card-shadow); cursor:grab; font-size:13.5px; line-height:1.45;
+  }
+  .card:active{cursor:grabbing;}
+  .card.dragging{opacity:0.4;}
+  .card .card-actions{display:flex; gap:6px; margin-top:10px;}
+  .card button{
+    font-family:'Inter',sans-serif; font-size:11px; border:1px solid var(--line); background:var(--paper);
+    color:var(--slate); border-radius:5px; padding:4px 8px; cursor:pointer;
+  }
+  .card button:hover{background:var(--paper-2); color:var(--ink);}
+  .col.drop-target{outline:2px dashed var(--teal); outline-offset:-4px;}
+  .empty-hint{font-size:12px; color:var(--slate); font-style:italic; padding:8px 2px;}
+
+  /* Achievements */
+  .achievements{background:var(--ink); color:var(--paper); border-radius:12px; padding:22px 24px;}
+  .achievements h3{font-family:'Fraunces',serif; font-weight:600; font-size:18px; margin:0 0 4px;}
+  .achievements .sub{font-size:12px; color:rgba(247,245,240,0.6); margin-bottom:16px;}
+  .ach-list{list-style:none; margin:0; padding:0;}
+  .ach-list li{
+    display:flex; gap:12px; padding:9px 0; border-bottom:1px solid rgba(247,245,240,0.1); font-size:13.5px;
+  }
+  .ach-list li:last-child{border-bottom:none;}
+  .ach-date{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--amber); white-space:nowrap; padding-top:1px;}
+  .ach-empty{color:rgba(247,245,240,0.5); font-size:13px; font-style:italic;}
+
+  .add-ach{display:flex; gap:8px; margin-top:16px;}
+  .add-ach input{
+    flex:1; background:rgba(247,245,240,0.08); border:1px solid rgba(247,245,240,0.2); color:var(--paper);
+    border-radius:6px; padding:8px 10px; font-family:'Inter',sans-serif; font-size:13px;
+  }
+  .add-ach input::placeholder{color:rgba(247,245,240,0.4);}
+  .add-ach button{
+    background:var(--amber); border:none; color:var(--ink); font-weight:600; font-size:13px;
+    padding:8px 16px; border-radius:6px; cursor:pointer;
+  }
+
+  .add-task-row{display:flex; gap:8px; margin-bottom:14px;}
+  .add-task-row input{
+    flex:1; border:1px solid var(--line); border-radius:6px; padding:8px 10px; font-family:'Inter',sans-serif; font-size:13px; background:var(--paper);
+  }
+  .add-task-row button{
+    background:var(--teal); border:none; color:#fff; font-weight:600; font-size:13px;
+    padding:8px 16px; border-radius:6px; cursor:pointer;
+  }
+
+  @media (max-width:780px){
+    .board{grid-template-columns:1fr;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="brand-eyebrow">SN SCORT Research Solutions</p>
+      <h1>90-Day Execution Board</h1>
+    </div>
+    <div class="sync-status" id="syncStatus"><span class="sync-dot pending" id="syncDot"></span>Connecting…</div>
+  </header>
+
+  <div class="stats" id="statsRow"></div>
+
+  <div class="biz-tabs" id="bizTabs">
+    <button class="biz-tab" data-biz="pv">PV &amp; Drug Safety</button>
+    <button class="biz-tab" data-biz="smo">SMO</button>
+    <button class="biz-tab" data-biz="institute">Institute</button>
+  </div>
+
+  <div class="phase-row" id="phaseRow">
+    <button class="phase-pill" data-phase="foundation">Foundation · Days 1–30</button>
+    <button class="phase-pill" data-phase="momentum">Momentum · Days 31–60</button>
+    <button class="phase-pill" data-phase="scale">Scale · Days 61–90</button>
+  </div>
+
+  <div class="add-task-row">
+    <input type="text" id="newTaskInput" placeholder="Add a task to this phase…">
+    <button id="addTaskBtn">Add task</button>
+  </div>
+
+  <div class="board" id="board">
+    <div class="col" data-status="future"><h3>Future <span class="count" id="countFuture">0</span></h3><div class="col-body" id="colFuture"></div></div>
+    <div class="col" data-status="inprogress"><h3>In Progress <span class="count" id="countInProgress">0</span></h3><div class="col-body" id="colInProgress"></div></div>
+    <div class="col" data-status="done"><h3>Done <span class="count" id="countDone">0</span></h3><div class="col-body" id="colDone"></div></div>
+  </div>
+
+  <div class="achievements">
+    <h3>Achievements Log</h3>
+    <p class="sub" id="achSub">Milestones logged for this business line</p>
+    <ul class="ach-list" id="achList"></ul>
+    <div class="add-ach">
+      <input type="text" id="newAchInput" placeholder="Log a new achievement…">
+      <button id="addAchBtn">Log it</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  "use strict";
+
+  var SUPABASE_URL = "https://sqmvnebnathateurqfeq.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_onNu45I1iy7rLdbn3uum5Q_hfgHoLRt";
+  var ROW_ID = "sn-scort-dashboard-v2";
+
+  var supabase = null;
+  try {
+    if (window.supabase && SUPABASE_ANON_KEY.indexOf("PASTE_") !== 0) {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+  } catch (e) {
+    console.error("Supabase init failed:", e);
+    supabase = null;
+  }
+
+  var BIZ_LABELS = { pv: "PV & Drug Safety", smo: "SMO", institute: "Institute" };
+  var PHASE_LABELS = { foundation: "Foundation", momentum: "Momentum", scale: "Scale" };
+
+  var state = {
+    idCounter: 46,
+    businesses: {
+      pv: { tasks: [], achievements: [] },
+      smo: { tasks: [], achievements: [] },
+      institute: { tasks: [], achievements: [] }
+    },
+    activePhase: { pv: "foundation", smo: "foundation", institute: "foundation" },
+    activeBusiness: "pv"
+  };
+
+  function setSyncStatus(mode, text){
+    var dot = document.getElementById("syncDot");
+    var wrap = document.getElementById("syncStatus");
+    dot.className = "sync-dot" + (mode === "bad" ? " bad" : mode === "pending" ? " pending" : "");
+    wrap.childNodes[1].textContent = text;
+  }
+
+  function loadState(cb){
+    if (!supabase) {
+      setSyncStatus("bad", " Offline mode — changes stay in this browser only");
+      cb();
+      return;
+    }
+    supabase.from("dashboard_state").select("data").eq("id", ROW_ID).maybeSingle()
+      .then(function(res){
+        if (res.error) {
+          console.error(res.error);
+          setSyncStatus("bad", " Could not load saved data — using blank board");
+        } else if (res.data && res.data.data) {
+          var d = res.data.data;
+          state.idCounter = d.idCounter || state.idCounter;
+          state.businesses = d.businesses || state.businesses;
+          state.activePhase = d.activePhase || state.activePhase;
+          state.activeBusiness = d.activeBusiness || state.activeBusiness;
+          setSyncStatus("ok", " Synced with Supabase");
+        } else {
+          setSyncStatus("ok", " Connected — no saved data yet");
+        }
+        cb();
+      })
+      .catch(function(e){
+        console.error(e);
+        setSyncStatus("bad", " Connection error — using local data");
+        cb();
+      });
+  }
+
+  var saveTimer = null;
+  function saveState(){
+    if (!supabase) return;
+    setSyncStatus("pending", " Saving…");
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){
+      supabase.from("dashboard_state").upsert({
+        id: ROW_ID,
+        data: state,
+        updated_at: new Date().toISOString()
+      }).then(function(res){
+        if (res.error) { console.error(res.error); setSyncStatus("bad", " Save failed — retry on next change"); }
+        else { setSyncStatus("ok", " Synced with Supabase"); }
+      }).catch(function(e){ console.error(e); setSyncStatus("bad", " Save failed"); });
+    }, 500);
+  }
+
+  function biz(){ return state.businesses[state.activeBusiness]; }
+  function phase(){ return state.activePhase[state.activeBusiness]; }
+
+  function render(){
+    document.querySelectorAll(".biz-tab").forEach(function(btn){
+      btn.classList.toggle("active", btn.dataset.biz === state.activeBusiness);
+    });
+    document.querySelectorAll(".phase-pill").forEach(function(btn){
+      btn.classList.toggle("active", btn.dataset.phase === phase());
+    });
+
+    var tasks = biz().tasks.filter(function(t){ return t.phase === phase(); });
+    var cols = { future: [], inprogress: [], done: [] };
+    tasks.forEach(function(t){ (cols[t.status] || cols.future).push(t); });
+
+    renderCol("colFuture", "countFuture", cols.future);
+    renderCol("colInProgress", "countInProgress", cols.inprogress);
+    renderCol("colDone", "countDone", cols.done);
+
+    renderStats();
+    renderAchievements();
+  }
+
+  function renderCol(bodyId, countId, items){
+    var body = document.getElementById(bodyId);
+    document.getElementById(countId).textContent = items.length;
+    body.innerHTML = "";
+    if (items.length === 0) {
+      var hint = document.createElement("div");
+      hint.className = "empty-hint";
+      hint.textContent = "Nothing here yet";
+      body.appendChild(hint);
+      return;
+    }
+    items.forEach(function(t){
+      var card = document.createElement("div");
+      card.className = "card";
+      card.draggable = true;
+      card.dataset.id = t.id;
+      card.textContent = t.text;
+
+      var actions = document.createElement("div");
+      actions.className = "card-actions";
+
+      if (t.status !== "future") {
+        var back = document.createElement("button");
+        back.textContent = "◀";
+        back.onclick = function(){ moveTask(t.id, t.status === "done" ? "inprogress" : "future"); };
+        actions.appendChild(back);
+      }
+      if (t.status !== "done") {
+        var fwd = document.createElement("button");
+        fwd.textContent = "▶";
+        fwd.onclick = function(){ moveTask(t.id, t.status === "future" ? "inprogress" : "done"); };
+        actions.appendChild(fwd);
+      }
+      var del = document.createElement("button");
+      del.textContent = "✕";
+      del.onclick = function(){ deleteTask(t.id); };
+      actions.appendChild(del);
+
+      card.appendChild(actions);
+
+      card.addEventListener("dragstart", function(){ card.classList.add("dragging"); });
+      card.addEventListener("dragend", function(){ card.classList.remove("dragging"); saveState(); });
+
+      body.appendChild(card);
+    });
+  }
+
+  function renderStats(){
+    var total = 0, done = 0, inprog = 0;
+    Object.keys(state.businesses).forEach(function(b){
+      state.businesses[b].tasks.forEach(function(t){
+        total++;
+        if (t.status === "done") done++;
+        if (t.status === "inprogress") inprog++;
+      });
+    });
+    var achCount = Object.keys(state.businesses).reduce(function(sum,b){
+      return sum + state.businesses[b].achievements.length;
+    }, 0);
+    var pct = total ? Math.round((done/total)*100) : 0;
+
+    document.getElementById("statsRow").innerHTML = [
+      ["Overall progress", pct + "%"],
+      ["Tasks in progress", inprog],
+      ["Tasks completed", done + " / " + total],
+      ["Achievements logged", achCount]
+    ].map(function(s){
+      return '<div class="stat"><div class="num">'+s[1]+'</div><div class="lbl">'+s[0]+'</div></div>';
+    }).join("");
+  }
+
+  function renderAchievements(){
+    document.getElementById("achSub").textContent = "Milestones logged for " + BIZ_LABELS[state.activeBusiness];
+    var list = document.getElementById("achList");
+    var items = biz().achievements.slice().reverse();
+    if (items.length === 0) {
+      list.innerHTML = '<li class="ach-empty">No achievements logged yet for this business line.</li>';
+      return;
+    }
+    list.innerHTML = items.map(function(a){
+      return '<li><span class="ach-date">'+a.date+'</span><span>'+escapeHtml(a.text)+'</span></li>';
+    }).join("");
+  }
+
+  function escapeHtml(s){
+    var d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function moveTask(id, newStatus){
+    var t = biz().tasks.find(function(t){ return t.id === id; });
+    if (t) { t.status = newStatus; render(); saveState(); }
+  }
+  function deleteTask(id){
+    biz().tasks = biz().tasks.filter(function(t){ return t.id !== id; });
+    render(); saveState();
+  }
+  function addTask(text){
+    if (!text.trim()) return;
+    state.idCounter++;
+    biz().tasks.push({ id: "id" + state.idCounter + "_" + Date.now(), text: text.trim(), phase: phase(), status: "future" });
+    render(); saveState();
+  }
+  function addAchievement(text){
+    if (!text.trim()) return;
+    var d = new Date();
+    var dateStr = d.toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
+    biz().achievements.push({ date: dateStr, text: text.trim() });
+    render(); saveState();
+  }
+
+  // drag & drop between columns
+  document.querySelectorAll(".col").forEach(function(col){
+    col.addEventListener("dragover", function(e){
+      e.preventDefault();
+      col.classList.add("drop-target");
+    });
+    col.addEventListener("dragleave", function(){ col.classList.remove("drop-target"); });
+    col.addEventListener("drop", function(e){
+      e.preventDefault();
+      col.classList.remove("drop-target");
+      var draggingCard = document.querySelector(".card.dragging");
+      if (!draggingCard) return;
+      var id = draggingCard.dataset.id;
+      var statusMap = { future:"future", inprogress:"inprogress", done:"done" };
+      moveTask(id, statusMap[col.dataset.status]);
+    });
+  });
+
+  document.getElementById("bizTabs").addEventListener("click", function(e){
+    var btn = e.target.closest(".biz-tab");
+    if (!btn) return;
+    state.activeBusiness = btn.dataset.biz;
+    render(); saveState();
+  });
+  document.getElementById("phaseRow").addEventListener("click", function(e){
+    var btn = e.target.closest(".phase-pill");
+    if (!btn) return;
+    state.activePhase[state.activeBusiness] = btn.dataset.phase;
+    render(); saveState();
+  });
+
+  document.getElementById("addTaskBtn").addEventListener("click", function(){
+    var input = document.getElementById("newTaskInput");
+    addTask(input.value);
+    input.value = "";
+  });
+  document.getElementById("newTaskInput").addEventListener("keydown", function(e){
+    if (e.key === "Enter") document.getElementById("addTaskBtn").click();
+  });
+
+  document.getElementById("addAchBtn").addEventListener("click", function(){
+    var input = document.getElementById("newAchInput");
+    addAchievement(input.value);
+    input.value = "";
+  });
+  document.getElementById("newAchInput").addEventListener("keydown", function(e){
+    if (e.key === "Enter") document.getElementById("addAchBtn").click();
+  });
+
+  loadState(render);
+})();
+</script>
+</body>
+</html>
