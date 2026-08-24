@@ -69,6 +69,21 @@ export type CaseDetail = CaseListItem & {
   }>;
 };
 
+export type DuplicateCandidateStatus = "pending" | "confirmed_duplicate" | "not_duplicate";
+
+export type DuplicateCandidate = {
+  id: string;
+  similarity_score: number;
+  matching_fields: string[];
+  status: DuplicateCandidateStatus;
+  reviewed_at: string | null;
+  candidate_case: {
+    id: string;
+    case_number: string;
+    status: CaseStatus;
+  };
+};
+
 export type CreateCaseInput = {
   source: CaseSource;
   country: string;

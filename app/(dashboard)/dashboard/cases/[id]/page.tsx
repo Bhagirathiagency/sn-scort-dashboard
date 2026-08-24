@@ -1,8 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/supabase/server";
 import { getCaseDetail } from "@/lib/cases/service";
+import { listDuplicateCandidates } from "@/lib/cases/duplicates";
 import { STATUS_LABEL } from "@/lib/cases/labels";
 import { CaseStatusActions } from "./status-actions";
+import { DuplicatePanel } from "./duplicate-panel";
 
 export default async function CaseOverviewPage({ params }: { params: { id: string } }) {
   const user = await getSessionUser();
@@ -10,6 +12,8 @@ export default async function CaseOverviewPage({ params }: { params: { id: strin
 
   const caseDetail = await getCaseDetail(user.organizationId, params.id);
   if (!caseDetail) notFound();
+
+  const duplicateCandidates = await listDuplicateCandidates(user.organizationId, params.id);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -106,6 +110,8 @@ export default async function CaseOverviewPage({ params }: { params: { id: strin
           {caseDetail.narrative || "No narrative recorded yet."}
         </p>
       </section>
+
+      <DuplicatePanel caseId={caseDetail.id} initialCandidates={duplicateCandidates} />
     </div>
   );
 }
