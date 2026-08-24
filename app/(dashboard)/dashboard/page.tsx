@@ -1,39 +1,10 @@
 import { getSessionUser } from "@/lib/supabase/server";
+import { listCases } from "@/lib/cases/service";
 
 type PulseItem = {
   tone: "red" | "amber" | "info";
   label: string;
 };
-
-const PULSE: PulseItem[] = [
-  { tone: "red", label: "0 urgent cases" },
-  { tone: "amber", label: "0 cases approaching deadline" },
-  { tone: "info", label: "0 literature records awaiting review" },
-  { tone: "info", label: "0 submission reconciliation issues" },
-];
-
-const SECTIONS = [
-  {
-    title: "Operational",
-    metrics: ["Cases received", "Cases pending", "Cases ageing", "Cases due", "Cases overdue"],
-  },
-  {
-    title: "Regulatory",
-    metrics: ["Submissions", "Errors", "Acknowledgements", "Reconciliation"],
-  },
-  {
-    title: "Safety",
-    metrics: ["Serious cases", "Emerging patterns", "Signals", "Literature"],
-  },
-  {
-    title: "Quality",
-    metrics: ["QC", "CAPA", "Audits", "Training"],
-  },
-  {
-    title: "Intelligence",
-    metrics: ["Safety Pulse", "Safety Graph", "AI recommendations"],
-  },
-];
 
 const toneClass: Record<PulseItem["tone"], string> = {
   red: "bg-safe-red/10 text-safe-red",
@@ -43,14 +14,73 @@ const toneClass: Record<PulseItem["tone"], string> = {
 
 export default async function SafetyCommandCenterPage() {
   const user = await getSessionUser();
+  const cases = user?.organizationId ? await listCases(user.organizationId) : [];
+
+  const urgentCount = cases.filter((c) => c.priority === "urgent" && c.status !== "closed").length;
+  const pendingCount = cases.filter((c) => c.status !== "closed").length;
+  const seriousCount = cases.filter((c) => c.is_serious).length;
+
+  const pulse: PulseItem[] = [
+    { tone: urgentCount > 0 ? "red" : "info", label: `${urgentCount} urgent case(s)` },
+    { tone: "info", label: "0 literature records awaiting review" },
+    { tone: "info", label: "0 submission reconciliation issues" },
+  ];
+
+  const sections = [
+    {
+      title: "Operational",
+      metrics: [
+        { label: "Cases received", value: cases.length },
+        { label: "Cases pending", value: pendingCount },
+        { label: "Cases ageing", value: "—" },
+        { label: "Cases due", value: "—" },
+        { label: "Cases overdue", value: "—" },
+      ],
+    },
+    {
+      title: "Regulatory",
+      metrics: [
+        { label: "Submissions", value: "—" },
+        { label: "Errors", value: "—" },
+        { label: "Acknowledgements", value: "—" },
+        { label: "Reconciliation", value: "—" },
+      ],
+    },
+    {
+      title: "Safety",
+      metrics: [
+        { label: "Serious cases", value: seriousCount },
+        { label: "Emerging patterns", value: "—" },
+        { label: "Signals", value: "—" },
+        { label: "Literature", value: "—" },
+      ],
+    },
+    {
+      title: "Quality",
+      metrics: [
+        { label: "QC", value: "—" },
+        { label: "CAPA", value: "—" },
+        { label: "Audits", value: "—" },
+        { label: "Training", value: "—" },
+      ],
+    },
+    {
+      title: "Intelligence",
+      metrics: [
+        { label: "Safety Pulse", value: "—" },
+        { label: "Safety Graph", value: "—" },
+        { label: "AI recommendations", value: "—" },
+      ],
+    },
+  ];
 
   return (
     <div>
       <header className="mb-6">
         <h1 className="text-2xl font-semibold text-navy-900">Safety Command Center</h1>
         <p className="text-sm text-navy-600">
-          Signed in as {user?.email ?? "unknown"} — this is a Phase 0 shell; live metrics
-          populate once the case, regulatory, signal, and quality domains (Phases 1–4) are built.
+          Signed in as {user?.email ?? "unknown"} — Operational/Safety figures reflect real case
+          data (Phase 1a); Regulatory/Quality/Intelligence populate as those phases are built.
         </p>
       </header>
 
@@ -59,7 +89,7 @@ export default async function SafetyCommandCenterPage() {
           Safety Pulse
         </h2>
         <ul className="flex flex-wrap gap-2">
-          {PULSE.map((item) => (
+          {pulse.map((item) => (
             <li key={item.label} className={`pv-badge ${toneClass[item.tone]}`}>
               {item.label}
             </li>
@@ -72,16 +102,16 @@ export default async function SafetyCommandCenterPage() {
       </section>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.title} className="pv-card p-5">
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-navy-600">
               {section.title}
             </h3>
             <ul className="space-y-2">
               {section.metrics.map((metric) => (
-                <li key={metric} className="flex items-center justify-between text-sm">
-                  <span className="text-navy-900">{metric}</span>
-                  <span className="font-mono text-navy-600">—</span>
+                <li key={metric.label} className="flex items-center justify-between text-sm">
+                  <span className="text-navy-900">{metric.label}</span>
+                  <span className="font-mono text-navy-600">{metric.value}</span>
                 </li>
               ))}
             </ul>

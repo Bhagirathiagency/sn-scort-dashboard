@@ -8,7 +8,7 @@ Product owner: SN SCORT Research Solutions.
 
 PV+ is a cloud-native, multi-tenant pharmacovigilance and drug-safety platform for pharmaceutical companies, biotech, CROs, sponsors, and MAHs. See **[ARCHITECTURE.md](./ARCHITECTURE.md)** for the full architecture assessment (stack, tenant model, RBAC, regulatory approach, AI approach, security, phased roadmap, risks).
 
-This repository is at **Phase 0 — Foundation**: tenant/RBAC/audit schema, authenticated shell app, CI. The full PV Core / Regulatory / Intelligence / Governance modules described in the product spec are staged for subsequent phases, each to be scoped and reviewed before build-out (see ARCHITECTURE.md §K "Risks and Assumptions").
+This repository has **Phase 0 — Foundation** complete (tenant/RBAC/audit schema, authenticated shell app, CI, a provisioned Dev Supabase project) and **Phase 1a — first PV Core slice** in progress: Case Intake, Case Worklist, and Case Overview, backed by a real (if intentionally minimal) ICSR data model — patients, reporters, products, adverse events, atomic case creation, and case versioning. Coding, medical review, QC, duplicate detection, and regulatory submission are not yet built; they extend this same schema rather than replace it. The rest of the product spec's modules are staged for subsequent phases (see ARCHITECTURE.md §K "Risks and Assumptions").
 
 ## Regulatory disclaimer
 
