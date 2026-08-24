@@ -41,6 +41,8 @@ To provision a project yourself instead (e.g. a different organization/environme
 
 Per ARCHITECTURE.md §I / the product spec's §32, PV+ requires separate **Development / Test / Validation (UAT) / Production** environments — each its own Supabase project and deployment target, never sharing regulated data. Only Development exists as scaffolding today; the others are provisioned when the platform is ready to move past Phase 0.
 
+**Hosting:** not provisioned. A `vercel deploy --temporary` attempt from the Claude Code session that built this failed — that session's network egress policy blocks `api.vercel.com` outright (confirmed a 403 policy denial, same as it blocks the Supabase REST API directly; only server-side MCP tool calls could reach Supabase from there). This isn't Vercel-specific — any hosting provider would hit the same block from that session. Deploy with `vercel deploy` (or your provider of choice) from a machine with normal network access, or from a Claude Code session whose environment allows the relevant hosts.
+
 ## Project structure
 
 ```
