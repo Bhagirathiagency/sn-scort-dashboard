@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { writeAuditEvent } from "@/lib/audit/audit";
-import type { CaseDetail, CaseListItem, CreateCaseInput } from "@/lib/cases/types";
+import { isTransitionAllowed } from "@/lib/cases/workflow";
+import type { CaseDetail, CaseListItem, CaseStatus, CreateCaseInput } from "@/lib/cases/types";
 
 /**
  * All functions here assume the caller has already passed the relevant
@@ -107,4 +108,58 @@ export async function createCase(
   });
 
   return { id: caseId as string, caseNumber: created?.case_number ?? "" };
+}
+
+export async function transitionCaseStatus(
+  organizationId: string,
+  actorUserId: string,
+  caseId: string,
+  toStatus: CaseStatus,
+  reason?: string
+): Promise<{ status: CaseStatus; version: number }> {
+  const supabase = createClient();
+
+  const { data: current, error: fetchError } = await supabase
+    .from("cases")
+    .select("status")
+    .eq("organization_id", organizationId)
+    .eq("id", caseId)
+    .single();
+
+  if (fetchError || !current) {
+    throw new Error("Case not found");
+  }
+
+  const fromStatus = current.status as CaseStatus;
+
+  if (!isTransitionAllowed(fromStatus, toStatus)) {
+    throw new Error(`Cannot move a case from "${fromStatus}" to "${toStatus}"`);
+  }
+
+  // Guard against a lost update if another transition happened concurrently.
+  const { data: updated, error: updateError } = await supabase
+    .from("cases")
+    .update({ status: toStatus, updated_by: actorUserId })
+    .eq("organization_id", organizationId)
+    .eq("id", caseId)
+    .eq("status", fromStatus)
+    .select("status, version")
+    .single();
+
+  if (updateError || !updated) {
+    throw new Error("Case status changed concurrently — reload and try again");
+  }
+
+  await writeAuditEvent({
+    organizationId,
+    actorUserId,
+    entityType: "case",
+    entityId: caseId,
+    action: "case_status_changed",
+    before: { status: fromStatus },
+    after: { status: toStatus },
+    reason,
+  });
+
+  return { status: updated.status as CaseStatus, version: updated.version };
 }

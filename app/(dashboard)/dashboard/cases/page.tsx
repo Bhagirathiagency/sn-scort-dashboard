@@ -2,21 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/supabase/server";
 import { listCases } from "@/lib/cases/service";
-import type { CasePriority, CaseStatus } from "@/lib/cases/types";
-
-const statusLabel: Record<CaseStatus, string> = {
-  new: "New",
-  validation: "Validation",
-  triage: "Triage",
-  processing: "Processing",
-  medical_review: "Medical Review",
-  qc: "QC",
-  submission_ready: "Submission Ready",
-  submitted: "Submitted",
-  follow_up: "Follow-up",
-  closed: "Closed",
-  reopened: "Reopened",
-};
+import { STATUS_LABEL } from "@/lib/cases/labels";
+import type { CasePriority } from "@/lib/cases/types";
 
 const priorityClass: Record<CasePriority, string> = {
   urgent: "bg-safe-red/10 text-safe-red",
@@ -63,7 +50,7 @@ export default async function CaseWorklistPage() {
                   </Link>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="pv-badge bg-teal-50 text-teal-600">{statusLabel[c.status]}</span>
+                  <span className="pv-badge bg-teal-50 text-teal-600">{STATUS_LABEL[c.status]}</span>
                 </td>
                 <td className="px-4 py-3">
                   <span className={`pv-badge ${priorityClass[c.priority]}`}>{c.priority}</span>

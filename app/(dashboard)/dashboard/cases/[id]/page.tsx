@@ -1,6 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/supabase/server";
 import { getCaseDetail } from "@/lib/cases/service";
+import { STATUS_LABEL } from "@/lib/cases/labels";
+import { CaseStatusActions } from "./status-actions";
 
 export default async function CaseOverviewPage({ params }: { params: { id: string } }) {
   const user = await getSessionUser();
@@ -14,7 +16,7 @@ export default async function CaseOverviewPage({ params }: { params: { id: strin
       <header className="mb-6">
         <div className="flex items-center gap-3">
           <h1 className="font-mono text-2xl font-semibold text-navy-900">{caseDetail.case_number}</h1>
-          <span className="pv-badge bg-teal-50 text-teal-600">{caseDetail.status.replace(/_/g, " ")}</span>
+          <span className="pv-badge bg-teal-50 text-teal-600">{STATUS_LABEL[caseDetail.status]}</span>
           {caseDetail.is_serious && <span className="pv-badge bg-safe-red/10 text-safe-red">Serious</span>}
           <span className="pv-badge bg-navy-50 text-navy-600">v{caseDetail.version}</span>
         </div>
@@ -23,6 +25,8 @@ export default async function CaseOverviewPage({ params }: { params: { id: strin
           {caseDetail.country ?? "—"}
         </p>
       </header>
+
+      <CaseStatusActions caseId={caseDetail.id} status={caseDetail.status} />
 
       <div className="grid grid-cols-2 gap-4">
         <section className="pv-card p-5">
