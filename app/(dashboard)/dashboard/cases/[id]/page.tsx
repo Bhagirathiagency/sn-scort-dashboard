@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/supabase/server";
 import { getCaseDetail } from "@/lib/cases/service";
@@ -23,6 +24,9 @@ export default async function CaseOverviewPage({ params }: { params: { id: strin
           <span className="pv-badge bg-teal-50 text-teal-600">{STATUS_LABEL[caseDetail.status]}</span>
           {caseDetail.is_serious && <span className="pv-badge bg-safe-red/10 text-safe-red">Serious</span>}
           <span className="pv-badge bg-navy-50 text-navy-600">v{caseDetail.version}</span>
+          <Link href={`/dashboard/cases/${caseDetail.id}/review`} className="pv-badge bg-teal-50 text-teal-600">
+            Medical Review
+          </Link>
         </div>
         <p className="mt-1 text-sm text-navy-600">
           Source: {caseDetail.source.replace(/_/g, " ")} · Received {caseDetail.receipt_date} · Country:{" "}

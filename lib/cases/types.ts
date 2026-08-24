@@ -84,6 +84,18 @@ export type DuplicateCandidate = {
   };
 };
 
+export type ReviewStage = "medical_review" | "qc";
+export type ReviewDecision = "approved" | "returned" | "comment";
+
+export type CaseReview = {
+  id: string;
+  stage: ReviewStage;
+  decision: ReviewDecision;
+  comment: string | null;
+  created_at: string;
+  reviewer: { email: string; full_name: string | null } | null;
+};
+
 export type CreateCaseInput = {
   source: CaseSource;
   country: string;
