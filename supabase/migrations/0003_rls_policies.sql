@@ -4,6 +4,13 @@
 -- current_organization_ids() helper below, which walks auth.uid() ->
 -- users.organization_id and any additional grants in user_roles
 -- (covering the CRO multi-client case, §45).
+--
+-- NOTE: the initial version of these functions had a mutable search_path
+-- and were executable by the `anon` role — both fixed in
+-- 0004_harden_rls_functions.sql / 0005_lock_function_grants.sql. Kept as
+-- separate follow-up migrations here (rather than edited in place) so this
+-- file matches exactly what was applied to the provisioned Supabase
+-- project, keeping the migration ledger consistent.
 
 create or replace function current_organization_ids()
 returns setof uuid

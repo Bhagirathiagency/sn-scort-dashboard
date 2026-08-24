@@ -22,9 +22,17 @@ cp .env.example .env.local   # fill in a Supabase project's URL + anon key
 npm run dev
 ```
 
-A Supabase project is required for auth/database to function locally — none is provisioned yet in this repository. To stand one up:
+### Development environment (provisioned)
 
-1. Create a Supabase project (Development environment first).
+A **Development** Supabase project (`pv-plus-dev`, project ref `bfdrqujjeenkmgmvphax`, in the same Supabase organization as the account that ran this session) has been provisioned and has all of `supabase/migrations/` applied, including two follow-up hardening migrations added after the Supabase security advisor flagged the initial RLS helper functions (mutable `search_path`, `anon`-role execute access) — both fixed, verified clean by the advisor. Project URL: `https://bfdrqujjeenkmgmvphax.supabase.co`. Get the anon/publishable key from that project's API settings in the Supabase dashboard to fill in `.env.local`.
+
+A fictional demo tenant (`PV+ Demo Pharma`, per §48 — never real data) has been seeded via `supabase/seed.sql`. **No user account exists yet**: this repo has no public self-service sign-up (regulated PV software is admin-provisioned, not open sign-up), so create the first user via Supabase Dashboard → Authentication → Users, then insert a matching row into the `users` table linking `auth_user_id` to the `organizations` row above. A proper in-app invitation/User Management screen is Phase 1 scope.
+
+**Note:** this Supabase account already has one other, unrelated active project with live data (a lead-gen prospect list) — the PV+ migrations were deliberately applied to a brand-new project instead, to keep them isolated. Test/Validation/Production Supabase projects, per §32, are not yet provisioned — each is a separate step to take when the platform is ready to move past Phase 0/Development.
+
+To provision a project yourself instead (e.g. a different organization/environment):
+
+1. Create a Supabase project.
 2. Run the migrations in `supabase/migrations/` in order (via `supabase db push` or the SQL editor).
 3. Enable TOTP MFA in Supabase Auth settings.
 4. Populate `.env.local` from the project's API settings.
