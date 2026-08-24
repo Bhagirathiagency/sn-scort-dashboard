@@ -31,15 +31,27 @@ function LoginForm() {
       password,
     });
 
-    setLoading(false);
-
     if (signInError) {
+      setLoading(false);
       setError(signInError.message);
       return;
     }
 
-    const redirectTo = searchParams.get("redirectTo") || "/mfa";
-    router.push(redirectTo);
+    // Only send the user to the MFA challenge if they actually have a
+    // verified TOTP factor enrolled — there is no enrollment screen yet
+    // (Phase 1 scope), so routing everyone through /mfa would be a dead
+    // end for any account that hasn't set one up.
+    const { data: factors } = await supabase.auth.mfa.listFactors();
+    const hasVerifiedFactor = factors?.totp?.some((f) => f.status === "verified");
+
+    setLoading(false);
+
+    const explicitRedirect = searchParams.get("redirectTo");
+    const destination = hasVerifiedFactor
+      ? explicitRedirect || "/mfa"
+      : explicitRedirect || "/select-organization";
+
+    router.push(destination);
     router.refresh();
   }
 
