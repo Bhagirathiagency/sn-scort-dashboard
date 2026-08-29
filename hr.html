@@ -179,6 +179,7 @@
         <button class="btn-primary" id="attSaveBtn">Save attendance</button>
         <span class="summary-note" id="attSaveNote"></span>
       </div>
+      <div class="summary-note" id="attHolidayBanner"></div>
       <table class="data-table">
         <thead><tr><th>Employee</th><th>Department</th><th>Status</th><th>Note</th></tr></thead>
         <tbody id="attTableBody"></tbody>
@@ -194,6 +195,19 @@
       <table class="data-table">
         <thead><tr><th>Employee</th><th>Present</th><th>Absent</th><th>Half day</th><th>Leave</th><th>Holiday</th></tr></thead>
         <tbody id="attSummaryBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card-block">
+      <h3>Company Holidays</h3>
+      <form class="entity-form" id="holForm">
+        <input type="date" id="holDate" required>
+        <input id="holName" placeholder="Holiday name" required style="width:200px">
+        <button type="submit" class="btn-primary">Add holiday</button>
+      </form>
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Day</th><th>Holiday</th><th></th></tr></thead>
+        <tbody id="holTableBody"></tbody>
       </table>
     </div>
   </section>
@@ -309,7 +323,8 @@
     leaveBalances: [],
     salaryStructures: [],
     payslips: [],
-    attendanceByDate: {}
+    attendanceByDate: {},
+    holidays: []
   };
 
   function setSyncStatus(mode, text){
@@ -354,7 +369,7 @@
 
   function loadTab(tab){
     if (tab === "employees") renderEmployees();
-    if (tab === "attendance") { renderAttendanceTable(); renderAttendanceSummary(); }
+    if (tab === "attendance") { renderAttendanceTable(); renderAttendanceSummary(); renderHolidays(); }
     if (tab === "leave") { renderLeaveForm(); renderLeaveTable(); renderBalanceForm(); renderBalanceTable(); renderLeaveTypes(); }
     if (tab === "payroll") { renderSalaryTable(); renderPayslipTable(); }
   }
@@ -485,10 +500,19 @@
     });
   }
 
+  function holidayOn(dateStr){
+    return state.holidays.find(function(h){ return h.holiday_date === dateStr; });
+  }
+
   function renderAttendanceTable(){
     var dateInput = document.getElementById("attDate");
     if (!dateInput.value) dateInput.value = todayStr();
     var dateStr = dateInput.value;
+    var holiday = holidayOn(dateStr);
+    var banner = document.getElementById("attHolidayBanner");
+    banner.innerHTML = holiday
+      ? '<span class="status-pill status-holiday">Holiday</span> ' + escapeHtml(holiday.name) + ' — everyone defaults to Holiday below; override per employee if needed.'
+      : '';
     fetchAttendance(dateStr).then(function(records){
       var byEmp = {};
       records.forEach(function(r){ byEmp[r.employee_id] = r; });
@@ -498,10 +522,11 @@
         body.innerHTML = '<tr class="empty-row"><td colspan="4">Add active employees first.</td></tr>';
         return;
       }
+      var defaultStatus = holiday ? "holiday" : "present";
       body.innerHTML = emps.map(function(e){
         var rec = byEmp[e.id] || {};
         var statusOpts = ATT_STATUSES.map(function(s){
-          return '<option value="' + s + '"' + (rec.status === s || (!rec.status && s === "present") ? " selected" : "") + '>' + ATT_LABELS[s] + '</option>';
+          return '<option value="' + s + '"' + (rec.status === s || (!rec.status && s === defaultStatus) ? " selected" : "") + '>' + ATT_LABELS[s] + '</option>';
         }).join("");
         return '<tr data-emp-row="' + e.id + '">' +
           '<td>' + escapeHtml(e.full_name) + '</td>' +
@@ -570,6 +595,57 @@
     });
   }
   document.getElementById("attMonth").addEventListener("change", renderAttendanceSummary);
+
+  function fetchHolidays(){
+    if (!supabase) return Promise.resolve();
+    return supabase.from("hr_holidays").select("*").order("holiday_date").then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      state.holidays = res.data || [];
+    });
+  }
+
+  function renderHolidays(){
+    var body = document.getElementById("holTableBody");
+    if (state.holidays.length === 0) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="4">No holidays added yet.</td></tr>';
+      return;
+    }
+    var dayFmt = { weekday: "short" };
+    body.innerHTML = state.holidays.map(function(h){
+      var d = new Date(h.holiday_date + "T00:00:00");
+      return '<tr>' +
+        '<td class="mono">' + escapeHtml(h.holiday_date) + '</td>' +
+        '<td>' + d.toLocaleDateString("en-IN", dayFmt) + '</td>' +
+        '<td>' + escapeHtml(h.name) + '</td>' +
+        '<td><button class="btn-danger" data-del-hol="' + h.id + '">Delete</button></td>' +
+      '</tr>';
+    }).join("");
+  }
+
+  document.getElementById("holForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    if (!supabase) return;
+    var payload = {
+      holiday_date: document.getElementById("holDate").value,
+      name: document.getElementById("holName").value.trim()
+    };
+    if (!payload.holiday_date || !payload.name) return;
+    supabase.from("hr_holidays").upsert(payload, { onConflict: "holiday_date" }).then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      document.getElementById("holForm").reset();
+      fetchHolidays().then(function(){ renderHolidays(); renderAttendanceTable(); });
+    });
+  });
+
+  document.getElementById("holTableBody").addEventListener("click", function(e){
+    var delBtn = e.target.closest("[data-del-hol]");
+    if (!delBtn || !supabase) return;
+    if (!confirm("Delete this holiday?")) return;
+    supabase.from("hr_holidays").delete().eq("id", delBtn.dataset.delHol).then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      fetchHolidays().then(function(){ renderHolidays(); renderAttendanceTable(); });
+    });
+  });
 
   // ================= LEAVE =================
   function fetchLeaveTypes(){
@@ -928,7 +1004,7 @@
   function init(){
     if (!supabase) { setSyncStatus("bad", " Offline — Supabase client failed to load"); return; }
     setSyncStatus("pending", " Loading…");
-    Promise.all([fetchEmployees(), fetchLeaveTypes(), fetchLeaveRequests(), fetchLeaveBalances(), fetchSalaryStructures(), fetchPayslips()])
+    Promise.all([fetchEmployees(), fetchLeaveTypes(), fetchLeaveRequests(), fetchLeaveBalances(), fetchSalaryStructures(), fetchPayslips(), fetchHolidays()])
       .then(function(){
         setSyncStatus("ok", " Synced with Supabase");
         document.getElementById("attDate").value = todayStr();
