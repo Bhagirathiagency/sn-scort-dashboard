@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SN SCORT — HR Software</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14213D;
+    --paper:#F7F5F0;
+    --paper-2:#EFEBE1;
+    --teal:#2A6F77;
+    --teal-dark:#1D4F55;
+    --amber:#D68C45;
+    --sage:#6E8F73;
+    --red:#B4523F;
+    --slate:#5B6570;
+    --line: rgba(20,33,61,0.12);
+    --card-shadow: 0 1px 2px rgba(20,33,61,0.06), 0 2px 8px rgba(20,33,61,0.04);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:32px 24px 80px;}
+  a{color:var(--teal-dark);}
+
+  header{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:24px; flex-wrap:wrap;}
+  .brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--teal-dark); margin:0 0 6px;}
+  h1{font-family:'Fraunces',serif; font-weight:600; font-size:30px; margin:0; letter-spacing:-0.01em;}
+  .back-link{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--slate); text-decoration:none;}
+  .sync-status{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--slate); text-align:right;}
+  .sync-dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; background:var(--sage);}
+  .sync-dot.bad{background:var(--red);}
+  .sync-dot.pending{background:var(--amber);}
+
+  .tabs{display:flex; gap:8px; margin-bottom:24px; border-bottom:1px solid var(--line);}
+  .tab-btn{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase;
+    padding:10px 16px; cursor:pointer; border:none; background:none; color:var(--slate);
+    border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s;
+  }
+  .tab-btn.active{color:var(--ink); border-bottom-color:var(--teal);}
+  .tab-btn:hover{color:var(--ink);}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .panel-head{margin-bottom:14px;}
+  .panel-head h2{font-family:'Fraunces',serif; font-weight:600; font-size:20px; margin:0 0 2px;}
+  .panel-sub{font-size:12.5px; color:var(--slate);}
+
+  .card-block{background:var(--paper-2); border-radius:10px; padding:16px; margin-bottom:20px;}
+  .card-block h3{font-size:13px; text-transform:uppercase; letter-spacing:0.06em; color:var(--slate); margin:0 0 12px;}
+
+  .entity-form{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:16px;}
+  .entity-form input, .entity-form select{
+    border:1px solid var(--line); border-radius:6px; padding:8px 10px; font-family:'Inter',sans-serif;
+    font-size:13px; background:var(--paper); color:var(--ink);
+  }
+  .entity-form input[type=date]{min-width:140px;}
+  .form-actions{display:flex; gap:8px;}
+  button{font-family:'Inter',sans-serif; cursor:pointer;}
+  .btn-primary{background:var(--teal); border:none; color:#fff; font-weight:600; font-size:13px; padding:8px 16px; border-radius:6px;}
+  .btn-primary:hover{background:var(--teal-dark);}
+  .btn-secondary{background:var(--paper); border:1px solid var(--line); color:var(--slate); font-size:13px; padding:8px 14px; border-radius:6px;}
+  .btn-secondary:hover{color:var(--ink);}
+  .btn-danger{background:none; border:1px solid var(--red); color:var(--red); font-size:11.5px; padding:5px 9px; border-radius:5px;}
+  .btn-sm{font-size:11.5px; border:1px solid var(--line); background:var(--paper); color:var(--slate); border-radius:5px; padding:5px 9px;}
+  .btn-sm:hover{color:var(--ink); background:var(--paper-2);}
+  .btn-ok{border-color:var(--sage); color:var(--sage);}
+  .btn-reject{border-color:var(--red); color:var(--red);}
+
+  table.data-table{width:100%; border-collapse:collapse; background:var(--paper); border-radius:10px; overflow:hidden; box-shadow:var(--card-shadow);}
+  table.data-table th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--slate);
+    background:var(--paper-2); padding:10px 12px; font-weight:600;
+  }
+  table.data-table td{padding:9px 12px; font-size:13px; border-top:1px solid var(--line); vertical-align:middle;}
+  table.data-table tr:hover td{background:rgba(42,111,119,0.04);}
+  .num-input{width:76px; border:1px solid var(--line); border-radius:5px; padding:5px 6px; font-size:12.5px; font-family:'IBM Plex Mono',monospace;}
+  .status-pill{font-size:11px; padding:2px 9px; border-radius:20px; font-weight:600; letter-spacing:0.02em;}
+  .status-active, .status-present, .status-approved{background:rgba(110,143,115,0.16); color:var(--sage);}
+  .status-inactive, .status-absent, .status-rejected{background:rgba(180,82,63,0.14); color:var(--red);}
+  .status-pending, .status-half_day{background:rgba(214,140,69,0.16); color:var(--amber);}
+  .status-leave, .status-holiday{background:rgba(20,33,61,0.08); color:var(--slate);}
+  .empty-row td{color:var(--slate); font-style:italic; text-align:center; padding:20px;}
+  .row-actions{display:flex; gap:6px; flex-wrap:wrap;}
+  .mono{font-family:'IBM Plex Mono',monospace; font-size:12px;}
+  .att-status-select{font-size:12.5px; padding:5px 6px; border-radius:5px; border:1px solid var(--line);}
+  .month-picker{display:flex; gap:8px; align-items:center; margin-bottom:12px;}
+  .month-picker input, .month-picker select{border:1px solid var(--line); border-radius:6px; padding:7px 10px; font-size:13px;}
+  .summary-note{font-size:12px; color:var(--slate); margin-top:8px;}
+
+  @media (max-width:780px){
+    table.data-table{display:block; overflow-x:auto;}
+    .wrap{padding:20px 14px 60px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="brand-eyebrow">SN SCORT Research Solutions Pvt Ltd</p>
+      <h1>HR Software</h1>
+      <a class="back-link" href="index.html">&larr; Back to 90-Day Execution Board</a>
+    </div>
+    <div class="sync-status" id="syncStatus"><span class="sync-dot pending" id="syncDot"></span>Connecting…</div>
+  </header>
+
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="employees">Employees</button>
+    <button class="tab-btn" data-tab="attendance">Attendance</button>
+    <button class="tab-btn" data-tab="leave">Leave</button>
+    <button class="tab-btn" data-tab="payroll">Payroll</button>
+  </div>
+
+  <!-- EMPLOYEES -->
+  <section class="panel active" id="panel-employees">
+    <div class="panel-head">
+      <h2>Employee Directory</h2>
+      <div class="panel-sub">Master list of employees across all business lines</div>
+    </div>
+
+    <form class="entity-form" id="empForm">
+      <input type="hidden" id="empId">
+      <input id="empCode" placeholder="Employee code" style="width:120px">
+      <input id="empName" placeholder="Full name" required style="width:170px">
+      <input id="empDept" placeholder="Department" style="width:130px">
+      <input id="empDesig" placeholder="Designation" style="width:140px">
+      <select id="empBiz" style="width:150px">
+        <option value="">Business unit</option>
+        <option value="pv">PV &amp; Drug Safety</option>
+        <option value="smo">SMO</option>
+        <option value="institute">Institute</option>
+        <option value="corporate">Corporate</option>
+      </select>
+      <input id="empEmail" type="email" placeholder="Email" style="width:170px">
+      <input id="empPhone" placeholder="Phone" style="width:120px">
+      <input id="empJoin" type="date">
+      <select id="empStatus">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" id="empSaveBtn">Add employee</button>
+        <button type="button" class="btn-secondary" id="empCancelBtn" hidden>Cancel</button>
+      </div>
+    </form>
+
+    <table class="data-table">
+      <thead><tr>
+        <th>Code</th><th>Name</th><th>Department</th><th>Designation</th><th>Business unit</th>
+        <th>Contact</th><th>Joined</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody id="empTableBody"></tbody>
+    </table>
+  </section>
+
+  <!-- ATTENDANCE -->
+  <section class="panel" id="panel-attendance">
+    <div class="panel-head">
+      <h2>Daily Attendance</h2>
+      <div class="panel-sub">Mark attendance for each active employee on a given day</div>
+    </div>
+
+    <div class="card-block">
+      <div class="month-picker">
+        <label class="mono" for="attDate">Date</label>
+        <input type="date" id="attDate">
+        <button class="btn-primary" id="attSaveBtn">Save attendance</button>
+        <span class="summary-note" id="attSaveNote"></span>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Employee</th><th>Department</th><th>Status</th><th>Note</th></tr></thead>
+        <tbody id="attTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card-block">
+      <h3>Monthly Summary</h3>
+      <div class="month-picker">
+        <label class="mono" for="attMonth">Month</label>
+        <input type="month" id="attMonth">
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Employee</th><th>Present</th><th>Absent</th><th>Half day</th><th>Leave</th><th>Holiday</th></tr></thead>
+        <tbody id="attSummaryBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- LEAVE -->
+  <section class="panel" id="panel-leave">
+    <div class="panel-head">
+      <h2>Leave Management</h2>
+      <div class="panel-sub">Requests, approvals and balances</div>
+    </div>
+
+    <div class="card-block">
+      <h3>New leave request</h3>
+      <form class="entity-form" id="leaveForm">
+        <select id="lvEmployee" required style="width:170px"></select>
+        <select id="lvType" required style="width:150px"></select>
+        <input type="date" id="lvStart" required>
+        <input type="date" id="lvEnd" required>
+        <input id="lvReason" placeholder="Reason" style="width:200px">
+        <button type="submit" class="btn-primary">Submit request</button>
+      </form>
+      <table class="data-table">
+        <thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+        <tbody id="leaveTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card-block">
+      <h3>Leave balances</h3>
+      <form class="entity-form" id="balForm">
+        <select id="balEmployee" required style="width:170px"></select>
+        <select id="balType" required style="width:150px"></select>
+        <input id="balYear" type="number" placeholder="Year" style="width:90px">
+        <input id="balAllocated" type="number" step="0.5" placeholder="Allocated days" style="width:120px">
+        <button type="submit" class="btn-primary">Set allocation</button>
+      </form>
+      <table class="data-table">
+        <thead><tr><th>Employee</th><th>Type</th><th>Year</th><th>Allocated</th><th>Used</th><th>Remaining</th></tr></thead>
+        <tbody id="balTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card-block">
+      <h3>Leave types</h3>
+      <form class="entity-form" id="ltForm">
+        <input id="ltName" placeholder="Leave type name" required style="width:180px">
+        <input id="ltQuota" type="number" step="0.5" placeholder="Annual quota" style="width:120px">
+        <button type="submit" class="btn-primary">Add leave type</button>
+      </form>
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Annual quota</th><th></th></tr></thead>
+        <tbody id="ltTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- PAYROLL -->
+  <section class="panel" id="panel-payroll">
+    <div class="panel-head">
+      <h2>Payroll</h2>
+      <div class="panel-sub">Salary structures and monthly payslip generation</div>
+    </div>
+
+    <div class="card-block">
+      <h3>Salary structures</h3>
+      <table class="data-table">
+        <thead><tr><th>Employee</th><th>Basic</th><th>HRA</th><th>Allowances</th><th>Deductions</th><th>Gross</th><th>Net</th><th></th></tr></thead>
+        <tbody id="salaryTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card-block">
+      <h3>Generate payslips</h3>
+      <div class="month-picker">
+        <label class="mono" for="paySelMonth">Month</label>
+        <input type="month" id="paySelMonth">
+        <button class="btn-primary" id="genPayslipsBtn">Generate for active employees</button>
+        <span class="summary-note" id="genPayslipsNote"></span>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Employee</th><th>Month</th><th>Gross</th><th>Net</th><th>Generated</th><th></th></tr></thead>
+        <tbody id="payslipTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  "use strict";
+
+  var SUPABASE_URL = "https://sqmvnebnathateurqfeq.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_onNu45I1iy7rLdbn3uum5Q_hfgHoLRt";
+
+  var supabase = null;
+  try {
+    if (window.supabase) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } catch (e) {
+    console.error("Supabase init failed:", e);
+  }
+
+  var BIZ_LABELS = { pv: "PV & Drug Safety", smo: "SMO", institute: "Institute", corporate: "Corporate" };
+  var ATT_STATUSES = ["present", "absent", "half_day", "leave", "holiday"];
+  var ATT_LABELS = { present: "Present", absent: "Absent", half_day: "Half day", leave: "Leave", holiday: "Holiday" };
+  var MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  var state = {
+    employees: [],
+    leaveTypes: [],
+    leaveRequests: [],
+    leaveBalances: [],
+    salaryStructures: [],
+    payslips: [],
+    attendanceByDate: {}
+  };
+
+  function setSyncStatus(mode, text){
+    var dot = document.getElementById("syncDot");
+    var wrap = document.getElementById("syncStatus");
+    dot.className = "sync-dot" + (mode === "bad" ? " bad" : mode === "pending" ? " pending" : "");
+    wrap.childNodes[1].textContent = text;
+  }
+
+  function escapeHtml(s){
+    var d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  }
+  function fmtMoney(n){
+    n = Number(n || 0);
+    return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  }
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  function thisMonthStr(){ return new Date().toISOString().slice(0,7); }
+  function employeeName(id){
+    var e = state.employees.find(function(x){ return x.id === id; });
+    return e ? e.full_name + (e.employee_code ? " (" + e.employee_code + ")" : "") : "—";
+  }
+  function activeEmployees(){
+    return state.employees.filter(function(e){ return e.status === "active"; });
+  }
+  function daysBetween(start, end){
+    var a = new Date(start), b = new Date(end);
+    var diff = Math.round((b - a) / 86400000) + 1;
+    return diff > 0 ? diff : 1;
+  }
+
+  // ---------- Tabs ----------
+  document.getElementById("tabs").addEventListener("click", function(e){
+    var btn = e.target.closest(".tab-btn");
+    if (!btn) return;
+    document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.toggle("active", b === btn); });
+    document.querySelectorAll(".panel").forEach(function(p){ p.classList.toggle("active", p.id === "panel-" + btn.dataset.tab); });
+    loadTab(btn.dataset.tab);
+  });
+
+  function loadTab(tab){
+    if (tab === "employees") renderEmployees();
+    if (tab === "attendance") { renderAttendanceTable(); renderAttendanceSummary(); }
+    if (tab === "leave") { renderLeaveForm(); renderLeaveTable(); renderBalanceForm(); renderBalanceTable(); renderLeaveTypes(); }
+    if (tab === "payroll") { renderSalaryTable(); renderPayslipTable(); }
+  }
+
+  // ================= EMPLOYEES =================
+  function fetchEmployees(){
+    if (!supabase) return Promise.resolve();
+    return supabase.from("hr_employees").select("*").order("full_name").then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      state.employees = res.data || [];
+    });
+  }
+
+  function renderEmployees(){
+    var body = document.getElementById("empTableBody");
+    if (state.employees.length === 0) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="9">No employees yet — add the first one above.</td></tr>';
+      return;
+    }
+    body.innerHTML = state.employees.map(function(e){
+      return '<tr>' +
+        '<td class="mono">' + escapeHtml(e.employee_code) + '</td>' +
+        '<td>' + escapeHtml(e.full_name) + '</td>' +
+        '<td>' + escapeHtml(e.department) + '</td>' +
+        '<td>' + escapeHtml(e.designation) + '</td>' +
+        '<td>' + escapeHtml(BIZ_LABELS[e.business_unit] || e.business_unit) + '</td>' +
+        '<td>' + escapeHtml(e.phone) + (e.phone && e.email ? '<br>' : '') + escapeHtml(e.email) + '</td>' +
+        '<td class="mono">' + escapeHtml(e.joining_date) + '</td>' +
+        '<td><span class="status-pill status-' + e.status + '">' + escapeHtml(e.status) + '</span></td>' +
+        '<td class="row-actions">' +
+          '<button class="btn-sm" data-edit-emp="' + e.id + '">Edit</button>' +
+          '<button class="btn-danger" data-del-emp="' + e.id + '">Delete</button>' +
+        '</td>' +
+      '</tr>';
+    }).join("");
+  }
+
+  document.getElementById("empTableBody").addEventListener("click", function(e){
+    var editBtn = e.target.closest("[data-edit-emp]");
+    var delBtn = e.target.closest("[data-del-emp]");
+    if (editBtn) startEditEmployee(editBtn.dataset.editEmp);
+    if (delBtn) deleteEmployee(delBtn.dataset.delEmp);
+  });
+
+  function startEditEmployee(id){
+    var e = state.employees.find(function(x){ return x.id === id; });
+    if (!e) return;
+    document.getElementById("empId").value = e.id;
+    document.getElementById("empCode").value = e.employee_code || "";
+    document.getElementById("empName").value = e.full_name || "";
+    document.getElementById("empDept").value = e.department || "";
+    document.getElementById("empDesig").value = e.designation || "";
+    document.getElementById("empBiz").value = e.business_unit || "";
+    document.getElementById("empEmail").value = e.email || "";
+    document.getElementById("empPhone").value = e.phone || "";
+    document.getElementById("empJoin").value = e.joining_date || "";
+    document.getElementById("empStatus").value = e.status || "active";
+    document.getElementById("empSaveBtn").textContent = "Save changes";
+    document.getElementById("empCancelBtn").hidden = false;
+    window.scrollTo({ top: document.getElementById("empForm").offsetTop - 20, behavior: "smooth" });
+  }
+
+  function resetEmployeeForm(){
+    document.getElementById("empForm").reset();
+    document.getElementById("empId").value = "";
+    document.getElementById("empStatus").value = "active";
+    document.getElementById("empSaveBtn").textContent = "Add employee";
+    document.getElementById("empCancelBtn").hidden = true;
+  }
+  document.getElementById("empCancelBtn").addEventListener("click", resetEmployeeForm);
+
+  document.getElementById("empForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    if (!supabase) return;
+    var id = document.getElementById("empId").value;
+    var payload = {
+      employee_code: document.getElementById("empCode").value.trim() || null,
+      full_name: document.getElementById("empName").value.trim(),
+      department: document.getElementById("empDept").value.trim() || null,
+      designation: document.getElementById("empDesig").value.trim() || null,
+      business_unit: document.getElementById("empBiz").value || null,
+      email: document.getElementById("empEmail").value.trim() || null,
+      phone: document.getElementById("empPhone").value.trim() || null,
+      joining_date: document.getElementById("empJoin").value || null,
+      status: document.getElementById("empStatus").value
+    };
+    if (!payload.full_name) return;
+    setSyncStatus("pending", " Saving…");
+    var q = id ? supabase.from("hr_employees").update(payload).eq("id", id) : supabase.from("hr_employees").insert(payload);
+    q.then(function(res){
+      if (res.error) { console.error(res.error); setSyncStatus("bad", " Save failed"); return; }
+      setSyncStatus("ok", " Synced with Supabase");
+      resetEmployeeForm();
+      fetchEmployees().then(renderEmployees);
+    });
+  });
+
+  function deleteEmployee(id){
+    if (!supabase) return;
+    if (!confirm("Delete this employee? This also removes their attendance, leave and payroll records.")) return;
+    supabase.from("hr_employees").delete().eq("id", id).then(function(res){
+      if (res.error) { console.error(res.error); setSyncStatus("bad", " Delete failed"); return; }
+      fetchEmployees().then(function(){
+        renderEmployees();
+        populateEmployeeSelects();
+      });
+    });
+  }
+
+  function populateEmployeeSelects(){
+    var opts = '<option value="">Select employee</option>' + activeEmployees().map(function(e){
+      return '<option value="' + e.id + '">' + escapeHtml(e.full_name) + (e.employee_code ? " (" + escapeHtml(e.employee_code) + ")" : "") + '</option>';
+    }).join("");
+    ["lvEmployee", "balEmployee"].forEach(function(id){
+      var sel = document.getElementById(id);
+      var prev = sel.value;
+      sel.innerHTML = opts;
+      if (prev) sel.value = prev;
+    });
+  }
+
+  // ================= ATTENDANCE =================
+  function fetchAttendance(dateStr){
+    if (!supabase) return Promise.resolve([]);
+    return supabase.from("hr_attendance").select("*").eq("att_date", dateStr).then(function(res){
+      if (res.error) { console.error(res.error); return []; }
+      return res.data || [];
+    });
+  }
+
+  function renderAttendanceTable(){
+    var dateInput = document.getElementById("attDate");
+    if (!dateInput.value) dateInput.value = todayStr();
+    var dateStr = dateInput.value;
+    fetchAttendance(dateStr).then(function(records){
+      var byEmp = {};
+      records.forEach(function(r){ byEmp[r.employee_id] = r; });
+      var body = document.getElementById("attTableBody");
+      var emps = activeEmployees();
+      if (emps.length === 0) {
+        body.innerHTML = '<tr class="empty-row"><td colspan="4">Add active employees first.</td></tr>';
+        return;
+      }
+      body.innerHTML = emps.map(function(e){
+        var rec = byEmp[e.id] || {};
+        var statusOpts = ATT_STATUSES.map(function(s){
+          return '<option value="' + s + '"' + (rec.status === s || (!rec.status && s === "present") ? " selected" : "") + '>' + ATT_LABELS[s] + '</option>';
+        }).join("");
+        return '<tr data-emp-row="' + e.id + '">' +
+          '<td>' + escapeHtml(e.full_name) + '</td>' +
+          '<td>' + escapeHtml(e.department) + '</td>' +
+          '<td><select class="att-status-select" data-att-status="' + e.id + '">' + statusOpts + '</select></td>' +
+          '<td><input type="text" class="btn-sm" style="width:160px;padding:5px 6px;" data-att-note="' + e.id + '" value="' + escapeHtml(rec.note) + '" placeholder="note"></td>' +
+        '</tr>';
+      }).join("");
+    });
+  }
+
+  document.getElementById("attDate").addEventListener("change", function(){
+    document.getElementById("attSaveNote").textContent = "";
+    renderAttendanceTable();
+  });
+
+  document.getElementById("attSaveBtn").addEventListener("click", function(){
+    if (!supabase) return;
+    var dateStr = document.getElementById("attDate").value || todayStr();
+    var rows = activeEmployees().map(function(e){
+      var statusSel = document.querySelector('[data-att-status="' + e.id + '"]');
+      var noteInput = document.querySelector('[data-att-note="' + e.id + '"]');
+      return {
+        employee_id: e.id,
+        att_date: dateStr,
+        status: statusSel ? statusSel.value : "present",
+        note: noteInput ? (noteInput.value.trim() || null) : null
+      };
+    });
+    if (rows.length === 0) return;
+    document.getElementById("attSaveNote").textContent = "Saving…";
+    supabase.from("hr_attendance").upsert(rows, { onConflict: "employee_id,att_date" }).then(function(res){
+      if (res.error) { console.error(res.error); document.getElementById("attSaveNote").textContent = "Save failed"; return; }
+      document.getElementById("attSaveNote").textContent = "Saved " + rows.length + " records for " + dateStr;
+      renderAttendanceSummary();
+    });
+  });
+
+  function renderAttendanceSummary(){
+    var monthInput = document.getElementById("attMonth");
+    if (!monthInput.value) monthInput.value = thisMonthStr();
+    var ym = monthInput.value;
+    var start = ym + "-01";
+    var endDate = new Date(ym + "-01T00:00:00");
+    endDate.setMonth(endDate.getMonth() + 1);
+    var end = endDate.toISOString().slice(0,10);
+
+    if (!supabase) return;
+    supabase.from("hr_attendance").select("*").gte("att_date", start).lt("att_date", end).then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      var counts = {};
+      (res.data || []).forEach(function(r){
+        counts[r.employee_id] = counts[r.employee_id] || { present:0, absent:0, half_day:0, leave:0, holiday:0 };
+        if (counts[r.employee_id][r.status] !== undefined) counts[r.employee_id][r.status]++;
+      });
+      var body = document.getElementById("attSummaryBody");
+      var emps = activeEmployees();
+      if (emps.length === 0) {
+        body.innerHTML = '<tr class="empty-row"><td colspan="6">No active employees.</td></tr>';
+        return;
+      }
+      body.innerHTML = emps.map(function(e){
+        var c = counts[e.id] || { present:0, absent:0, half_day:0, leave:0, holiday:0 };
+        return '<tr><td>' + escapeHtml(e.full_name) + '</td><td>' + c.present + '</td><td>' + c.absent + '</td><td>' + c.half_day + '</td><td>' + c.leave + '</td><td>' + c.holiday + '</td></tr>';
+      }).join("");
+    });
+  }
+  document.getElementById("attMonth").addEventListener("change", renderAttendanceSummary);
+
+  // ================= LEAVE =================
+  function fetchLeaveTypes(){
+    if (!supabase) return Promise.resolve();
+    return supabase.from("hr_leave_types").select("*").order("name").then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      state.leaveTypes = res.data || [];
+    });
+  }
+  function fetchLeaveRequests(){
+    if (!supabase) return Promise.resolve();
+    return supabase.from("hr_leave_requests").select("*").order("requested_at", { ascending: false }).then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      state.leaveRequests = res.data || [];
+    });
+  }
+  function fetchLeaveBalances(){
+    if (!supabase) return Promise.resolve();
+    return supabase.from("hr_leave_balances").select("*").then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      state.leaveBalances = res.data || [];
+    });
+  }
+
+  function leaveTypeName(id){
+    var t = state.leaveTypes.find(function(x){ return x.id === id; });
+    return t ? t.name : "—";
+  }
+
+  function renderLeaveForm(){
+    populateEmployeeSelects();
+    var typeSel = document.getElementById("lvType");
+    typeSel.innerHTML = '<option value="">Leave type</option>' + state.leaveTypes.map(function(t){
+      return '<option value="' + t.id + '">' + escapeHtml(t.name) + '</option>';
+    }).join("");
+    var balTypeSel = document.getElementById("balType");
+    balTypeSel.innerHTML = typeSel.innerHTML;
+  }
+
+  function renderLeaveTable(){
+    var body = document.getElementById("leaveTableBody");
+    if (state.leaveRequests.length === 0) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="8">No leave requests yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = state.leaveRequests.map(function(r){
+      var actions = r.status === "pending"
+        ? '<button class="btn-sm btn-ok" data-approve-lv="' + r.id + '">Approve</button><button class="btn-sm btn-reject" data-reject-lv="' + r.id + '">Reject</button>'
+        : '';
+      return '<tr>' +
+        '<td>' + escapeHtml(employeeName(r.employee_id)) + '</td>' +
+        '<td>' + escapeHtml(leaveTypeName(r.leave_type_id)) + '</td>' +
+        '<td class="mono">' + escapeHtml(r.start_date) + '</td>' +
+        '<td class="mono">' + escapeHtml(r.end_date) + '</td>' +
+        '<td>' + escapeHtml(r.days) + '</td>' +
+        '<td>' + escapeHtml(r.reason) + '</td>' +
+        '<td><span class="status-pill status-' + r.status + '">' + escapeHtml(r.status) + '</span></td>' +
+        '<td class="row-actions">' + actions + '<button class="btn-danger" data-del-lv="' + r.id + '">Delete</button></td>' +
+      '</tr>';
+    }).join("");
+  }
+
+  document.getElementById("leaveForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    if (!supabase) return;
+    var employeeId = document.getElementById("lvEmployee").value;
+    var leaveTypeId = document.getElementById("lvType").value;
+    var start = document.getElementById("lvStart").value;
+    var end = document.getElementById("lvEnd").value;
+    if (!employeeId || !leaveTypeId || !start || !end) return;
+    var payload = {
+      employee_id: employeeId,
+      leave_type_id: leaveTypeId,
+      start_date: start,
+      end_date: end,
+      days: daysBetween(start, end),
+      reason: document.getElementById("lvReason").value.trim() || null,
+      status: "pending"
+    };
+    supabase.from("hr_leave_requests").insert(payload).then(function(res){
+      if (res.error) { console.error(res.error); setSyncStatus("bad", " Save failed"); return; }
+      document.getElementById("leaveForm").reset();
+      fetchLeaveRequests().then(renderLeaveTable);
+    });
+  });
+
+  document.getElementById("leaveTableBody").addEventListener("click", function(e){
+    var approveBtn = e.target.closest("[data-approve-lv]");
+    var rejectBtn = e.target.closest("[data-reject-lv]");
+    var delBtn = e.target.closest("[data-del-lv]");
+    if (approveBtn) decideLeave(approveBtn.dataset.approveLv, "approved");
+    if (rejectBtn) decideLeave(rejectBtn.dataset.rejectLv, "rejected");
+    if (delBtn) deleteLeaveRequest(delBtn.dataset.delLv);
+  });
+
+  function decideLeave(id, decision){
+    if (!supabase) return;
+    var req = state.leaveRequests.find(function(x){ return x.id === id; });
+    if (!req) return;
+    supabase.from("hr_leave_requests").update({ status: decision, decided_at: new Date().toISOString() }).eq("id", id).then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      if (decision === "approved") {
+        applyLeaveToBalance(req).then(function(){
+          fetchLeaveRequests().then(renderLeaveTable);
+          fetchLeaveBalances().then(renderBalanceTable);
+        });
+      } else {
+        fetchLeaveRequests().then(renderLeaveTable);
+      }
+    });
+  }
+
+  function applyLeaveToBalance(req){
+    var year = new Date(req.start_date).getFullYear();
+    var existing = state.leaveBalances.find(function(b){
+      return b.employee_id === req.employee_id && b.leave_type_id === req.leave_type_id && b.year === year;
+    });
+    if (existing) {
+      return supabase.from("hr_leave_balances").update({ used: Number(existing.used || 0) + Number(req.days) }).eq("id", existing.id);
+    }
+    var lt = state.leaveTypes.find(function(t){ return t.id === req.leave_type_id; });
+    return supabase.from("hr_leave_balances").insert({
+      employee_id: req.employee_id,
+      leave_type_id: req.leave_type_id,
+      year: year,
+      allocated: lt ? lt.annual_quota : 0,
+      used: Number(req.days)
+    });
+  }
+
+  function deleteLeaveRequest(id){
+    if (!supabase) return;
+    if (!confirm("Delete this leave request?")) return;
+    supabase.from("hr_leave_requests").delete().eq("id", id).then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      fetchLeaveRequests().then(renderLeaveTable);
+    });
+  }
+
+  function renderBalanceForm(){
+    var yearInput = document.getElementById("balYear");
+    if (!yearInput.value) yearInput.value = new Date().getFullYear();
+  }
+
+  document.getElementById("balForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    if (!supabase) return;
+    var payload = {
+      employee_id: document.getElementById("balEmployee").value,
+      leave_type_id: document.getElementById("balType").value,
+      year: parseInt(document.getElementById("balYear").value, 10) || new Date().getFullYear(),
+      allocated: parseFloat(document.getElementById("balAllocated").value) || 0
+    };
+    if (!payload.employee_id || !payload.leave_type_id) return;
+    supabase.from("hr_leave_balances").upsert(payload, { onConflict: "employee_id,leave_type_id,year" }).then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      document.getElementById("balAllocated").value = "";
+      fetchLeaveBalances().then(renderBalanceTable);
+    });
+  });
+
+  function renderBalanceTable(){
+    var body = document.getElementById("balTableBody");
+    if (state.leaveBalances.length === 0) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="6">No leave balances set yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = state.leaveBalances.map(function(b){
+      var remaining = Number(b.allocated || 0) - Number(b.used || 0);
+      return '<tr>' +
+        '<td>' + escapeHtml(employeeName(b.employee_id)) + '</td>' +
+        '<td>' + escapeHtml(leaveTypeName(b.leave_type_id)) + '</td>' +
+        '<td>' + escapeHtml(b.year) + '</td>' +
+        '<td>' + escapeHtml(b.allocated) + '</td>' +
+        '<td>' + escapeHtml(b.used) + '</td>' +
+        '<td>' + fmtMoney(remaining) + '</td>' +
+      '</tr>';
+    }).join("");
+  }
+
+  function renderLeaveTypes(){
+    var body = document.getElementById("ltTableBody");
+    if (state.leaveTypes.length === 0) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="3">No leave types defined.</td></tr>';
+      return;
+    }
+    body.innerHTML = state.leaveTypes.map(function(t){
+      return '<tr><td>' + escapeHtml(t.name) + '</td><td>' + escapeHtml(t.annual_quota) + '</td>' +
+        '<td><button class="btn-danger" data-del-lt="' + t.id + '">Delete</button></td></tr>';
+    }).join("");
+  }
+
+  document.getElementById("ltForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    if (!supabase) return;
+    var payload = {
+      name: document.getElementById("ltName").value.trim(),
+      annual_quota: parseFloat(document.getElementById("ltQuota").value) || 0
+    };
+    if (!payload.name) return;
+    supabase.from("hr_leave_types").insert(payload).then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      document.getElementById("ltForm").reset();
+      fetchLeaveTypes().then(function(){ renderLeaveTypes(); renderLeaveForm(); });
+    });
+  });
+
+  document.getElementById("ltTableBody").addEventListener("click", function(e){
+    var delBtn = e.target.closest("[data-del-lt]");
+    if (!delBtn || !supabase) return;
+    if (!confirm("Delete this leave type?")) return;
+    supabase.from("hr_leave_types").delete().eq("id", delBtn.dataset.delLt).then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      fetchLeaveTypes().then(function(){ renderLeaveTypes(); renderLeaveForm(); });
+    });
+  });
+
+  // ================= PAYROLL =================
+  function fetchSalaryStructures(){
+    if (!supabase) return Promise.resolve();
+    return supabase.from("hr_salary_structures").select("*").then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      state.salaryStructures = res.data || [];
+    });
+  }
+  function fetchPayslips(){
+    if (!supabase) return Promise.resolve();
+    return supabase.from("hr_payslips").select("*").order("generated_at", { ascending: false }).then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      state.payslips = res.data || [];
+    });
+  }
+
+  function renderSalaryTable(){
+    var body = document.getElementById("salaryTableBody");
+    var emps = activeEmployees();
+    if (emps.length === 0) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="8">Add active employees first.</td></tr>';
+      return;
+    }
+    body.innerHTML = emps.map(function(e){
+      var s = state.salaryStructures.find(function(x){ return x.employee_id === e.id; }) || { basic:0, hra:0, allowances:0, deductions:0 };
+      var gross = Number(s.basic||0) + Number(s.hra||0) + Number(s.allowances||0);
+      var net = gross - Number(s.deductions||0);
+      return '<tr data-sal-row="' + e.id + '">' +
+        '<td>' + escapeHtml(e.full_name) + '</td>' +
+        '<td><input class="num-input" type="number" data-sal-basic="' + e.id + '" value="' + Number(s.basic||0) + '"></td>' +
+        '<td><input class="num-input" type="number" data-sal-hra="' + e.id + '" value="' + Number(s.hra||0) + '"></td>' +
+        '<td><input class="num-input" type="number" data-sal-allow="' + e.id + '" value="' + Number(s.allowances||0) + '"></td>' +
+        '<td><input class="num-input" type="number" data-sal-ded="' + e.id + '" value="' + Number(s.deductions||0) + '"></td>' +
+        '<td class="mono">' + fmtMoney(gross) + '</td>' +
+        '<td class="mono">' + fmtMoney(net) + '</td>' +
+        '<td><button class="btn-sm" data-save-sal="' + e.id + '">Save</button></td>' +
+      '</tr>';
+    }).join("");
+  }
+
+  document.getElementById("salaryTableBody").addEventListener("click", function(e){
+    var btn = e.target.closest("[data-save-sal]");
+    if (!btn || !supabase) return;
+    var empId = btn.dataset.saveSal;
+    var payload = {
+      employee_id: empId,
+      basic: parseFloat(document.querySelector('[data-sal-basic="' + empId + '"]').value) || 0,
+      hra: parseFloat(document.querySelector('[data-sal-hra="' + empId + '"]').value) || 0,
+      allowances: parseFloat(document.querySelector('[data-sal-allow="' + empId + '"]').value) || 0,
+      deductions: parseFloat(document.querySelector('[data-sal-ded="' + empId + '"]').value) || 0,
+      updated_at: new Date().toISOString()
+    };
+    supabase.from("hr_salary_structures").upsert(payload, { onConflict: "employee_id" }).then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      fetchSalaryStructures().then(renderSalaryTable);
+    });
+  });
+
+  document.getElementById("genPayslipsBtn").addEventListener("click", function(){
+    if (!supabase) return;
+    var ym = document.getElementById("paySelMonth").value || thisMonthStr();
+    var parts = ym.split("-");
+    var year = parseInt(parts[0], 10), month = parseInt(parts[1], 10);
+    var emps = activeEmployees();
+    if (emps.length === 0) return;
+    var rows = emps.map(function(e){
+      var s = state.salaryStructures.find(function(x){ return x.employee_id === e.id; }) || { basic:0, hra:0, allowances:0, deductions:0 };
+      var gross = Number(s.basic||0) + Number(s.hra||0) + Number(s.allowances||0);
+      var net = gross - Number(s.deductions||0);
+      return {
+        employee_id: e.id, pay_month: month, pay_year: year,
+        basic: Number(s.basic||0), hra: Number(s.hra||0), allowances: Number(s.allowances||0), deductions: Number(s.deductions||0),
+        gross: gross, net: net, generated_at: new Date().toISOString()
+      };
+    });
+    document.getElementById("genPayslipsNote").textContent = "Generating…";
+    supabase.from("hr_payslips").upsert(rows, { onConflict: "employee_id,pay_month,pay_year" }).then(function(res){
+      if (res.error) { console.error(res.error); document.getElementById("genPayslipsNote").textContent = "Failed"; return; }
+      document.getElementById("genPayslipsNote").textContent = "Generated " + rows.length + " payslips for " + MONTH_NAMES[month-1] + " " + year;
+      fetchPayslips().then(renderPayslipTable);
+    });
+  });
+
+  function renderPayslipTable(){
+    var body = document.getElementById("payslipTableBody");
+    if (state.payslips.length === 0) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="6">No payslips generated yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = state.payslips.map(function(p){
+      return '<tr>' +
+        '<td>' + escapeHtml(employeeName(p.employee_id)) + '</td>' +
+        '<td>' + MONTH_NAMES[p.pay_month-1] + ' ' + p.pay_year + '</td>' +
+        '<td class="mono">' + fmtMoney(p.gross) + '</td>' +
+        '<td class="mono">' + fmtMoney(p.net) + '</td>' +
+        '<td class="mono">' + new Date(p.generated_at).toLocaleDateString("en-IN") + '</td>' +
+        '<td><button class="btn-sm" data-print-ps="' + p.id + '">Print</button></td>' +
+      '</tr>';
+    }).join("");
+  }
+
+  document.getElementById("payslipTableBody").addEventListener("click", function(e){
+    var btn = e.target.closest("[data-print-ps]");
+    if (!btn) return;
+    printPayslip(btn.dataset.printPs);
+  });
+
+  function printPayslip(id){
+    var p = state.payslips.find(function(x){ return x.id === id; });
+    if (!p) return;
+    var emp = state.employees.find(function(x){ return x.id === p.employee_id; }) || {};
+    var w = window.open("", "_blank", "width=520,height=680");
+    if (!w) return;
+    w.document.write(
+      '<!DOCTYPE html><html><head><title>Payslip — ' + escapeHtml(emp.full_name) + '</title>' +
+      '<style>body{font-family:Arial,sans-serif;padding:24px;color:#14213D;} h1{font-size:18px;margin:0 0 2px;} ' +
+      '.sub{color:#5B6570;font-size:12px;margin-bottom:20px;} table{width:100%;border-collapse:collapse;} ' +
+      'td{padding:6px 0;border-bottom:1px solid #eee;font-size:13px;} td.right{text-align:right;} ' +
+      '.net{font-weight:bold;font-size:15px;}</style></head><body>' +
+      '<h1>SN SCORT Research Solutions Pvt Ltd</h1>' +
+      '<div class="sub">Payslip — ' + MONTH_NAMES[p.pay_month-1] + ' ' + p.pay_year + '</div>' +
+      '<table>' +
+      '<tr><td>Employee</td><td class="right">' + escapeHtml(emp.full_name) + (emp.employee_code ? ' (' + escapeHtml(emp.employee_code) + ')' : '') + '</td></tr>' +
+      '<tr><td>Department</td><td class="right">' + escapeHtml(emp.department) + '</td></tr>' +
+      '<tr><td>Basic</td><td class="right">' + fmtMoney(p.basic) + '</td></tr>' +
+      '<tr><td>HRA</td><td class="right">' + fmtMoney(p.hra) + '</td></tr>' +
+      '<tr><td>Allowances</td><td class="right">' + fmtMoney(p.allowances) + '</td></tr>' +
+      '<tr><td>Gross</td><td class="right">' + fmtMoney(p.gross) + '</td></tr>' +
+      '<tr><td>Deductions</td><td class="right">-' + fmtMoney(p.deductions) + '</td></tr>' +
+      '<tr class="net"><td>Net pay</td><td class="right">' + fmtMoney(p.net) + '</td></tr>' +
+      '</table></body></html>'
+    );
+    w.document.close();
+    w.focus();
+    w.print();
+  }
+
+  // ---------- Init ----------
+  function init(){
+    if (!supabase) { setSyncStatus("bad", " Offline — Supabase client failed to load"); return; }
+    setSyncStatus("pending", " Loading…");
+    Promise.all([fetchEmployees(), fetchLeaveTypes(), fetchLeaveRequests(), fetchLeaveBalances(), fetchSalaryStructures(), fetchPayslips()])
+      .then(function(){
+        setSyncStatus("ok", " Synced with Supabase");
+        document.getElementById("attDate").value = todayStr();
+        document.getElementById("attMonth").value = thisMonthStr();
+        document.getElementById("paySelMonth").value = thisMonthStr();
+        populateEmployeeSelects();
+        renderEmployees();
+      })
+      .catch(function(e){
+        console.error(e);
+        setSyncStatus("bad", " Could not load data");
+      });
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
