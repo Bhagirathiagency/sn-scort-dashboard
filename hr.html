@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SN SCORT — HR Software</title>
+<link rel="icon" href="assets/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -32,6 +33,7 @@
   a{color:var(--teal-dark);}
 
   header{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:24px; flex-wrap:wrap;}
+  .brand-logo{height:44px; width:auto; display:block;}
   .brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--teal-dark); margin:0 0 6px;}
   h1{font-family:'Fraunces',serif; font-weight:600; font-size:30px; margin:0; letter-spacing:-0.01em;}
   .back-link{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--slate); text-decoration:none;}
@@ -108,10 +110,13 @@
 <div class="wrap">
 
   <header>
-    <div>
-      <p class="brand-eyebrow">SN SCORT Research Solutions Pvt Ltd</p>
-      <h1>HR Software</h1>
-      <a class="back-link" href="index.html">&larr; Back to 90-Day Execution Board</a>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <img src="assets/logo.png" alt="SN SCORT Research Solutions logo" class="brand-logo" id="headerLogo" onerror="this.style.display='none'">
+      <div>
+        <p class="brand-eyebrow">SN SCORT Research Solutions Pvt Ltd</p>
+        <h1>HR Software</h1>
+        <a class="back-link" href="index.html">&larr; Back to 90-Day Execution Board</a>
+      </div>
     </div>
     <div class="sync-status" id="syncStatus"><span class="sync-dot pending" id="syncDot"></span>Connecting…</div>
   </header>
@@ -121,6 +126,7 @@
     <button class="tab-btn" data-tab="attendance">Attendance</button>
     <button class="tab-btn" data-tab="leave">Leave</button>
     <button class="tab-btn" data-tab="payroll">Payroll</button>
+    <button class="tab-btn" data-tab="reports">Reports</button>
   </div>
 
   <!-- EMPLOYEES -->
@@ -294,6 +300,42 @@
     </div>
   </section>
 
+  <!-- REPORTS -->
+  <section class="panel" id="panel-reports">
+    <div class="panel-head">
+      <h2>Reports</h2>
+      <div class="panel-sub">Standard printable reports, letterheaded with the company logo</div>
+    </div>
+
+    <div class="card-block">
+      <h3>Attendance report</h3>
+      <div class="month-picker">
+        <label class="mono" for="repAttMonth">Month</label>
+        <input type="month" id="repAttMonth">
+        <button class="btn-primary" id="repAttBtn">Print attendance report</button>
+      </div>
+      <div class="panel-sub">Present / absent / half-day / leave / holiday counts for every active employee in the selected month.</div>
+    </div>
+
+    <div class="card-block">
+      <h3>Leave balance report</h3>
+      <div class="month-picker">
+        <label class="mono" for="repLeaveYear">Year</label>
+        <input type="number" id="repLeaveYear" style="width:90px">
+        <button class="btn-primary" id="repLeaveBtn">Print leave report</button>
+      </div>
+      <div class="panel-sub">Allocated / used / remaining leave for every employee and leave type in the selected year.</div>
+    </div>
+
+    <div class="card-block">
+      <h3>Employee master report</h3>
+      <div class="month-picker">
+        <button class="btn-primary" id="repEmpBtn">Print employee list</button>
+      </div>
+      <div class="panel-sub">Full employee directory as currently on file.</div>
+    </div>
+  </section>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -303,6 +345,8 @@
 
   var SUPABASE_URL = "https://sqmvnebnathateurqfeq.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_onNu45I1iy7rLdbn3uum5Q_hfgHoLRt";
+  var LOGO_URL = new URL("assets/logo.png", window.location.href).href;
+  var COMPANY_NAME = "SN SCORT Research Solutions Pvt Ltd";
 
   var supabase = null;
   try {
@@ -372,6 +416,12 @@
     if (tab === "attendance") { renderAttendanceTable(); renderAttendanceSummary(); renderHolidays(); }
     if (tab === "leave") { renderLeaveForm(); renderLeaveTable(); renderBalanceForm(); renderBalanceTable(); renderLeaveTypes(); }
     if (tab === "payroll") { renderSalaryTable(); renderPayslipTable(); }
+    if (tab === "reports") {
+      var ram = document.getElementById("repAttMonth");
+      if (!ram.value) ram.value = thisMonthStr();
+      var rly = document.getElementById("repLeaveYear");
+      if (!rly.value) rly.value = new Date().getFullYear();
+    }
   }
 
   // ================= EMPLOYEES =================
@@ -970,35 +1020,143 @@
     printPayslip(btn.dataset.printPs);
   });
 
-  function printPayslip(id){
-    var p = state.payslips.find(function(x){ return x.id === id; });
-    if (!p) return;
-    var emp = state.employees.find(function(x){ return x.id === p.employee_id; }) || {};
-    var w = window.open("", "_blank", "width=520,height=680");
+  function numberToWordsIndian(num){
+    num = Math.round(Math.abs(Number(num) || 0));
+    if (num === 0) return "Zero";
+    var ones = ["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten",
+      "Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
+    var tens = ["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+    function twoDigits(n){
+      if (n < 20) return ones[n];
+      return tens[Math.floor(n/10)] + (n % 10 ? " " + ones[n % 10] : "");
+    }
+    function threeDigits(n){
+      var h = Math.floor(n/100), r = n % 100;
+      var out = h ? ones[h] + " Hundred" : "";
+      if (r) out += (out ? " " : "") + twoDigits(r);
+      return out;
+    }
+    var crore = Math.floor(num / 10000000); num %= 10000000;
+    var lakh = Math.floor(num / 100000); num %= 100000;
+    var thousand = Math.floor(num / 1000); num %= 1000;
+    var rest = num;
+    var parts = [];
+    if (crore) parts.push(threeDigits(crore) + " Crore");
+    if (lakh) parts.push(threeDigits(lakh) + " Lakh");
+    if (thousand) parts.push(threeDigits(thousand) + " Thousand");
+    if (rest) parts.push(threeDigits(rest));
+    return parts.join(" ") || "Zero";
+  }
+
+  function openLetterhead(title, subtitle, bodyHtml, winOpts){
+    var w = window.open("", "_blank", winOpts || "width=680,height=800");
     if (!w) return;
     w.document.write(
-      '<!DOCTYPE html><html><head><title>Payslip — ' + escapeHtml(emp.full_name) + '</title>' +
-      '<style>body{font-family:Arial,sans-serif;padding:24px;color:#14213D;} h1{font-size:18px;margin:0 0 2px;} ' +
-      '.sub{color:#5B6570;font-size:12px;margin-bottom:20px;} table{width:100%;border-collapse:collapse;} ' +
-      'td{padding:6px 0;border-bottom:1px solid #eee;font-size:13px;} td.right{text-align:right;} ' +
-      '.net{font-weight:bold;font-size:15px;}</style></head><body>' +
-      '<h1>SN SCORT Research Solutions Pvt Ltd</h1>' +
-      '<div class="sub">Payslip — ' + MONTH_NAMES[p.pay_month-1] + ' ' + p.pay_year + '</div>' +
-      '<table>' +
-      '<tr><td>Employee</td><td class="right">' + escapeHtml(emp.full_name) + (emp.employee_code ? ' (' + escapeHtml(emp.employee_code) + ')' : '') + '</td></tr>' +
-      '<tr><td>Department</td><td class="right">' + escapeHtml(emp.department) + '</td></tr>' +
-      '<tr><td>Basic</td><td class="right">' + fmtMoney(p.basic) + '</td></tr>' +
-      '<tr><td>HRA</td><td class="right">' + fmtMoney(p.hra) + '</td></tr>' +
-      '<tr><td>Allowances</td><td class="right">' + fmtMoney(p.allowances) + '</td></tr>' +
-      '<tr><td>Gross</td><td class="right">' + fmtMoney(p.gross) + '</td></tr>' +
-      '<tr><td>Deductions</td><td class="right">-' + fmtMoney(p.deductions) + '</td></tr>' +
-      '<tr class="net"><td>Net pay</td><td class="right">' + fmtMoney(p.net) + '</td></tr>' +
-      '</table></body></html>'
+      '<!DOCTYPE html><html><head><title>' + escapeHtml(title) + '</title>' +
+      '<style>' +
+        'body{font-family:Arial,Helvetica,sans-serif;padding:28px;color:#14213D;}' +
+        '.letterhead{display:flex;align-items:center;gap:14px;border-bottom:2px solid #2A6F77;padding-bottom:14px;margin-bottom:18px;}' +
+        '.letterhead img{height:52px;width:auto;}' +
+        '.letterhead h1{font-size:17px;margin:0;}' +
+        '.doc-title{font-size:14px;font-weight:bold;margin:0 0 2px;}' +
+        '.doc-sub{color:#5B6570;font-size:12px;margin-bottom:18px;}' +
+        'table{width:100%;border-collapse:collapse;margin-bottom:14px;}' +
+        'th,td{padding:6px 8px;font-size:12.5px;border-bottom:1px solid #eee;text-align:left;}' +
+        'th{background:#F7F5F0;text-transform:uppercase;font-size:10px;letter-spacing:.04em;color:#5B6570;}' +
+        'td.right,th.right{text-align:right;}' +
+        '.net td{font-weight:bold;font-size:15px;border-top:2px solid #14213D;border-bottom:none;}' +
+        '.footer-note{margin-top:20px;font-size:10.5px;color:#98A2AE;}' +
+      '</style></head><body>' +
+      '<div class="letterhead"><img src="' + LOGO_URL + '" onerror="this.style.display=\'none\'"><div><h1>' + escapeHtml(COMPANY_NAME) + '</h1></div></div>' +
+      '<div class="doc-title">' + escapeHtml(title) + '</div>' +
+      '<div class="doc-sub">' + escapeHtml(subtitle) + '</div>' +
+      bodyHtml +
+      '<div class="footer-note">Computer-generated document — generated ' + new Date().toLocaleString("en-IN") + '. No signature required.</div>' +
+      '</body></html>'
     );
     w.document.close();
     w.focus();
     w.print();
   }
+
+  function printPayslip(id){
+    var p = state.payslips.find(function(x){ return x.id === id; });
+    if (!p) return;
+    var emp = state.employees.find(function(x){ return x.id === p.employee_id; }) || {};
+    var body =
+      '<table>' +
+      '<tr><th>Employee</th><td class="right">' + escapeHtml(emp.full_name) + (emp.employee_code ? ' (' + escapeHtml(emp.employee_code) + ')' : '') + '</td></tr>' +
+      '<tr><th>Department</th><td class="right">' + escapeHtml(emp.department || "—") + '</td></tr>' +
+      '<tr><th>Designation</th><td class="right">' + escapeHtml(emp.designation || "—") + '</td></tr>' +
+      '<tr><th>Pay period</th><td class="right">' + MONTH_NAMES[p.pay_month-1] + " " + p.pay_year + '</td></tr>' +
+      '</table>' +
+      '<table>' +
+      '<tr><th>Earnings</th><th class="right">Amount (Rs.)</th></tr>' +
+      '<tr><td>Basic</td><td class="right">' + fmtMoney(p.basic) + '</td></tr>' +
+      '<tr><td>HRA</td><td class="right">' + fmtMoney(p.hra) + '</td></tr>' +
+      '<tr><td>Allowances</td><td class="right">' + fmtMoney(p.allowances) + '</td></tr>' +
+      '<tr><td><strong>Gross earnings</strong></td><td class="right"><strong>' + fmtMoney(p.gross) + '</strong></td></tr>' +
+      '</table>' +
+      '<table>' +
+      '<tr><th>Deductions</th><th class="right">Amount (Rs.)</th></tr>' +
+      '<tr><td>Total deductions</td><td class="right">' + fmtMoney(p.deductions) + '</td></tr>' +
+      '</table>' +
+      '<table><tr class="net"><td>Net pay</td><td class="right">Rs. ' + fmtMoney(p.net) + '</td></tr></table>' +
+      '<div style="font-size:12px;color:#5B6570;">Rupees ' + numberToWordsIndian(p.net) + ' Only.</div>';
+    openLetterhead("Payslip — " + emp.full_name, MONTH_NAMES[p.pay_month-1] + " " + p.pay_year, body, "width=560,height=760");
+  }
+
+  document.getElementById("repAttBtn").addEventListener("click", function(){
+    if (!supabase) return;
+    var ym = document.getElementById("repAttMonth").value || thisMonthStr();
+    var start = ym + "-01";
+    var endDate = new Date(ym + "-01T00:00:00");
+    endDate.setMonth(endDate.getMonth() + 1);
+    var end = endDate.toISOString().slice(0,10);
+    supabase.from("hr_attendance").select("*").gte("att_date", start).lt("att_date", end).then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      var counts = {};
+      (res.data || []).forEach(function(r){
+        counts[r.employee_id] = counts[r.employee_id] || { present:0, absent:0, half_day:0, leave:0, holiday:0 };
+        if (counts[r.employee_id][r.status] !== undefined) counts[r.employee_id][r.status]++;
+      });
+      var emps = activeEmployees();
+      var rows = emps.map(function(e){
+        var c = counts[e.id] || { present:0, absent:0, half_day:0, leave:0, holiday:0 };
+        return '<tr><td>' + escapeHtml(e.full_name) + '</td><td>' + escapeHtml(e.department) + '</td>' +
+          '<td class="right">' + c.present + '</td><td class="right">' + c.absent + '</td>' +
+          '<td class="right">' + c.half_day + '</td><td class="right">' + c.leave + '</td><td class="right">' + c.holiday + '</td></tr>';
+      }).join("");
+      var body = '<table><tr><th>Employee</th><th>Department</th><th class="right">Present</th><th class="right">Absent</th><th class="right">Half day</th><th class="right">Leave</th><th class="right">Holiday</th></tr>' +
+        (rows || '<tr><td colspan="7">No active employees.</td></tr>') + '</table>';
+      var ymDate = new Date(ym + "-01T00:00:00");
+      openLetterhead("Attendance Report", MONTH_NAMES[ymDate.getMonth()] + " " + ymDate.getFullYear(), body, "width=780,height=820");
+    });
+  });
+
+  document.getElementById("repLeaveBtn").addEventListener("click", function(){
+    var year = parseInt(document.getElementById("repLeaveYear").value, 10) || new Date().getFullYear();
+    var bals = state.leaveBalances.filter(function(b){ return b.year === year; });
+    var rows = bals.map(function(b){
+      var remaining = Number(b.allocated || 0) - Number(b.used || 0);
+      return '<tr><td>' + escapeHtml(employeeName(b.employee_id)) + '</td><td>' + escapeHtml(leaveTypeName(b.leave_type_id)) + '</td>' +
+        '<td class="right">' + escapeHtml(b.allocated) + '</td><td class="right">' + escapeHtml(b.used) + '</td><td class="right">' + fmtMoney(remaining) + '</td></tr>';
+    }).join("");
+    var body = '<table><tr><th>Employee</th><th>Leave type</th><th class="right">Allocated</th><th class="right">Used</th><th class="right">Remaining</th></tr>' +
+      (rows || '<tr><td colspan="5">No leave balances recorded for ' + year + '.</td></tr>') + '</table>';
+    openLetterhead("Leave Balance Report", "Year " + year, body, "width=700,height=800");
+  });
+
+  document.getElementById("repEmpBtn").addEventListener("click", function(){
+    var rows = state.employees.map(function(e){
+      return '<tr><td>' + escapeHtml(e.employee_code) + '</td><td>' + escapeHtml(e.full_name) + '</td><td>' + escapeHtml(e.department) + '</td>' +
+        '<td>' + escapeHtml(e.designation) + '</td><td>' + escapeHtml(BIZ_LABELS[e.business_unit] || e.business_unit) + '</td>' +
+        '<td>' + escapeHtml(e.joining_date) + '</td><td>' + escapeHtml(e.status) + '</td></tr>';
+    }).join("");
+    var body = '<table><tr><th>Code</th><th>Name</th><th>Department</th><th>Designation</th><th>Business unit</th><th>Joined</th><th>Status</th></tr>' +
+      (rows || '<tr><td colspan="7">No employees on file.</td></tr>') + '</table>';
+    openLetterhead("Employee Master Report", state.employees.length + " employees on file", body, "width=820,height=820");
+  });
 
   // ---------- Init ----------
   function init(){

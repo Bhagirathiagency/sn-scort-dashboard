@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SN SCORT — 90-Day Execution Board</title>
+<link rel="icon" href="assets/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -31,6 +32,7 @@
 
   /* Header */
   header{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:28px; flex-wrap:wrap;}
+  .brand-logo{height:48px; width:auto; display:block;}
   .brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--teal-dark); margin:0 0 6px;}
   h1{font-family:'Fraunces',serif; font-weight:600; font-size:32px; margin:0; letter-spacing:-0.01em;}
   .sync-status{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--slate); text-align:right;}
@@ -125,10 +127,13 @@
 <div class="wrap">
 
   <header>
-    <div>
-      <p class="brand-eyebrow">SN SCORT Research Solutions</p>
-      <h1>90-Day Execution Board</h1>
-      <a href="hr.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--slate); text-decoration:none;">HR Software &rarr;</a>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <img src="assets/logo.png" alt="SN SCORT Research Solutions logo" class="brand-logo" onerror="this.style.display='none'">
+      <div>
+        <p class="brand-eyebrow">SN SCORT Research Solutions</p>
+        <h1>90-Day Execution Board</h1>
+        <a href="hr.html" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--slate); text-decoration:none;">HR Software &rarr;</a>
+      </div>
     </div>
     <div class="sync-status" id="syncStatus"><span class="sync-dot pending" id="syncDot"></span>Connecting…</div>
   </header>
