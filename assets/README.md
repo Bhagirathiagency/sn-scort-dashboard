@@ -8,6 +8,7 @@ It is referenced from:
 - `hr.html` — header + favicon
 - `hr.html` printable letterhead (payslips, attendance/leave/employee reports),
   via the `LOGO_URL` constant in the script
+- `marketing.html` — header + favicon
 
 Nothing breaks if the file is missing — headers hide the broken image gracefully
 and printed reports just omit the mark.

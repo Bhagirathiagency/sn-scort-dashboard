@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SN SCORT — Marketing &amp; Social Media Agent</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14213D;
+    --paper:#F7F5F0;
+    --paper-2:#EFEBE1;
+    --teal:#2A6F77;
+    --teal-dark:#1D4F55;
+    --amber:#D68C45;
+    --sage:#6E8F73;
+    --red:#B4523F;
+    --slate:#5B6570;
+    --line: rgba(20,33,61,0.12);
+    --card-shadow: 0 1px 2px rgba(20,33,61,0.06), 0 2px 8px rgba(20,33,61,0.04);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:32px 24px 80px;}
+  a{color:var(--teal-dark);}
+
+  /* Header */
+  header{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:28px; flex-wrap:wrap;}
+  .brand-logo{height:48px; width:auto; display:block;}
+  .brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--teal-dark); margin:0 0 6px;}
+  h1{font-family:'Fraunces',serif; font-weight:600; font-size:32px; margin:0; letter-spacing:-0.01em;}
+  .back-link{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--slate); text-decoration:none;}
+  .sync-status{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--slate); text-align:right;}
+  .sync-dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; background:var(--sage);}
+  .sync-dot.bad{background:var(--red);}
+  .sync-dot.pending{background:var(--amber);}
+
+  /* Stats */
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:28px;}
+  .stat{background:var(--paper); padding:16px 18px;}
+  .stat .num{font-family:'Fraunces',serif; font-size:28px; font-weight:600; line-height:1;}
+  .stat .lbl{font-size:12px; color:var(--slate); margin-top:6px;}
+
+  /* Business tabs */
+  .biz-tabs{display:flex; gap:8px; margin-bottom:18px; border-bottom:1px solid var(--line);}
+  .biz-tab{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase;
+    padding:10px 16px; cursor:pointer; border:none; background:none; color:var(--slate);
+    border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s;
+  }
+  .biz-tab.active{color:var(--ink); border-bottom-color:var(--teal);}
+  .biz-tab:hover{color:var(--ink);}
+
+  section{margin-bottom:32px;}
+  .section-head{margin-bottom:14px;}
+  .section-head h2{font-family:'Fraunces',serif; font-weight:600; font-size:19px; margin:0 0 2px;}
+  .section-sub{font-size:12.5px; color:var(--slate);}
+
+  /* Channels */
+  .channels{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+  .channel-card{background:var(--paper-2); border-radius:10px; padding:14px 16px;}
+  .channel-card h4{margin:0 0 2px; font-size:14px;}
+  .channel-count{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--slate); margin-bottom:8px;}
+  .progress-track{background:var(--line); border-radius:6px; height:6px; overflow:hidden; margin-bottom:8px;}
+  .progress-fill{background:var(--teal); height:100%; border-radius:6px;}
+  .progress-fill.over{background:var(--sage);}
+  .channel-meta{font-size:11.5px; color:var(--slate); margin-bottom:10px;}
+  .channel-row{display:flex; align-items:center; gap:6px; margin-bottom:8px;}
+  .channel-row label{font-size:11px; color:var(--slate); white-space:nowrap;}
+  .target-input{width:48px; border:1px solid var(--line); border-radius:5px; padding:4px 6px; font-size:12px; font-family:'IBM Plex Mono',monospace;}
+  .btn-sm{font-family:'Inter',sans-serif; font-size:11.5px; border:1px solid var(--line); background:var(--paper); color:var(--slate); border-radius:5px; padding:5px 9px; cursor:pointer;}
+  .btn-sm:hover{color:var(--ink); background:var(--paper);}
+
+  /* Generator */
+  .generator{background:var(--paper-2); border-radius:10px; padding:16px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
+  .generator select{border:1px solid var(--line); border-radius:6px; padding:8px 10px; font-family:'Inter',sans-serif; font-size:13px; background:var(--paper); color:var(--ink);}
+  .btn-primary{background:var(--teal); border:none; color:#fff; font-weight:600; font-size:13px; padding:9px 18px; border-radius:6px; cursor:pointer;}
+  .btn-primary:hover{background:var(--teal-dark);}
+  .generator-hint{font-size:11.5px; color:var(--slate); width:100%;}
+
+  /* Board */
+  .board{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+  .col{background:var(--paper-2); border-radius:10px; padding:14px; min-height:120px;}
+  .col h3{font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--slate); margin:0 0 12px; display:flex; justify-content:space-between; align-items:center;}
+  .col h3 .count{font-family:'IBM Plex Mono',monospace; background:var(--paper); border-radius:10px; padding:1px 8px; color:var(--ink);}
+  .card{
+    background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:12px 12px 10px;
+    margin-bottom:10px; box-shadow:var(--card-shadow); cursor:grab; font-size:13px; line-height:1.45;
+  }
+  .card:active{cursor:grabbing;}
+  .card.dragging{opacity:0.4;}
+  .platform-tag{
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.04em; text-transform:uppercase;
+    background:var(--paper-2); color:var(--teal-dark); border-radius:4px; padding:2px 6px; margin-bottom:6px;
+  }
+  .pillar-tag{display:block; font-size:11px; color:var(--slate); margin-bottom:4px;}
+  .card .card-actions{display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;}
+  .card button{
+    font-family:'Inter',sans-serif; font-size:11px; border:1px solid var(--line); background:var(--paper);
+    color:var(--slate); border-radius:5px; padding:4px 8px; cursor:pointer;
+  }
+  .card button:hover{background:var(--paper-2); color:var(--ink);}
+  .col.drop-target{outline:2px dashed var(--teal); outline-offset:-4px;}
+  .empty-hint{font-size:12px; color:var(--slate); font-style:italic; padding:8px 2px;}
+
+  /* Achievements */
+  .achievements{background:var(--ink); color:var(--paper); border-radius:12px; padding:22px 24px;}
+  .achievements h3{font-family:'Fraunces',serif; font-weight:600; font-size:18px; margin:0 0 4px;}
+  .achievements .sub{font-size:12px; color:rgba(247,245,240,0.6); margin-bottom:16px;}
+  .ach-list{list-style:none; margin:0; padding:0;}
+  .ach-list li{
+    display:flex; gap:12px; padding:9px 0; border-bottom:1px solid rgba(247,245,240,0.1); font-size:13.5px;
+  }
+  .ach-list li:last-child{border-bottom:none;}
+  .ach-date{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--amber); white-space:nowrap; padding-top:1px;}
+  .ach-empty{color:rgba(247,245,240,0.5); font-size:13px; font-style:italic;}
+
+  .add-ach{display:flex; gap:8px; margin-top:16px;}
+  .add-ach input{
+    flex:1; background:rgba(247,245,240,0.08); border:1px solid rgba(247,245,240,0.2); color:var(--paper);
+    border-radius:6px; padding:8px 10px; font-family:'Inter',sans-serif; font-size:13px;
+  }
+  .add-ach input::placeholder{color:rgba(247,245,240,0.4);}
+  .add-ach button{
+    background:var(--amber); border:none; color:var(--ink); font-weight:600; font-size:13px;
+    padding:8px 16px; border-radius:6px; cursor:pointer;
+  }
+
+  @media (max-width:900px){
+    .channels{grid-template-columns:repeat(2,1fr);}
+    .board{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (max-width:600px){
+    .channels{grid-template-columns:1fr;}
+    .board{grid-template-columns:1fr;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <img src="assets/logo.png" alt="SN SCORT Research Solutions logo" class="brand-logo" onerror="this.style.display='none'">
+      <div>
+        <p class="brand-eyebrow">SN SCORT Research Solutions Pvt Ltd</p>
+        <h1>Marketing &amp; Social Media Agent</h1>
+        <a class="back-link" href="index.html">&larr; Back to 90-Day Execution Board</a>
+      </div>
+    </div>
+    <div class="sync-status" id="syncStatus"><span class="sync-dot pending" id="syncDot"></span>Connecting…</div>
+  </header>
+
+  <div class="stats" id="statsRow"></div>
+
+  <div class="biz-tabs" id="bizTabs">
+    <button class="biz-tab" data-biz="pv">PV &amp; Drug Safety</button>
+    <button class="biz-tab" data-biz="smo">SMO</button>
+    <button class="biz-tab" data-biz="institute">Institute</button>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <h2>Weekly Posting Cadence</h2>
+      <div class="section-sub" id="channelsSub">Channel targets and this week's posting count</div>
+    </div>
+    <div class="channels" id="channels"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Post Idea Generator</h2>
+      <div class="section-sub">Pick a content pillar and a channel, or let the agent surprise you</div>
+    </div>
+    <div class="generator">
+      <select id="genPillar"></select>
+      <select id="genPlatform">
+        <option value="">Surprise me — any channel</option>
+        <option value="linkedin">LinkedIn</option>
+        <option value="instagram">Instagram</option>
+        <option value="facebook">Facebook</option>
+        <option value="twitter">X / Twitter</option>
+      </select>
+      <button class="btn-primary" id="genBtn">Generate post idea</button>
+      <div class="generator-hint">New ideas land in the Idea column below with a draft caption and hashtags — edit, drag through Drafted → Scheduled → Posted, and the agent logs it against the channel's weekly count.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Content Queue</h2>
+      <div class="section-sub">Drag cards across stages as content moves toward publishing</div>
+    </div>
+    <div class="board" id="board">
+      <div class="col" data-status="idea"><h3>Idea <span class="count" id="countIdea">0</span></h3><div class="col-body" id="colIdea"></div></div>
+      <div class="col" data-status="drafted"><h3>Drafted <span class="count" id="countDrafted">0</span></h3><div class="col-body" id="colDrafted"></div></div>
+      <div class="col" data-status="scheduled"><h3>Scheduled <span class="count" id="countScheduled">0</span></h3><div class="col-body" id="colScheduled"></div></div>
+      <div class="col" data-status="posted"><h3>Posted <span class="count" id="countPosted">0</span></h3><div class="col-body" id="colPosted"></div></div>
+    </div>
+  </section>
+
+  <div class="achievements">
+    <h3>Achievements Log</h3>
+    <p class="sub" id="achSub">Milestones logged for this business line</p>
+    <ul class="ach-list" id="achList"></ul>
+    <div class="add-ach">
+      <input type="text" id="newAchInput" placeholder="Log a new achievement…">
+      <button id="addAchBtn">Log it</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  "use strict";
+
+  var SUPABASE_URL = "https://sqmvnebnathateurqfeq.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_onNu45I1iy7rLdbn3uum5Q_hfgHoLRt";
+  var ROW_ID = "sn-scort-marketing-v1";
+
+  var supabase = null;
+  try {
+    if (window.supabase && SUPABASE_ANON_KEY.indexOf("PASTE_") !== 0) {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+  } catch (e) {
+    console.error("Supabase init failed:", e);
+    supabase = null;
+  }
+
+  var BIZ_LABELS = { pv: "PV & Drug Safety", smo: "SMO", institute: "Institute" };
+  var PLATFORM_LABELS = { linkedin: "LinkedIn", instagram: "Instagram", facebook: "Facebook", twitter: "X / Twitter" };
+  var PLATFORMS = ["linkedin", "instagram", "facebook", "twitter"];
+  var STATUSES = ["idea", "drafted", "scheduled", "posted"];
+  var STATUS_LABELS = { idea: "Idea", drafted: "Drafted", scheduled: "Scheduled", posted: "Posted" };
+
+  var PILLARS = {
+    pv: ["Pharmacovigilance Awareness", "Case Study / Success Story", "Regulatory Update", "Team & Culture", "Client Testimonial"],
+    smo: ["Site Management Insight", "Trial Recruitment Tip", "Investigator Spotlight", "Compliance & GCP", "Client Testimonial"],
+    institute: ["Course Highlight", "Student Success Story", "Upcoming Batch / Webinar", "Industry Trend", "Alumni Testimonial"]
+  };
+
+  var HASHTAGS = {
+    pv: ["#Pharmacovigilance", "#DrugSafety", "#PatientSafety", "#ClinicalResearch", "#SNSCORT"],
+    smo: ["#SiteManagement", "#ClinicalTrials", "#SMO", "#ClinicalResearch", "#SNSCORT"],
+    institute: ["#ClinicalResearchTraining", "#CareerInPharma", "#SNSCORTInstitute", "#UpskillPharma", "#SNSCORT"]
+  };
+
+  var TEMPLATES = [
+    "Did you know? {pillar} is central to what we do at {biz}. Here's why it matters.",
+    "Behind the scenes at {biz}: a closer look at {pillar}.",
+    "3 things every client should know about {pillar} — from the {biz} team.",
+    "Quick tip from our experts at {biz} on {pillar}.",
+    "Myth-busting {pillar}: what {biz} wants you to know.",
+    "Q&A: our team answers your top questions on {pillar}.",
+    "Case in point — how {biz} approaches {pillar} for better outcomes.",
+    "Celebrating {pillar} this week at {biz}. Here's what stood out.",
+    "New week, new insight: {pillar}, explained by {biz}.",
+    "Client spotlight: what {pillar} looks like in practice at {biz}."
+  ];
+
+  function defaultBusiness(){
+    var channels = {};
+    PLATFORMS.forEach(function(p){ channels[p] = { target: 3, posts: [] }; });
+    return { channels: channels, queue: [], achievements: [] };
+  }
+
+  var state = {
+    idCounter: 0,
+    generatedCount: 0,
+    activeBusiness: "pv",
+    businesses: { pv: defaultBusiness(), smo: defaultBusiness(), institute: defaultBusiness() }
+  };
+
+  function setSyncStatus(mode, text){
+    var dot = document.getElementById("syncDot");
+    var wrap = document.getElementById("syncStatus");
+    dot.className = "sync-dot" + (mode === "bad" ? " bad" : mode === "pending" ? " pending" : "");
+    wrap.childNodes[1].textContent = text;
+  }
+
+  function loadState(cb){
+    if (!supabase) {
+      setSyncStatus("bad", " Offline mode — changes stay in this browser only");
+      cb();
+      return;
+    }
+    supabase.from("dashboard_state").select("data").eq("id", ROW_ID).maybeSingle()
+      .then(function(res){
+        if (res.error) {
+          console.error(res.error);
+          setSyncStatus("bad", " Could not load saved data — using blank board");
+        } else if (res.data && res.data.data) {
+          var d = res.data.data;
+          state.idCounter = d.idCounter || state.idCounter;
+          state.generatedCount = d.generatedCount || state.generatedCount;
+          state.businesses = d.businesses || state.businesses;
+          state.activeBusiness = d.activeBusiness || state.activeBusiness;
+          PLATFORMS.forEach(function(p){
+            Object.keys(state.businesses).forEach(function(b){
+              if (!state.businesses[b].channels[p]) state.businesses[b].channels[p] = { target: 3, posts: [] };
+            });
+          });
+          setSyncStatus("ok", " Synced with Supabase");
+        } else {
+          setSyncStatus("ok", " Connected — no saved data yet");
+        }
+        cb();
+      })
+      .catch(function(e){
+        console.error(e);
+        setSyncStatus("bad", " Connection error — using local data");
+        cb();
+      });
+  }
+
+  var saveTimer = null;
+  function saveState(){
+    if (!supabase) return;
+    setSyncStatus("pending", " Saving…");
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){
+      supabase.from("dashboard_state").upsert({
+        id: ROW_ID,
+        data: state,
+        updated_at: new Date().toISOString()
+      }).then(function(res){
+        if (res.error) { console.error(res.error); setSyncStatus("bad", " Save failed — retry on next change"); }
+        else { setSyncStatus("ok", " Synced with Supabase"); }
+      }).catch(function(e){ console.error(e); setSyncStatus("bad", " Save failed"); });
+    }, 500);
+  }
+
+  function biz(){ return state.businesses[state.activeBusiness]; }
+
+  function todayStr(){ return new Date().toISOString().slice(0, 10); }
+
+  function startOfWeek(){
+    var d = new Date();
+    var day = d.getDay();
+    var diff = (day === 0 ? -6 : 1) - day;
+    d.setDate(d.getDate() + diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function postsThisWeek(posts){
+    var start = startOfWeek();
+    return posts.filter(function(p){ return new Date(p + "T00:00:00") >= start; }).length;
+  }
+
+  function lastPosted(posts){
+    if (!posts.length) return "—";
+    var sorted = posts.slice().sort();
+    return sorted[sorted.length - 1];
+  }
+
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function render(){
+    document.querySelectorAll(".biz-tab").forEach(function(btn){
+      btn.classList.toggle("active", btn.dataset.biz === state.activeBusiness);
+    });
+
+    renderGenPillars();
+    renderChannels();
+    renderBoard();
+    renderStats();
+    renderAchievements();
+  }
+
+  function renderGenPillars(){
+    var sel = document.getElementById("genPillar");
+    var current = sel.value;
+    sel.innerHTML = '<option value="">Surprise me — any pillar</option>' +
+      PILLARS[state.activeBusiness].map(function(p){ return '<option value="'+escapeHtml(p)+'">'+escapeHtml(p)+'</option>'; }).join("");
+    sel.value = current && PILLARS[state.activeBusiness].indexOf(current) !== -1 ? current : "";
+  }
+
+  function renderChannels(){
+    document.getElementById("channelsSub").textContent = "Channel targets and this week's posting count — " + BIZ_LABELS[state.activeBusiness];
+    var wrap = document.getElementById("channels");
+    wrap.innerHTML = "";
+    PLATFORMS.forEach(function(p){
+      var ch = biz().channels[p];
+      var count = postsThisWeek(ch.posts);
+      var pct = ch.target > 0 ? Math.min(100, Math.round((count / ch.target) * 100)) : 0;
+
+      var card = document.createElement("div");
+      card.className = "channel-card";
+      card.innerHTML =
+        '<h4>' + PLATFORM_LABELS[p] + '</h4>' +
+        '<div class="channel-count">' + count + ' / <span class="target-display">' + ch.target + '</span> this week</div>' +
+        '<div class="progress-track"><div class="progress-fill' + (count >= ch.target ? ' over' : '') + '" style="width:' + pct + '%"></div></div>' +
+        '<div class="channel-meta">Last posted: ' + lastPosted(ch.posts) + '</div>';
+
+      var row = document.createElement("div");
+      row.className = "channel-row";
+      var label = document.createElement("label");
+      label.textContent = "Weekly target";
+      var input = document.createElement("input");
+      input.type = "number";
+      input.min = "0";
+      input.className = "target-input";
+      input.value = ch.target;
+      input.addEventListener("change", function(){
+        var v = parseInt(input.value, 10);
+        ch.target = isNaN(v) || v < 0 ? 0 : v;
+        render(); saveState();
+      });
+      row.appendChild(label);
+      row.appendChild(input);
+      card.appendChild(row);
+
+      var logBtn = document.createElement("button");
+      logBtn.className = "btn-sm";
+      logBtn.textContent = "Log a post today";
+      logBtn.addEventListener("click", function(){
+        ch.posts.push(todayStr());
+        render(); saveState();
+      });
+      card.appendChild(logBtn);
+
+      wrap.appendChild(card);
+    });
+  }
+
+  function renderBoard(){
+    var byStatus = { idea: [], drafted: [], scheduled: [], posted: [] };
+    biz().queue.forEach(function(t){ (byStatus[t.status] || byStatus.idea).push(t); });
+    STATUSES.forEach(function(s){
+      renderCol("col" + capitalize(s), "count" + capitalize(s), byStatus[s]);
+    });
+  }
+
+  function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  function renderCol(bodyId, countId, items){
+    var body = document.getElementById(bodyId);
+    document.getElementById(countId).textContent = items.length;
+    body.innerHTML = "";
+    if (items.length === 0) {
+      var hint = document.createElement("div");
+      hint.className = "empty-hint";
+      hint.textContent = "Nothing here yet";
+      body.appendChild(hint);
+      return;
+    }
+    items.forEach(function(t){
+      var card = document.createElement("div");
+      card.className = "card";
+      card.draggable = true;
+      card.dataset.id = t.id;
+
+      var tag = document.createElement("span");
+      tag.className = "platform-tag";
+      tag.textContent = PLATFORM_LABELS[t.platform];
+      card.appendChild(tag);
+
+      var pillarEl = document.createElement("span");
+      pillarEl.className = "pillar-tag";
+      pillarEl.textContent = t.pillar;
+      card.appendChild(pillarEl);
+
+      var textEl = document.createElement("div");
+      textEl.textContent = t.text;
+      card.appendChild(textEl);
+
+      var actions = document.createElement("div");
+      actions.className = "card-actions";
+
+      var idx = STATUSES.indexOf(t.status);
+      if (idx > 0) {
+        var back = document.createElement("button");
+        back.textContent = "◀";
+        back.onclick = function(){ moveTask(t.id, STATUSES[idx - 1]); };
+        actions.appendChild(back);
+      }
+      if (idx < STATUSES.length - 1) {
+        var fwd = document.createElement("button");
+        fwd.textContent = "▶";
+        fwd.onclick = function(){ moveTask(t.id, STATUSES[idx + 1]); };
+        actions.appendChild(fwd);
+      }
+      var copyBtn = document.createElement("button");
+      copyBtn.textContent = "Copy";
+      copyBtn.onclick = function(){
+        var full = t.text + (t.hashtags && t.hashtags.length ? "\n\n" + t.hashtags.join(" ") : "");
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(full).catch(function(){});
+        }
+      };
+      actions.appendChild(copyBtn);
+
+      var del = document.createElement("button");
+      del.textContent = "✕";
+      del.onclick = function(){ deleteTask(t.id); };
+      actions.appendChild(del);
+
+      card.appendChild(actions);
+
+      card.addEventListener("dragstart", function(){ card.classList.add("dragging"); });
+      card.addEventListener("dragend", function(){ card.classList.remove("dragging"); saveState(); });
+
+      body.appendChild(card);
+    });
+  }
+
+  function renderStats(){
+    var queueActive = 0, generated = state.generatedCount, achCount = 0;
+    var weekPosts = 0, weekTarget = 0;
+    Object.keys(state.businesses).forEach(function(b){
+      var bd = state.businesses[b];
+      bd.queue.forEach(function(t){ if (t.status !== "posted") queueActive++; });
+      achCount += bd.achievements.length;
+      PLATFORMS.forEach(function(p){
+        var ch = bd.channels[p];
+        weekPosts += postsThisWeek(ch.posts);
+        weekTarget += ch.target;
+      });
+    });
+
+    document.getElementById("statsRow").innerHTML = [
+      ["Posts this week", weekPosts + " / " + weekTarget],
+      ["Active in queue", queueActive],
+      ["Ideas generated (all-time)", generated],
+      ["Achievements logged", achCount]
+    ].map(function(s){
+      return '<div class="stat"><div class="num">'+s[1]+'</div><div class="lbl">'+s[0]+'</div></div>';
+    }).join("");
+  }
+
+  function renderAchievements(){
+    document.getElementById("achSub").textContent = "Milestones logged for " + BIZ_LABELS[state.activeBusiness];
+    var list = document.getElementById("achList");
+    var items = biz().achievements.slice().reverse();
+    if (items.length === 0) {
+      list.innerHTML = '<li class="ach-empty">No achievements logged yet for this business line.</li>';
+      return;
+    }
+    list.innerHTML = items.map(function(a){
+      return '<li><span class="ach-date">'+a.date+'</span><span>'+escapeHtml(a.text)+'</span></li>';
+    }).join("");
+  }
+
+  function escapeHtml(s){
+    var d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function moveTask(id, newStatus){
+    var t = biz().queue.find(function(t){ return t.id === id; });
+    if (!t) return;
+    t.status = newStatus;
+    if (newStatus === "posted" && !t.loggedPost) {
+      biz().channels[t.platform].posts.push(todayStr());
+      t.loggedPost = true;
+    }
+    render(); saveState();
+  }
+  function deleteTask(id){
+    biz().queue = biz().queue.filter(function(t){ return t.id !== id; });
+    render(); saveState();
+  }
+  function addAchievement(text){
+    if (!text.trim()) return;
+    var d = new Date();
+    var dateStr = d.toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
+    biz().achievements.push({ date: dateStr, text: text.trim() });
+    render(); saveState();
+  }
+
+  function generateIdea(){
+    var b = state.activeBusiness;
+    var pillarSel = document.getElementById("genPillar").value;
+    var platformSel = document.getElementById("genPlatform").value;
+
+    var pillar = pillarSel || pick(PILLARS[b]);
+    var platform = platformSel || pick(PLATFORMS);
+    var template = pick(TEMPLATES);
+    var text = template.replace(/\{pillar\}/g, pillar).replace(/\{biz\}/g, BIZ_LABELS[b]);
+
+    var pool = HASHTAGS[b].slice();
+    var hashtags = [];
+    while (hashtags.length < 3 && pool.length) {
+      var i = Math.floor(Math.random() * pool.length);
+      hashtags.push(pool.splice(i, 1)[0]);
+    }
+
+    state.idCounter++;
+    state.generatedCount++;
+    biz().queue.push({
+      id: "id" + state.idCounter + "_" + Date.now(),
+      platform: platform,
+      pillar: pillar,
+      text: text,
+      hashtags: hashtags,
+      status: "idea",
+      loggedPost: false
+    });
+    render(); saveState();
+  }
+
+  // drag & drop between columns
+  document.querySelectorAll(".col").forEach(function(col){
+    col.addEventListener("dragover", function(e){
+      e.preventDefault();
+      col.classList.add("drop-target");
+    });
+    col.addEventListener("dragleave", function(){ col.classList.remove("drop-target"); });
+    col.addEventListener("drop", function(e){
+      e.preventDefault();
+      col.classList.remove("drop-target");
+      var draggingCard = document.querySelector(".card.dragging");
+      if (!draggingCard) return;
+      var id = draggingCard.dataset.id;
+      moveTask(id, col.dataset.status);
+    });
+  });
+
+  document.getElementById("bizTabs").addEventListener("click", function(e){
+    var btn = e.target.closest(".biz-tab");
+    if (!btn) return;
+    state.activeBusiness = btn.dataset.biz;
+    render(); saveState();
+  });
+
+  document.getElementById("genBtn").addEventListener("click", generateIdea);
+
+  document.getElementById("addAchBtn").addEventListener("click", function(){
+    var input = document.getElementById("newAchInput");
+    addAchievement(input.value);
+    input.value = "";
+  });
+  document.getElementById("newAchInput").addEventListener("keydown", function(e){
+    if (e.key === "Enter") document.getElementById("addAchBtn").click();
+  });
+
+  loadState(render);
+})();
+</script>
+</body>
+</html>
