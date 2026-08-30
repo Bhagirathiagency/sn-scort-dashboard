@@ -67,6 +67,10 @@
     font-size:13px; background:var(--paper); color:var(--ink);
   }
   .entity-form input[type=date]{min-width:140px;}
+  .entity-form textarea{
+    border:1px solid var(--line); border-radius:6px; padding:8px 10px; font-family:'Inter',sans-serif;
+    font-size:13px; background:var(--paper); color:var(--ink); width:100%; min-height:80px; resize:vertical;
+  }
   .form-actions{display:flex; gap:8px;}
   button{font-family:'Inter',sans-serif; cursor:pointer;}
   .btn-primary{background:var(--teal); border:none; color:#fff; font-weight:600; font-size:13px; padding:8px 16px; border-radius:6px;}
@@ -127,6 +131,7 @@
     <button class="tab-btn" data-tab="leave">Leave</button>
     <button class="tab-btn" data-tab="payroll">Payroll</button>
     <button class="tab-btn" data-tab="reports">Reports</button>
+    <button class="tab-btn" data-tab="documents">Letters</button>
   </div>
 
   <!-- EMPLOYEES -->
@@ -336,6 +341,37 @@
     </div>
   </section>
 
+  <!-- DOCUMENTS -->
+  <section class="panel" id="panel-documents">
+    <div class="panel-head">
+      <h2>Letters &amp; Certificates</h2>
+      <div class="panel-sub">Generate standard HR letters and certificates for any employee, letterheaded and ready to print or save as PDF</div>
+    </div>
+
+    <div class="card-block">
+      <div class="entity-form">
+        <select id="docEmployee" style="width:220px"></select>
+        <select id="docType" style="width:250px">
+          <option value="">Letter / certificate type</option>
+          <option value="offer">Offer Letter</option>
+          <option value="appointment">Appointment Letter</option>
+          <option value="confirmation">Confirmation Letter</option>
+          <option value="increment">Increment / Promotion Letter</option>
+          <option value="experience">Experience / Relieving Letter</option>
+          <option value="salary_certificate">Salary Certificate</option>
+          <option value="employment_verification">Employment Verification Letter</option>
+          <option value="noc">No Objection Certificate (NOC)</option>
+          <option value="warning">Warning Letter</option>
+          <option value="fnf">Full &amp; Final Settlement Letter</option>
+        </select>
+      </div>
+      <div class="entity-form" id="docFields"></div>
+      <div class="form-actions">
+        <button type="button" class="btn-primary" id="docGenBtn">Generate &amp; print</button>
+      </div>
+    </div>
+  </section>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -422,6 +458,7 @@
       var rly = document.getElementById("repLeaveYear");
       if (!rly.value) rly.value = new Date().getFullYear();
     }
+    if (tab === "documents") { populateDocEmployeeSelect(); renderDocFields(); }
   }
 
   // ================= EMPLOYEES =================
@@ -1066,6 +1103,8 @@
         'td.right,th.right{text-align:right;}' +
         '.net td{font-weight:bold;font-size:15px;border-top:2px solid #14213D;border-bottom:none;}' +
         '.footer-note{margin-top:20px;font-size:10.5px;color:#98A2AE;}' +
+        'p{line-height:1.65;margin:0 0 12px;font-size:13px;}' +
+        '.signature-line{margin-top:56px;border-top:1px solid #14213D;width:240px;padding-top:4px;font-size:11px;color:#5B6570;}' +
       '</style></head><body>' +
       '<div class="letterhead"><img src="' + LOGO_URL + '" onerror="this.style.display=\'none\'"><div><h1>' + escapeHtml(COMPANY_NAME) + '</h1></div></div>' +
       '<div class="doc-title">' + escapeHtml(title) + '</div>' +
@@ -1158,6 +1197,200 @@
     openLetterhead("Employee Master Report", state.employees.length + " employees on file", body, "width=820,height=820");
   });
 
+  // ================= LETTERS & CERTIFICATES =================
+  var DOC_FIELD_DEFS = {
+    offer: [
+      { key:"ctc", label:"Annual CTC (Rs.)", type:"number" },
+      { key:"joiningDate", label:"Joining date", type:"date", defaultFrom:"joining_date" },
+      { key:"location", label:"Reporting location", type:"text", "default":"Head Office" }
+    ],
+    appointment: [
+      { key:"ctc", label:"Annual CTC (Rs.)", type:"number" },
+      { key:"joiningDate", label:"Joining date", type:"date", defaultFrom:"joining_date" },
+      { key:"probationMonths", label:"Probation (months)", type:"number", "default":"3" }
+    ],
+    confirmation: [
+      { key:"confirmDate", label:"Confirmation date", type:"date", defaultToday:true }
+    ],
+    increment: [
+      { key:"oldSalary", label:"Previous annual CTC (Rs.)", type:"number" },
+      { key:"newSalary", label:"Revised annual CTC (Rs.)", type:"number" },
+      { key:"newDesignation", label:"New designation (optional)", type:"text", optional:true },
+      { key:"effectiveDate", label:"Effective date", type:"date", defaultToday:true }
+    ],
+    experience: [
+      { key:"lastWorkingDate", label:"Last working date", type:"date" }
+    ],
+    salary_certificate: [
+      { key:"monthlyGross", label:"Monthly gross salary (Rs.)", type:"number" },
+      { key:"purpose", label:"Purpose", type:"text", "default":"Bank loan application" }
+    ],
+    employment_verification: [
+      { key:"asOfDate", label:"As of / last working date", type:"date", defaultToday:true }
+    ],
+    noc: [
+      { key:"purpose", label:"Purpose", type:"text", "default":"Visa application" }
+    ],
+    warning: [
+      { key:"subject", label:"Subject", type:"text" },
+      { key:"description", label:"Description of issue", type:"textarea" },
+      { key:"issueDate", label:"Date", type:"date", defaultToday:true }
+    ],
+    fnf: [
+      { key:"lastWorkingDate", label:"Last working date", type:"date" },
+      { key:"settlementAmount", label:"Settlement amount (Rs.)", type:"number" }
+    ]
+  };
+
+  function fmtDateLong(d){
+    if (!d) return "";
+    var dt = new Date(d + "T00:00:00");
+    if (isNaN(dt.getTime())) return d;
+    return dt.toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric" });
+  }
+
+  function populateDocEmployeeSelect(){
+    var sel = document.getElementById("docEmployee");
+    var prev = sel.value;
+    sel.innerHTML = '<option value="">Select employee</option>' + state.employees.map(function(e){
+      return '<option value="' + e.id + '">' + escapeHtml(e.full_name) + (e.employee_code ? " (" + escapeHtml(e.employee_code) + ")" : "") + (e.status === "inactive" ? " — inactive" : "") + '</option>';
+    }).join("");
+    if (prev) sel.value = prev;
+  }
+
+  function renderDocFields(){
+    var type = document.getElementById("docType").value;
+    var empId = document.getElementById("docEmployee").value;
+    var emp = state.employees.find(function(e){ return e.id === empId; }) || {};
+    var wrap = document.getElementById("docFields");
+    var defs = DOC_FIELD_DEFS[type] || [];
+    if (!type) { wrap.innerHTML = ""; return; }
+    wrap.innerHTML = defs.map(function(f){
+      var val = "";
+      if (f.defaultFrom) val = emp[f.defaultFrom] || "";
+      else if (f.defaultToday) val = todayStr();
+      else if (f["default"]) val = f["default"];
+      if (f.type === "textarea") {
+        return '<textarea id="docField_' + f.key + '" placeholder="' + escapeHtml(f.label) + '">' + escapeHtml(val) + '</textarea>';
+      }
+      return '<input id="docField_' + f.key + '" type="' + f.type + '" placeholder="' + escapeHtml(f.label) + '" value="' + escapeHtml(val) + '" style="width:220px">';
+    }).join("");
+  }
+  document.getElementById("docType").addEventListener("change", renderDocFields);
+  document.getElementById("docEmployee").addEventListener("change", renderDocFields);
+
+  function signatureBlock(){
+    return '<p style="margin-top:32px;">Sincerely,<br>For ' + escapeHtml(COMPANY_NAME) + '</p><div class="signature-line">Authorized Signatory</div>';
+  }
+
+  function generateDocument(){
+    var empId = document.getElementById("docEmployee").value;
+    var type = document.getElementById("docType").value;
+    if (!empId || !type) { alert("Select an employee and a letter type first."); return; }
+    var emp = state.employees.find(function(e){ return e.id === empId; });
+    if (!emp) return;
+    var defs = DOC_FIELD_DEFS[type] || [];
+    var f = {};
+    for (var i = 0; i < defs.length; i++) {
+      var d = defs[i];
+      var el = document.getElementById("docField_" + d.key);
+      var v = el ? el.value.trim() : "";
+      if (!v && !d.optional) { alert("Please fill in: " + d.label); return; }
+      f[d.key] = v;
+    }
+    var name = emp.full_name;
+    var designation = emp.designation || "—";
+    var department = emp.department || "—";
+    var subject = "", body = "";
+
+    if (type === "offer") {
+      subject = "Offer of Employment";
+      body =
+        '<p>Dear ' + escapeHtml(name) + ',</p>' +
+        '<p>We are pleased to offer you the position of <strong>' + escapeHtml(designation) + '</strong> in the ' + escapeHtml(department) + ' department at ' + escapeHtml(COMPANY_NAME) + ', based on the understanding reached during your discussions with us.</p>' +
+        '<p>Your annual Cost to Company (CTC) will be Rs. ' + fmtMoney(f.ctc) + ' (Rupees ' + numberToWordsIndian(f.ctc) + ' Only), subject to applicable statutory deductions. You are expected to join us on or before ' + fmtDateLong(f.joiningDate) + ' at ' + escapeHtml(f.location) + '.</p>' +
+        '<p>This offer is subject to verification of the documents and information provided by you and satisfactory completion of any background checks.</p>' +
+        '<p>Please confirm your acceptance of this offer by signing and returning a copy of this letter.</p>' +
+        '<p>We look forward to having you as part of our team.</p>' +
+        signatureBlock() +
+        '<p style="margin-top:40px;">I accept the above offer of employment.</p>' +
+        '<div class="signature-line">Signature of ' + escapeHtml(name) + ' &nbsp;&nbsp;&nbsp; Date</div>';
+    } else if (type === "appointment") {
+      subject = "Letter of Appointment";
+      body =
+        '<p>Dear ' + escapeHtml(name) + ',</p>' +
+        '<p>Further to your acceptance of our offer, we are pleased to confirm your appointment as <strong>' + escapeHtml(designation) + '</strong> in the ' + escapeHtml(department) + ' department at ' + escapeHtml(COMPANY_NAME) + ' with effect from ' + fmtDateLong(f.joiningDate) + '.</p>' +
+        '<p>Your annual CTC will be Rs. ' + fmtMoney(f.ctc) + ' (Rupees ' + numberToWordsIndian(f.ctc) + ' Only), payable as per the Company&rsquo;s standard payroll policy and subject to applicable statutory deductions.</p>' +
+        '<p>You will be on probation for a period of ' + escapeHtml(f.probationMonths) + ' months from your date of joining, during which your performance will be reviewed. Your employment will be governed by the Company&rsquo;s HR policies as amended from time to time.</p>' +
+        '<p>We welcome you to ' + escapeHtml(COMPANY_NAME) + ' and wish you a successful career with us.</p>' +
+        signatureBlock();
+    } else if (type === "confirmation") {
+      subject = "Confirmation of Employment";
+      body =
+        '<p>Dear ' + escapeHtml(name) + ',</p>' +
+        '<p>We are pleased to inform you that, based on a review of your performance during the probation period, your employment with ' + escapeHtml(COMPANY_NAME) + ' as <strong>' + escapeHtml(designation) + '</strong> in the ' + escapeHtml(department) + ' department stands confirmed with effect from ' + fmtDateLong(f.confirmDate) + '.</p>' +
+        '<p>All other terms and conditions of your employment remain unchanged.</p>' +
+        '<p>We appreciate your contribution and look forward to your continued association with the organisation.</p>' +
+        signatureBlock();
+    } else if (type === "increment") {
+      subject = "Revision in Compensation";
+      body =
+        '<p>Dear ' + escapeHtml(name) + ',</p>' +
+        '<p>We are pleased to inform you that, in recognition of your performance and contribution, your compensation has been revised with effect from ' + fmtDateLong(f.effectiveDate) + '.</p>' +
+        (f.newDesignation ? '<p>Your designation has also been revised to <strong>' + escapeHtml(f.newDesignation) + '</strong>.</p>' : '') +
+        '<p>Your revised annual CTC will be Rs. ' + fmtMoney(f.newSalary) + ' (Rupees ' + numberToWordsIndian(f.newSalary) + ' Only), compared to your previous CTC of Rs. ' + fmtMoney(f.oldSalary) + '.</p>' +
+        '<p>All other terms and conditions of your employment remain unchanged.</p>' +
+        '<p>Congratulations, and we look forward to your continued contribution to the organisation.</p>' +
+        signatureBlock();
+    } else if (type === "experience") {
+      subject = "Experience cum Relieving Letter";
+      body =
+        '<p>This is to certify that ' + escapeHtml(name) + ' was employed with ' + escapeHtml(COMPANY_NAME) + ' as <strong>' + escapeHtml(designation) + '</strong> in the ' + escapeHtml(department) + ' department from ' + fmtDateLong(emp.joining_date) + ' to ' + fmtDateLong(f.lastWorkingDate) + '.</p>' +
+        '<p>During this period, ' + escapeHtml(name) + ' was found to be sincere, hardworking and professional in conduct. ' + escapeHtml(name) + ' has been relieved from services with effect from ' + fmtDateLong(f.lastWorkingDate) + ' on completion of all exit formalities.</p>' +
+        '<p>We wish ' + escapeHtml(name) + ' success in all future endeavours.</p>' +
+        signatureBlock();
+    } else if (type === "salary_certificate") {
+      subject = "Salary Certificate";
+      body =
+        '<p>This is to certify that ' + escapeHtml(name) + ' is employed with ' + escapeHtml(COMPANY_NAME) + ' as <strong>' + escapeHtml(designation) + '</strong> in the ' + escapeHtml(department) + ' department since ' + fmtDateLong(emp.joining_date) + '.</p>' +
+        '<p>' + escapeHtml(name) + '&rsquo;s current monthly gross salary is Rs. ' + fmtMoney(f.monthlyGross) + ' (Rupees ' + numberToWordsIndian(f.monthlyGross) + ' Only).</p>' +
+        '<p>This certificate is issued at the request of ' + escapeHtml(name) + ' for the purpose of ' + escapeHtml(f.purpose) + '.</p>' +
+        signatureBlock();
+    } else if (type === "employment_verification") {
+      subject = "To Whomsoever It May Concern";
+      body =
+        '<p>This is to certify that ' + escapeHtml(name) + ' is employed with ' + escapeHtml(COMPANY_NAME) + ' as <strong>' + escapeHtml(designation) + '</strong> in the ' + escapeHtml(department) + ' department from ' + fmtDateLong(emp.joining_date) + ' to ' + fmtDateLong(f.asOfDate) + '.</p>' +
+        '<p>This letter is issued for verification purposes at the request of ' + escapeHtml(name) + '.</p>' +
+        signatureBlock();
+    } else if (type === "noc") {
+      subject = "No Objection Certificate";
+      body =
+        '<p>This is to certify that ' + escapeHtml(COMPANY_NAME) + ' has no objection to ' + escapeHtml(name) + ', currently employed as <strong>' + escapeHtml(designation) + '</strong> in the ' + escapeHtml(department) + ' department, applying for ' + escapeHtml(f.purpose) + '.</p>' +
+        '<p>This certificate is issued at the request of ' + escapeHtml(name) + ' for the stated purpose only.</p>' +
+        signatureBlock();
+    } else if (type === "warning") {
+      subject = "Warning Letter — " + f.subject;
+      body =
+        '<p>Dear ' + escapeHtml(name) + ',</p>' +
+        '<p>This letter serves as a formal warning regarding <strong>' + escapeHtml(f.subject) + '</strong>, as detailed below:</p>' +
+        '<p>' + escapeHtml(f.description).replace(/\n/g, "<br>") + '</p>' +
+        '<p>You are advised to take this matter seriously and ensure that such conduct is not repeated. Any recurrence may result in further disciplinary action, up to and including termination of employment, as per Company policy.</p>' +
+        '<p>Please treat this communication with the seriousness it deserves.</p>' +
+        signatureBlock();
+    } else if (type === "fnf") {
+      subject = "Full and Final Settlement";
+      body =
+        '<p>This is to confirm that the full and final settlement of dues for ' + escapeHtml(name) + ', who was employed as <strong>' + escapeHtml(designation) + '</strong> in the ' + escapeHtml(department) + ' department and whose last working day with ' + escapeHtml(COMPANY_NAME) + ' was ' + fmtDateLong(f.lastWorkingDate) + ', has been processed.</p>' +
+        '<p>Settlement amount: Rs. ' + fmtMoney(f.settlementAmount) + ' (Rupees ' + numberToWordsIndian(f.settlementAmount) + ' Only), subject to applicable statutory deductions.</p>' +
+        '<p>This settlement is in full and final discharge of all dues payable by the Company to ' + escapeHtml(name) + ' in connection with their employment.</p>' +
+        signatureBlock();
+    }
+
+    openLetterhead(subject, "Date: " + fmtDateLong(todayStr()), body, "width=650,height=820");
+  }
+
+  document.getElementById("docGenBtn").addEventListener("click", generateDocument);
+
   // ---------- Init ----------
   function init(){
     if (!supabase) { setSyncStatus("bad", " Offline — Supabase client failed to load"); return; }
@@ -1169,6 +1402,7 @@
         document.getElementById("attMonth").value = thisMonthStr();
         document.getElementById("paySelMonth").value = thisMonthStr();
         populateEmployeeSelects();
+        populateDocEmployeeSelect();
         renderEmployees();
       })
       .catch(function(e){
