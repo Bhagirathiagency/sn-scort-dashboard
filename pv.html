@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SN SCORT — PV &amp; Drug Safety</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14213D;
+    --console:#0E1B33;
+    --paper:#F7F5F0;
+    --paper-2:#EFEBE1;
+    --teal:#2A6F77;
+    --teal-dark:#1D4F55;
+    --amber:#D68C45;
+    --sage:#6E8F73;
+    --red:#B4523F;
+    --red-dark:#8C3C2C;
+    --slate:#5B6570;
+    --line: rgba(20,33,61,0.12);
+    --card-shadow: 0 1px 2px rgba(20,33,61,0.06), 0 2px 8px rgba(20,33,61,0.04);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--teal-dark);}
+  .wrap{max-width:1240px; margin:0 auto; padding:0 24px 80px;}
+
+  /* Console header */
+  .console{background:var(--console); color:var(--paper); margin-bottom:24px;}
+  .console-inner{max-width:1240px; margin:0 auto; padding:20px 24px; display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap;}
+  .brand-logo{height:40px; width:auto; display:block;}
+  .brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); margin:0 0 6px;}
+  h1{font-family:'Fraunces',serif; font-weight:600; font-size:28px; margin:0; letter-spacing:-0.01em; color:var(--paper);}
+  .back-link{font-family:'IBM Plex Mono',monospace; font-size:11px; color:rgba(247,245,240,0.65); text-decoration:none;}
+  .back-link:hover{color:var(--paper);}
+  .sync-status{font-family:'IBM Plex Mono',monospace; font-size:12px; color:rgba(247,245,240,0.75); text-align:right;}
+  .sync-dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; background:var(--sage);}
+  .sync-dot.bad{background:var(--red);}
+  .sync-dot.pending{background:var(--amber);}
+  .console-strip{background:rgba(247,245,240,0.06); border-top:1px solid rgba(247,245,240,0.12);}
+  .console-strip-inner{max-width:1240px; margin:0 auto; padding:10px 24px; display:flex; gap:28px; flex-wrap:wrap; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:rgba(247,245,240,0.7);}
+  .console-strip b{color:var(--paper); font-weight:600;}
+  .console-strip .flag-overdue b{color:#F0A18F;}
+  .console-strip .flag-serious b{color:#F0A18F;}
+
+  .tabs{display:flex; gap:8px; margin-bottom:24px; border-bottom:1px solid var(--line);}
+  .tab-btn{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase;
+    padding:10px 16px; cursor:pointer; border:none; background:none; color:var(--slate);
+    border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s;
+  }
+  .tab-btn.active{color:var(--ink); border-bottom-color:var(--teal);}
+  .tab-btn:hover{color:var(--ink);}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .panel-head{margin-bottom:14px;}
+  .panel-head h2{font-family:'Fraunces',serif; font-weight:600; font-size:20px; margin:0 0 2px;}
+  .panel-sub{font-size:12.5px; color:var(--slate);}
+
+  /* Dashboard stats */
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:24px;}
+  .stat{background:var(--paper); padding:16px 18px;}
+  .stat .num{font-family:'Fraunces',serif; font-size:28px; font-weight:600; line-height:1;}
+  .stat .lbl{font-size:12px; color:var(--slate); margin-top:6px;}
+  .stat.warn .num{color:var(--red);}
+
+  .dash-grid{display:grid; grid-template-columns:1.4fr 1fr; gap:20px;}
+  @media (max-width:900px){ .dash-grid{grid-template-columns:1fr;} }
+
+  .card-block{background:var(--paper-2); border-radius:10px; padding:16px; margin-bottom:20px;}
+  .card-block h3{font-size:13px; text-transform:uppercase; letter-spacing:0.06em; color:var(--slate); margin:0 0 12px;}
+
+  .status-breakdown{display:flex; flex-direction:column; gap:8px;}
+  .sb-row{display:flex; align-items:center; gap:10px; font-size:12.5px;}
+  .sb-label{width:120px; flex-shrink:0; color:var(--slate);}
+  .sb-bar-track{flex:1; background:var(--paper); border-radius:6px; height:10px; overflow:hidden; border:1px solid var(--line);}
+  .sb-bar{height:100%; background:var(--teal); border-radius:6px;}
+  .sb-count{width:26px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:11.5px;}
+
+  .due-list{list-style:none; margin:0; padding:0;}
+  .due-list li{display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:12.5px;}
+  .due-list li:last-child{border-bottom:none;}
+  .due-list .case-link{font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--ink); text-decoration:none; cursor:pointer;}
+  .due-list .due-badge{font-family:'IBM Plex Mono',monospace; font-size:11px; padding:2px 7px; border-radius:4px;}
+  .due-badge.overdue{background:rgba(180,82,63,0.16); color:var(--red);}
+  .due-badge.soon{background:rgba(214,140,69,0.16); color:var(--amber);}
+  .due-badge.ok{background:rgba(110,143,115,0.16); color:var(--sage);}
+  .empty-note{color:var(--slate); font-style:italic; font-size:12.5px; padding:6px 0;}
+
+  /* Forms */
+  fieldset{border:1px solid var(--line); border-radius:8px; padding:14px 16px 16px; margin:0 0 16px;}
+  legend{font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--teal-dark); padding:0 6px;}
+  .form-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px;}
+  .form-field{display:flex; flex-direction:column; gap:4px;}
+  .form-field.wide{grid-column:1/-1;}
+  .form-field label{font-size:11px; color:var(--slate); font-weight:500;}
+  .form-field input, .form-field select, .form-field textarea{
+    border:1px solid var(--line); border-radius:6px; padding:8px 10px; font-family:'Inter',sans-serif;
+    font-size:13px; background:var(--paper); color:var(--ink); width:100%;
+  }
+  .form-field textarea{min-height:70px; resize:vertical;}
+  .check-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px 16px;}
+  .check-field{display:flex; align-items:center; gap:8px; font-size:13px;}
+  .check-field input{width:16px; height:16px;}
+  .form-error{color:var(--red); font-size:12px; width:100%; margin-top:6px;}
+  .form-error:empty{display:none;}
+  .form-actions{display:flex; gap:8px; margin-top:4px;}
+
+  button{font-family:'Inter',sans-serif; cursor:pointer;}
+  .btn-primary{background:var(--teal); border:none; color:#fff; font-weight:600; font-size:13px; padding:9px 18px; border-radius:6px;}
+  .btn-primary:hover{background:var(--teal-dark);}
+  .btn-secondary{background:var(--paper); border:1px solid var(--line); color:var(--slate); font-size:13px; padding:8px 14px; border-radius:6px;}
+  .btn-secondary:hover{color:var(--ink);}
+  .btn-danger{background:none; border:1px solid var(--red); color:var(--red); font-size:11.5px; padding:5px 9px; border-radius:5px;}
+  .btn-sm{font-size:11.5px; border:1px solid var(--line); background:var(--paper); color:var(--slate); border-radius:5px; padding:5px 9px;}
+  .btn-sm:hover{color:var(--ink); background:var(--paper-2);}
+
+  /* Filters + table */
+  .filter-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:center;}
+  .filter-row select, .filter-row input{border:1px solid var(--line); border-radius:6px; padding:7px 10px; font-size:13px; background:var(--paper); color:var(--ink);}
+  .filter-row input[type=search]{min-width:220px;}
+  .filter-count{margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--slate);}
+
+  table.data-table{width:100%; border-collapse:collapse; background:var(--paper); border-radius:10px; overflow:hidden; box-shadow:var(--card-shadow);}
+  table.data-table th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--slate);
+    background:var(--paper-2); padding:10px 12px; font-weight:600;
+  }
+  table.data-table td{padding:9px 12px; font-size:13px; border-top:1px solid var(--line); vertical-align:middle;}
+  table.data-table tr:hover td{background:rgba(42,111,119,0.04);}
+  table.data-table tr.row-overdue td{background:rgba(180,82,63,0.05);}
+  .mono{font-family:'IBM Plex Mono',monospace; font-size:12px;}
+  .case-id-link{background:none; border:none; padding:0; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; color:var(--teal-dark); cursor:pointer; text-decoration:underline;}
+  .empty-row td{color:var(--slate); font-style:italic; text-align:center; padding:20px;}
+  .row-actions{display:flex; gap:6px; flex-wrap:wrap;}
+
+  .status-pill{font-size:11px; padding:2px 9px; border-radius:20px; font-weight:600; letter-spacing:0.02em; white-space:nowrap;}
+  .status-New{background:rgba(91,101,112,0.14); color:var(--slate);}
+  .status-Triage{background:rgba(214,140,69,0.16); color:var(--amber);}
+  .status-Data_Entry{background:rgba(42,111,119,0.14); color:var(--teal);}
+  .status-Medical_Review{background:rgba(214,140,69,0.2); color:#9C5E24;}
+  .status-QC{background:rgba(29,79,85,0.16); color:var(--teal-dark);}
+  .status-Submitted{background:rgba(110,143,115,0.18); color:var(--sage);}
+  .status-Closed{background:rgba(20,33,61,0.1); color:var(--ink);}
+
+  .seriousness-badge{font-size:10.5px; padding:2px 8px; border-radius:20px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;}
+  .seriousness-badge.serious{background:rgba(180,82,63,0.16); color:var(--red);}
+  .seriousness-badge.nonserious{background:rgba(20,33,61,0.06); color:var(--slate);}
+
+  /* Case detail drawer */
+  .drawer-overlay{position:fixed; inset:0; background:rgba(14,27,51,0.5); display:none; align-items:flex-start; justify-content:flex-end; z-index:50;}
+  .drawer-overlay.open{display:flex;}
+  .drawer{background:var(--paper); width:min(560px,100%); height:100%; overflow-y:auto; padding:24px; box-shadow:-4px 0 24px rgba(0,0,0,0.2);}
+  .drawer-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:4px;}
+  .drawer-head h2{font-family:'Fraunces',serif; font-size:20px; margin:0;}
+  .drawer-close{background:none; border:none; font-size:20px; color:var(--slate); cursor:pointer; line-height:1;}
+  .drawer-sub{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--slate); margin-bottom:18px;}
+  .drawer-section{margin-bottom:18px;}
+  .drawer-section h4{font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--slate); margin:0 0 8px;}
+  .kv-grid{display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; font-size:13px;}
+  .kv-grid .k{color:var(--slate); font-size:11.5px;}
+  .kv-grid .full{grid-column:1/-1;}
+  .narrative-text{font-size:13px; line-height:1.55; background:var(--paper-2); border-radius:8px; padding:12px 14px; white-space:pre-wrap;}
+  .workflow-stepper{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
+  .step-btn{font-size:11px; padding:5px 10px; border-radius:20px; border:1px solid var(--line); background:var(--paper); color:var(--slate); cursor:pointer;}
+  .step-btn.current{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+  .event-list{list-style:none; margin:0; padding:0;}
+  .event-list li{padding:8px 0; border-bottom:1px solid var(--line); font-size:12.5px;}
+  .event-list li:last-child{border-bottom:none;}
+  .event-date{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--slate); display:block; margin-bottom:2px;}
+  .add-note-row{display:flex; gap:8px; margin-top:10px;}
+  .add-note-row input{flex:1; border:1px solid var(--line); border-radius:6px; padding:7px 10px; font-size:12.5px;}
+
+  @media (max-width:780px){
+    table.data-table{display:block; overflow-x:auto;}
+    .wrap{padding:0 14px 60px;}
+    .console-inner{padding:16px 14px;}
+    .drawer{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="console">
+  <div class="console-inner">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <img src="assets/logo.png" alt="SN SCORT Research Solutions logo" class="brand-logo" onerror="this.style.display='none'">
+      <div>
+        <p class="brand-eyebrow">SN SCORT Research Solutions — Pharmacovigilance</p>
+        <h1>Drug Safety Case Console</h1>
+        <a href="index.html" class="back-link">&larr; 90-Day Execution Board</a>
+      </div>
+    </div>
+    <div class="sync-status" id="syncStatus"><span class="sync-dot pending" id="syncDot"></span>Connecting…</div>
+  </div>
+  <div class="console-strip">
+    <div class="console-strip-inner" id="consoleStrip">
+      <span>OPEN CASES <b id="stripOpen">0</b></span>
+      <span class="flag-serious">SERIOUS <b id="stripSerious">0</b></span>
+      <span class="flag-overdue">OVERDUE (EXPEDITED CLOCK) <b id="stripOverdue">0</b></span>
+      <span>CLOSED THIS YEAR <b id="stripClosed">0</b></span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="intake">Case Intake</button>
+    <button class="tab-btn" data-tab="workflow">Case Workflow</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <section class="panel active" id="panel-dashboard">
+    <div class="panel-head">
+      <h2>Safety Surveillance Overview</h2>
+      <p class="panel-sub">Case volume, seriousness, and expedited reporting clocks across all Individual Case Safety Reports (ICSRs).</p>
+    </div>
+
+    <div class="stats" id="dashStats"></div>
+
+    <div class="dash-grid">
+      <div class="card-block">
+        <h3>Cases by workflow stage</h3>
+        <div class="status-breakdown" id="statusBreakdown"></div>
+      </div>
+      <div class="card-block">
+        <h3>Expedited reporting clock</h3>
+        <ul class="due-list" id="dueList"></ul>
+      </div>
+    </div>
+
+    <div class="card-block">
+      <h3>Most recent cases</h3>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead><tr><th>Case ID</th><th>Received</th><th>Suspect drug</th><th>Event</th><th>Seriousness</th><th>Stage</th></tr></thead>
+          <tbody id="recentCasesBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTAKE -->
+  <section class="panel" id="panel-intake">
+    <div class="panel-head">
+      <h2>New Case Intake</h2>
+      <p class="panel-sub">Log a new Individual Case Safety Report. A case ID and expedited-reporting due date are assigned on save.</p>
+    </div>
+
+    <form id="intakeForm">
+      <fieldset>
+        <legend>Report source</legend>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Report type</label>
+            <select id="fReportType">
+              <option>Spontaneous</option>
+              <option>Clinical Trial</option>
+              <option>Literature</option>
+              <option>Post-marketing</option>
+              <option>Regulatory Authority</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Initial receipt date</label>
+            <input type="date" id="fReceiptDate">
+          </div>
+          <div class="form-field">
+            <label>Reporter name</label>
+            <input type="text" id="fReporterName" placeholder="e.g. Dr. A. Sharma">
+          </div>
+          <div class="form-field">
+            <label>Reporter type</label>
+            <select id="fReporterType">
+              <option value="">Select…</option>
+              <option>Physician</option>
+              <option>Pharmacist</option>
+              <option>Nurse</option>
+              <option>Consumer/Patient</option>
+              <option>Other HCP</option>
+              <option>Regulatory Authority</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Reporter country</label>
+            <input type="text" id="fReporterCountry" value="India">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Patient</legend>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Patient initials</label>
+            <input type="text" id="fPatientInitials" maxlength="6" placeholder="e.g. R.K.">
+          </div>
+          <div class="form-field">
+            <label>Age</label>
+            <input type="number" id="fPatientAge" min="0">
+          </div>
+          <div class="form-field">
+            <label>Age unit</label>
+            <select id="fPatientAgeUnit">
+              <option>Years</option>
+              <option>Months</option>
+              <option>Days</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Sex</label>
+            <select id="fPatientSex">
+              <option value="">Select…</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+              <option>Unknown</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Suspect drug &amp; adverse event</legend>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Suspect drug *</label>
+            <input type="text" id="fSuspectDrug" required>
+          </div>
+          <div class="form-field">
+            <label>Indication</label>
+            <input type="text" id="fIndication">
+          </div>
+          <div class="form-field">
+            <label>Dose / route</label>
+            <input type="text" id="fDoseRoute" placeholder="e.g. 500mg BID, oral">
+          </div>
+          <div class="form-field">
+            <label>Adverse event term *</label>
+            <input type="text" id="fEventTerm" required placeholder="e.g. Urticaria">
+          </div>
+          <div class="form-field">
+            <label>Event onset date</label>
+            <input type="date" id="fOnsetDate">
+          </div>
+          <div class="form-field">
+            <label>Outcome</label>
+            <select id="fOutcome">
+              <option>Unknown</option>
+              <option>Recovered/Resolved</option>
+              <option>Recovering/Resolving</option>
+              <option>Not Recovered</option>
+              <option>Recovered with Sequelae</option>
+              <option>Fatal</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Causality (WHO-UMC)</label>
+            <select id="fCausality">
+              <option>Unassessable/Unclassifiable</option>
+              <option>Certain</option>
+              <option>Probable/Likely</option>
+              <option>Possible</option>
+              <option>Unlikely</option>
+              <option>Conditional/Unclassified</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-field wide" style="margin-top:10px;">
+          <label>Case narrative</label>
+          <textarea id="fNarrative" placeholder="Describe the case in chronological detail — history, event course, relevant labs, treatment, and outcome."></textarea>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Seriousness criteria (ICH E2A)</legend>
+        <div class="check-grid">
+          <label class="check-field"><input type="checkbox" id="fScDeath"> Results in death</label>
+          <label class="check-field"><input type="checkbox" id="fScLifeThreatening"> Life-threatening</label>
+          <label class="check-field"><input type="checkbox" id="fScHospitalization"> Requires hospitalization / prolongation</label>
+          <label class="check-field"><input type="checkbox" id="fScDisability"> Persistent / significant disability</label>
+          <label class="check-field"><input type="checkbox" id="fScCongenital"> Congenital anomaly / birth defect</label>
+          <label class="check-field"><input type="checkbox" id="fScOtherImportant"> Other medically important condition</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Case assignment</legend>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Assigned to</label>
+            <input type="text" id="fAssignedTo" placeholder="Safety associate name">
+          </div>
+          <div class="form-field">
+            <label>Reporting due date</label>
+            <input type="date" id="fDueDate">
+            <span style="font-size:11px; color:var(--slate);">Auto-set to 15 days (serious) / 30 days (non-serious) from receipt — editable.</span>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="form-error" id="intakeFormError"></div>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Open case</button>
+        <button type="button" class="btn-secondary" id="intakeResetBtn">Clear form</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- WORKFLOW -->
+  <section class="panel" id="panel-workflow">
+    <div class="panel-head">
+      <h2>Case Workflow</h2>
+      <p class="panel-sub">All ICSRs across the intake-to-submission pipeline.</p>
+    </div>
+
+    <div class="filter-row">
+      <input type="search" id="wfSearch" placeholder="Search case ID, drug, event, patient…">
+      <select id="wfStatusFilter">
+        <option value="">All stages</option>
+        <option value="New">New</option>
+        <option value="Triage">Triage</option>
+        <option value="Data Entry">Data Entry</option>
+        <option value="Medical Review">Medical Review</option>
+        <option value="QC">QC</option>
+        <option value="Submitted">Submitted</option>
+        <option value="Closed">Closed</option>
+      </select>
+      <select id="wfSeriousFilter">
+        <option value="">Serious &amp; non-serious</option>
+        <option value="1">Serious only</option>
+        <option value="0">Non-serious only</option>
+      </select>
+      <select id="wfOverdueFilter">
+        <option value="">All due dates</option>
+        <option value="1">Overdue only</option>
+      </select>
+      <span class="filter-count" id="wfCount"></span>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Case ID</th><th>Received</th><th>Suspect drug</th><th>Event term</th>
+            <th>Seriousness</th><th>Stage</th><th>Due</th><th>Assigned</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="workflowBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<!-- Case detail drawer -->
+<div class="drawer-overlay" id="drawerOverlay">
+  <div class="drawer" id="drawer"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  "use strict";
+
+  var SUPABASE_URL = "https://sqmvnebnathateurqfeq.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_onNu45I1iy7rLdbn3uum5Q_hfgHoLRt";
+
+  var supabase = null;
+  try {
+    if (window.supabase) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } catch (e) {
+    console.error("Supabase init failed:", e);
+  }
+
+  var WORKFLOW_STAGES = ["New", "Triage", "Data Entry", "Medical Review", "QC", "Submitted", "Closed"];
+  var OPEN_STAGES = ["New", "Triage", "Data Entry", "Medical Review", "QC"];
+
+  var state = {
+    cases: [],
+    events: {}, // caseId -> [events]
+    openCaseId: null
+  };
+
+  function statusClass(status){ return "status-" + String(status).replace(/\s+/g, "_"); }
+
+  function setSyncStatus(mode, text){
+    var dot = document.getElementById("syncDot");
+    var wrap = document.getElementById("syncStatus");
+    dot.className = "sync-dot" + (mode === "bad" ? " bad" : mode === "pending" ? " pending" : "");
+    wrap.childNodes[1].textContent = text;
+  }
+
+  function escapeHtml(s){
+    var d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  }
+  function showFormError(id, message){
+    var el = document.getElementById(id);
+    if (el) el.textContent = message || "";
+  }
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  function addDays(dateStr, n){
+    var d = dateStr ? new Date(dateStr + "T00:00:00") : new Date();
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0,10);
+  }
+  function daysUntil(dateStr){
+    if (!dateStr) return null;
+    var a = new Date(todayStr() + "T00:00:00");
+    var b = new Date(dateStr + "T00:00:00");
+    return Math.round((b - a) / 86400000);
+  }
+  function fmtDate(d){ return d || "—"; }
+
+  // ---------- Tabs ----------
+  document.getElementById("tabs").addEventListener("click", function(e){
+    var btn = e.target.closest(".tab-btn");
+    if (!btn) return;
+    document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.toggle("active", b === btn); });
+    document.querySelectorAll(".panel").forEach(function(p){ p.classList.toggle("active", p.id === "panel-" + btn.dataset.tab); });
+    if (btn.dataset.tab === "dashboard") renderDashboard();
+    if (btn.dataset.tab === "workflow") renderWorkflow();
+  });
+
+  // ---------- Data ----------
+  function fetchCases(){
+    if (!supabase) return Promise.resolve();
+    return supabase.from("pv_cases").select("*").order("created_at", { ascending: false }).then(function(res){
+      if (res.error) { console.error(res.error); return; }
+      state.cases = res.data || [];
+    });
+  }
+
+  function fetchEvents(caseId){
+    if (!supabase) return Promise.resolve([]);
+    return supabase.from("pv_case_events").select("*").eq("case_id", caseId).order("created_at", { ascending: false }).then(function(res){
+      if (res.error) { console.error(res.error); return []; }
+      state.events[caseId] = res.data || [];
+      return state.events[caseId];
+    });
+  }
+
+  function refreshAll(){
+    return fetchCases().then(function(){
+      renderConsoleStrip();
+      renderDashboard();
+      renderWorkflow();
+    });
+  }
+
+  // ---------- Console strip ----------
+  function renderConsoleStrip(){
+    var open = state.cases.filter(function(c){ return OPEN_STAGES.indexOf(c.workflow_status) !== -1; });
+    var serious = open.filter(function(c){ return c.serious; });
+    var overdue = open.filter(function(c){ return c.due_date && daysUntil(c.due_date) < 0; });
+    var thisYear = new Date().getFullYear();
+    var closedThisYear = state.cases.filter(function(c){
+      return c.workflow_status === "Closed" && c.updated_at && new Date(c.updated_at).getFullYear() === thisYear;
+    });
+    document.getElementById("stripOpen").textContent = open.length;
+    document.getElementById("stripSerious").textContent = serious.length;
+    document.getElementById("stripOverdue").textContent = overdue.length;
+    document.getElementById("stripClosed").textContent = closedThisYear.length;
+  }
+
+  // ---------- Dashboard ----------
+  function renderDashboard(){
+    var total = state.cases.length;
+    var open = state.cases.filter(function(c){ return OPEN_STAGES.indexOf(c.workflow_status) !== -1; });
+    var serious = state.cases.filter(function(c){ return c.serious; });
+    var overdue = open.filter(function(c){ return c.due_date && daysUntil(c.due_date) < 0; });
+
+    document.getElementById("dashStats").innerHTML = [
+      ["Total cases", total, false],
+      ["Open cases", open.length, false],
+      ["Serious cases", serious.length, false],
+      ["Overdue (expedited clock)", overdue.length, overdue.length > 0]
+    ].map(function(s){
+      return '<div class="stat' + (s[2] ? ' warn' : '') + '"><div class="num">' + s[1] + '</div><div class="lbl">' + s[0] + '</div></div>';
+    }).join("");
+
+    var byStage = {};
+    WORKFLOW_STAGES.forEach(function(s){ byStage[s] = 0; });
+    state.cases.forEach(function(c){ if (byStage[c.workflow_status] != null) byStage[c.workflow_status]++; });
+    var maxCount = Math.max.apply(null, WORKFLOW_STAGES.map(function(s){ return byStage[s]; }).concat([1]));
+    document.getElementById("statusBreakdown").innerHTML = WORKFLOW_STAGES.map(function(s){
+      var pct = Math.round((byStage[s] / maxCount) * 100);
+      return '<div class="sb-row"><span class="sb-label">' + s + '</span>' +
+        '<span class="sb-bar-track"><span class="sb-bar" style="width:' + pct + '%"></span></span>' +
+        '<span class="sb-count">' + byStage[s] + '</span></div>';
+    }).join("");
+
+    var withDue = state.cases.filter(function(c){ return c.due_date && OPEN_STAGES.indexOf(c.workflow_status) !== -1; })
+      .sort(function(a,b){ return new Date(a.due_date) - new Date(b.due_date); })
+      .slice(0, 8);
+    var dueList = document.getElementById("dueList");
+    if (withDue.length === 0) {
+      dueList.innerHTML = '<li class="empty-note" style="border:none;">No open cases with a reporting deadline.</li>';
+    } else {
+      dueList.innerHTML = withDue.map(function(c){
+        var d = daysUntil(c.due_date);
+        var cls = d < 0 ? "overdue" : d <= 3 ? "soon" : "ok";
+        var label = d < 0 ? (Math.abs(d) + "d overdue") : (d === 0 ? "due today" : d + "d left");
+        return '<li><span class="case-link" data-open-case="' + c.id + '">' + escapeHtml(c.case_number) + '</span>' +
+          '<span class="due-badge ' + cls + '">' + label + '</span></li>';
+      }).join("");
+    }
+
+    var recent = state.cases.slice(0, 8);
+    var recentBody = document.getElementById("recentCasesBody");
+    if (recent.length === 0) {
+      recentBody.innerHTML = '<tr class="empty-row"><td colspan="6">No cases logged yet — open one from Case Intake.</td></tr>';
+    } else {
+      recentBody.innerHTML = recent.map(function(c){
+        return '<tr>' +
+          '<td><button class="case-id-link" data-open-case="' + c.id + '">' + escapeHtml(c.case_number) + '</button></td>' +
+          '<td class="mono">' + fmtDate(c.initial_receipt_date) + '</td>' +
+          '<td>' + escapeHtml(c.suspect_drug) + '</td>' +
+          '<td>' + escapeHtml(c.event_term) + '</td>' +
+          '<td>' + seriousBadge(c.serious) + '</td>' +
+          '<td><span class="status-pill ' + statusClass(c.workflow_status) + '">' + escapeHtml(c.workflow_status) + '</span></td>' +
+          '</tr>';
+      }).join("");
+    }
+  }
+
+  function seriousBadge(serious){
+    return serious
+      ? '<span class="seriousness-badge serious">Serious</span>'
+      : '<span class="seriousness-badge nonserious">Non-serious</span>';
+  }
+
+  // ---------- Intake ----------
+  document.getElementById("fReceiptDate").value = todayStr();
+
+  function recalcDueDate(){
+    var due = document.getElementById("fDueDate");
+    if (due.dataset.userEdited === "1") return;
+    var receipt = document.getElementById("fReceiptDate").value || todayStr();
+    var serious = ["fScDeath","fScLifeThreatening","fScHospitalization","fScDisability","fScCongenital","fScOtherImportant"]
+      .some(function(id){ return document.getElementById(id).checked; });
+    due.value = addDays(receipt, serious ? 15 : 30);
+  }
+  document.getElementById("fReceiptDate").addEventListener("change", recalcDueDate);
+  document.querySelectorAll('#intakeForm [id^="fSc"]').forEach(function(el){
+    el.addEventListener("change", recalcDueDate);
+  });
+  document.getElementById("fDueDate").addEventListener("change", function(){
+    this.dataset.userEdited = "1";
+  });
+  recalcDueDate();
+
+  document.getElementById("intakeForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    showFormError("intakeFormError", "");
+
+    if (!supabase) { showFormError("intakeFormError", "Not connected to the database — check your connection and reload."); return; }
+
+    var suspectDrug = document.getElementById("fSuspectDrug").value.trim();
+    var eventTerm = document.getElementById("fEventTerm").value.trim();
+    if (!suspectDrug || !eventTerm) {
+      showFormError("intakeFormError", "Suspect drug and adverse event term are required.");
+      return;
+    }
+
+    var payload = {
+      report_type: document.getElementById("fReportType").value,
+      initial_receipt_date: document.getElementById("fReceiptDate").value || todayStr(),
+      event_onset_date: document.getElementById("fOnsetDate").value || null,
+      patient_initials: document.getElementById("fPatientInitials").value.trim() || null,
+      patient_age: document.getElementById("fPatientAge").value || null,
+      patient_age_unit: document.getElementById("fPatientAgeUnit").value,
+      patient_sex: document.getElementById("fPatientSex").value || null,
+      reporter_name: document.getElementById("fReporterName").value.trim() || null,
+      reporter_type: document.getElementById("fReporterType").value || null,
+      reporter_country: document.getElementById("fReporterCountry").value.trim() || null,
+      suspect_drug: suspectDrug,
+      drug_indication: document.getElementById("fIndication").value.trim() || null,
+      dose_route: document.getElementById("fDoseRoute").value.trim() || null,
+      event_term: eventTerm,
+      narrative: document.getElementById("fNarrative").value.trim() || null,
+      outcome: document.getElementById("fOutcome").value,
+      causality: document.getElementById("fCausality").value,
+      sc_death: document.getElementById("fScDeath").checked,
+      sc_life_threatening: document.getElementById("fScLifeThreatening").checked,
+      sc_hospitalization: document.getElementById("fScHospitalization").checked,
+      sc_disability: document.getElementById("fScDisability").checked,
+      sc_congenital_anomaly: document.getElementById("fScCongenital").checked,
+      sc_other_medically_important: document.getElementById("fScOtherImportant").checked,
+      assigned_to: document.getElementById("fAssignedTo").value.trim() || null,
+      due_date: document.getElementById("fDueDate").value || null,
+      workflow_status: "New"
+    };
+
+    supabase.from("pv_cases").insert(payload).select().then(function(res){
+      if (res.error) { console.error(res.error); showFormError("intakeFormError", "Save failed — " + res.error.message); return; }
+      var newCase = res.data && res.data[0];
+      var logEvent = newCase
+        ? supabase.from("pv_case_events").insert({ case_id: newCase.id, event_type: "created", detail: "Case opened via intake form." })
+        : Promise.resolve();
+      logEvent.then(function(){
+        document.getElementById("intakeForm").reset();
+        document.getElementById("fReceiptDate").value = todayStr();
+        document.getElementById("fReporterCountry").value = "India";
+        document.getElementById("fDueDate").dataset.userEdited = "";
+        recalcDueDate();
+        refreshAll();
+        if (newCase) openCaseDrawer(newCase.id);
+      });
+    });
+  });
+
+  document.getElementById("intakeResetBtn").addEventListener("click", function(){
+    document.getElementById("intakeForm").reset();
+    document.getElementById("fReceiptDate").value = todayStr();
+    document.getElementById("fReporterCountry").value = "India";
+    document.getElementById("fDueDate").dataset.userEdited = "";
+    showFormError("intakeFormError", "");
+    recalcDueDate();
+  });
+
+  // ---------- Workflow list ----------
+  function filteredCases(){
+    var q = document.getElementById("wfSearch").value.trim().toLowerCase();
+    var statusF = document.getElementById("wfStatusFilter").value;
+    var seriousF = document.getElementById("wfSeriousFilter").value;
+    var overdueF = document.getElementById("wfOverdueFilter").value;
+
+    return state.cases.filter(function(c){
+      if (statusF && c.workflow_status !== statusF) return false;
+      if (seriousF === "1" && !c.serious) return false;
+      if (seriousF === "0" && c.serious) return false;
+      if (overdueF === "1" && !(c.due_date && daysUntil(c.due_date) < 0 && OPEN_STAGES.indexOf(c.workflow_status) !== -1)) return false;
+      if (q) {
+        var hay = [c.case_number, c.suspect_drug, c.event_term, c.patient_initials, c.reporter_name, c.assigned_to]
+          .map(function(v){ return (v || "").toLowerCase(); }).join(" ");
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderWorkflow(){
+    var rows = filteredCases();
+    document.getElementById("wfCount").textContent = rows.length + " of " + state.cases.length + " cases";
+    var body = document.getElementById("workflowBody");
+    if (rows.length === 0) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="9">No cases match these filters.</td></tr>';
+      return;
+    }
+    body.innerHTML = rows.map(function(c){
+      var overdue = c.due_date && daysUntil(c.due_date) < 0 && OPEN_STAGES.indexOf(c.workflow_status) !== -1;
+      return '<tr class="' + (overdue ? "row-overdue" : "") + '">' +
+        '<td><button class="case-id-link" data-open-case="' + c.id + '">' + escapeHtml(c.case_number) + '</button></td>' +
+        '<td class="mono">' + fmtDate(c.initial_receipt_date) + '</td>' +
+        '<td>' + escapeHtml(c.suspect_drug) + '</td>' +
+        '<td>' + escapeHtml(c.event_term) + '</td>' +
+        '<td>' + seriousBadge(c.serious) + '</td>' +
+        '<td><span class="status-pill ' + statusClass(c.workflow_status) + '">' + escapeHtml(c.workflow_status) + '</span></td>' +
+        '<td class="mono">' + fmtDate(c.due_date) + (overdue ? ' <span style="color:var(--red);">⚠</span>' : '') + '</td>' +
+        '<td>' + escapeHtml(c.assigned_to) + '</td>' +
+        '<td class="row-actions"><button class="btn-sm" data-open-case="' + c.id + '">Open</button>' +
+        '<button class="btn-danger" data-delete-case="' + c.id + '">Delete</button></td>' +
+        '</tr>';
+    }).join("");
+  }
+
+  ["wfSearch","wfStatusFilter","wfSeriousFilter","wfOverdueFilter"].forEach(function(id){
+    document.getElementById(id).addEventListener("input", renderWorkflow);
+    document.getElementById(id).addEventListener("change", renderWorkflow);
+  });
+
+  document.getElementById("panel-workflow").addEventListener("click", function(e){
+    var delBtn = e.target.closest("[data-delete-case]");
+    if (delBtn) {
+      var id = delBtn.dataset.deleteCase;
+      var c = state.cases.find(function(x){ return x.id === id; });
+      if (!c) return;
+      if (!confirm("Delete case " + c.case_number + "? This cannot be undone.")) return;
+      supabase.from("pv_cases").delete().eq("id", id).then(function(res){
+        if (res.error) { console.error(res.error); alert("Delete failed — " + res.error.message); return; }
+        refreshAll();
+      });
+    }
+  });
+
+  // ---------- Case detail drawer ----------
+  document.body.addEventListener("click", function(e){
+    var opener = e.target.closest("[data-open-case]");
+    if (opener) openCaseDrawer(opener.dataset.openCase);
+  });
+
+  function openCaseDrawer(caseId){
+    state.openCaseId = caseId;
+    document.getElementById("drawerOverlay").classList.add("open");
+    renderDrawer();
+    fetchEvents(caseId).then(renderDrawerEvents);
+  }
+  function closeDrawer(){
+    document.getElementById("drawerOverlay").classList.remove("open");
+    state.openCaseId = null;
+  }
+  document.getElementById("drawerOverlay").addEventListener("click", function(e){
+    if (e.target.id === "drawerOverlay") closeDrawer();
+  });
+
+  function renderDrawer(){
+    var c = state.cases.find(function(x){ return x.id === state.openCaseId; });
+    if (!c) return;
+    var d = document.getElementById("drawer");
+    d.innerHTML =
+      '<div class="drawer-head"><h2>' + escapeHtml(c.case_number) + '</h2><button class="drawer-close" id="drawerCloseBtn">&times;</button></div>' +
+      '<div class="drawer-sub">' + escapeHtml(c.report_type) + ' · received ' + fmtDate(c.initial_receipt_date) + ' · ' + seriousBadge(c.serious) + '</div>' +
+
+      '<div class="drawer-section"><h4>Workflow stage</h4><div class="workflow-stepper" id="drawerStepper"></div></div>' +
+
+      '<div class="drawer-section"><h4>Patient</h4><div class="kv-grid">' +
+        kv("Initials", c.patient_initials) + kv("Sex", c.patient_sex) +
+        kv("Age", (c.patient_age != null ? c.patient_age + " " + (c.patient_age_unit || "") : "—")) +
+        kv("Outcome", c.outcome) +
+      '</div></div>' +
+
+      '<div class="drawer-section"><h4>Reporter</h4><div class="kv-grid">' +
+        kv("Name", c.reporter_name) + kv("Type", c.reporter_type) + kv("Country", c.reporter_country) +
+      '</div></div>' +
+
+      '<div class="drawer-section"><h4>Suspect drug &amp; event</h4><div class="kv-grid">' +
+        kv("Drug", c.suspect_drug) + kv("Indication", c.drug_indication) +
+        kv("Dose / route", c.dose_route) + kv("Onset date", c.event_onset_date) +
+        kv("Event term", c.event_term) + kv("Causality", c.causality) +
+      '</div></div>' +
+
+      '<div class="drawer-section"><h4>Seriousness criteria</h4><div class="kv-grid">' +
+        seriousnessRows(c) +
+      '</div></div>' +
+
+      (c.narrative ? '<div class="drawer-section"><h4>Narrative</h4><div class="narrative-text">' + escapeHtml(c.narrative) + '</div></div>' : '') +
+
+      '<div class="drawer-section"><h4>Assignment</h4><div class="kv-grid">' +
+        kv("Assigned to", c.assigned_to) +
+        kv("Due date", (c.due_date || "—") + (c.due_date && daysUntil(c.due_date) < 0 && OPEN_STAGES.indexOf(c.workflow_status) !== -1 ? " (overdue)" : "")) +
+      '</div></div>' +
+
+      '<div class="drawer-section"><h4>Case history</h4><ul class="event-list" id="drawerEvents"><li class="empty-note">Loading…</li></ul>' +
+        '<div class="add-note-row"><input type="text" id="drawerNoteInput" placeholder="Add a note to the case history…"><button class="btn-sm" id="drawerNoteBtn">Add</button></div>' +
+      '</div>';
+
+    document.getElementById("drawerCloseBtn").addEventListener("click", closeDrawer);
+    renderStepper(c);
+
+    document.getElementById("drawerNoteBtn").addEventListener("click", function(){
+      var input = document.getElementById("drawerNoteInput");
+      var text = input.value.trim();
+      if (!text) return;
+      supabase.from("pv_case_events").insert({ case_id: c.id, event_type: "note", detail: text }).then(function(res){
+        if (res.error) { console.error(res.error); return; }
+        input.value = "";
+        fetchEvents(c.id).then(renderDrawerEvents);
+      });
+    });
+  }
+
+  function kv(label, value){
+    return '<div><div class="k">' + escapeHtml(label) + '</div><div>' + escapeHtml(value || "—") + '</div></div>';
+  }
+  function seriousnessRows(c){
+    var items = [
+      ["Death", c.sc_death], ["Life-threatening", c.sc_life_threatening],
+      ["Hospitalization", c.sc_hospitalization], ["Disability", c.sc_disability],
+      ["Congenital anomaly", c.sc_congenital_anomaly], ["Other medically important", c.sc_other_medically_important]
+    ];
+    var any = items.some(function(i){ return i[1]; });
+    if (!any) return '<div class="full">None checked — non-serious case.</div>';
+    return items.filter(function(i){ return i[1]; }).map(function(i){ return kv(i[0], "Yes"); }).join("");
+  }
+
+  function renderStepper(c){
+    var wrap = document.getElementById("drawerStepper");
+    wrap.innerHTML = WORKFLOW_STAGES.map(function(s){
+      return '<button class="step-btn ' + (s === c.workflow_status ? "current" : "") + '" data-set-status="' + s + '">' + s + '</button>';
+    }).join("");
+    wrap.querySelectorAll("[data-set-status]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var newStatus = btn.dataset.setStatus;
+        if (newStatus === c.workflow_status) return;
+        var oldStatus = c.workflow_status;
+        supabase.from("pv_cases").update({ workflow_status: newStatus, updated_at: new Date().toISOString() }).eq("id", c.id).then(function(res){
+          if (res.error) { console.error(res.error); alert("Update failed — " + res.error.message); return; }
+          supabase.from("pv_case_events").insert({
+            case_id: c.id, event_type: "status_change",
+            detail: "Stage changed from " + oldStatus + " to " + newStatus + "."
+          }).then(function(){
+            refreshAll().then(function(){
+              renderDrawer();
+              fetchEvents(c.id).then(renderDrawerEvents);
+            });
+          });
+        });
+      });
+    });
+  }
+
+  function renderDrawerEvents(events){
+    var list = document.getElementById("drawerEvents");
+    if (!list) return;
+    if (!events || events.length === 0) {
+      list.innerHTML = '<li class="empty-note">No history yet.</li>';
+      return;
+    }
+    list.innerHTML = events.map(function(ev){
+      var when = ev.created_at ? new Date(ev.created_at).toLocaleString("en-IN", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "";
+      return '<li><span class="event-date">' + escapeHtml(when) + '</span>' + escapeHtml(ev.detail || "") + '</li>';
+    }).join("");
+  }
+
+  // ---------- Init ----------
+  if (!supabase) {
+    setSyncStatus("bad", " Offline — Supabase client failed to load");
+  } else {
+    setSyncStatus("pending", " Loading cases…");
+    refreshAll().then(function(){
+      setSyncStatus("ok", " Synced with Supabase");
+    }).catch(function(e){
+      console.error(e);
+      setSyncStatus("bad", " Could not load cases");
+    });
+  }
+})();
+</script>
+</body>
+</html>
