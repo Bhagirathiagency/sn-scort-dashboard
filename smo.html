@@ -274,6 +274,7 @@
       <p class="panel-sub">Create and track studies. Open a study to manage its site assignments, feasibility, activation and finance.</p>
     </div>
 
+    <p class="ok-box" id="roleNoteStudies" hidden>Only SMO administrators can create, edit, or delete studies. You can open and view studies your assigned site is part of.</p>
     <form id="studyForm">
       <input type="hidden" id="sfEditingId">
       <fieldset>
@@ -323,6 +324,7 @@
       <p class="panel-sub">Existing collaborating sites plus onboarding for new sites.</p>
     </div>
 
+    <p class="ok-box" id="roleNoteSites" hidden>Only SMO administrators can create, edit, or delete sites. You can open sites you're assigned to.</p>
     <form id="siteForm">
       <input type="hidden" id="tfEditingId">
       <fieldset>
@@ -568,8 +570,10 @@
     activeTab: "dashboard",
     drawerType: null, drawerId: null, drawerSubtab: "overview",
     assignId: null, assignSubtab: "feasibility",
-    issueFilterStudyId: ""
+    issueFilterStudyId: "",
+    userRole: null, userFullName: null, userSiteIds: []
   };
+  function isAdmin(){ return state.userRole === "admin"; }
 
   // ---------- Helpers ----------
   function $(id){ return document.getElementById(id); }
@@ -683,7 +687,8 @@
     $("isStudyFilter").innerHTML = '<option value="">All studies</option>' + state.studies.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.protocol_number) + "</option>"; }).join("");
     $("efStudy").innerHTML = studyOpts;
     $("dfStudy").innerHTML = '<option value="">— none —</option>' + state.studies.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.protocol_number + " — " + s.title) + "</option>"; }).join("");
-    $("dfSite").innerHTML = '<option value="">— none —</option>' + state.sites.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.site_name) + "</option>"; }).join("");
+    var dfSiteOptions = isAdmin() ? state.sites : state.sites.filter(function(s){ return (state.userSiteIds || []).indexOf(s.id) !== -1; });
+    $("dfSite").innerHTML = (isAdmin() ? '<option value="">— none —</option>' : "") + dfSiteOptions.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.site_name) + "</option>"; }).join("");
     $("dcStudyFilter").innerHTML = '<option value="">All studies</option>' + state.studies.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.protocol_number) + "</option>"; }).join("");
     $("dcSiteFilter").innerHTML = '<option value="">All sites</option>' + state.sites.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.site_name) + "</option>"; }).join("");
 
@@ -861,7 +866,7 @@
     body.innerHTML = rows.map(function(s){
       var n = state.studySites.filter(function(a){ return a.study_id === s.id; }).length;
       return "<tr><td class=\"mono\">" + escapeHtml(s.protocol_number) + "</td><td><button class=\"row-link\" data-open-study=\"" + s.id + "\">" + escapeHtml(s.title) + "</button></td><td>" + escapeHtml(s.sponsor) + "</td><td>" + escapeHtml(s.phase) + "</td><td>" + pill(s.status) + "</td><td>" + n + "</td>" +
-        "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-study=\"" + s.id + "\">Open</button><button class=\"btn-sm\" data-edit-study=\"" + s.id + "\">Edit</button><button class=\"btn-danger\" data-delete-study=\"" + s.id + "\">Delete</button></td></tr>";
+        "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-study=\"" + s.id + "\">Open</button>" + (isAdmin() ? "<button class=\"btn-sm\" data-edit-study=\"" + s.id + "\">Edit</button><button class=\"btn-danger\" data-delete-study=\"" + s.id + "\">Delete</button>" : "") + "</td></tr>";
     }).join("");
   }
   ["stSearch","stStatusFilter"].forEach(function(id){ $(id).addEventListener("input", renderStudies); $(id).addEventListener("change", renderStudies); });
@@ -959,7 +964,7 @@
     body.innerHTML = rows.map(function(s){
       var n = state.studySites.filter(function(a){ return a.site_id === s.id; }).length;
       return "<tr><td><button class=\"row-link\" data-open-site=\"" + s.id + "\">" + escapeHtml(s.site_name) + "</button></td><td class=\"mono\">" + escapeHtml(s.site_code) + "</td><td>" + escapeHtml(s.city) + "</td><td>" + escapeHtml(s.pi_name) + "</td><td>" + pill(s.status) + "</td><td>" + n + "</td>" +
-        "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-site=\"" + s.id + "\">Open</button><button class=\"btn-sm\" data-edit-site=\"" + s.id + "\">Edit</button><button class=\"btn-danger\" data-delete-site=\"" + s.id + "\">Delete</button></td></tr>";
+        "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-site=\"" + s.id + "\">Open</button>" + (isAdmin() ? "<button class=\"btn-sm\" data-edit-site=\"" + s.id + "\">Edit</button><button class=\"btn-danger\" data-delete-site=\"" + s.id + "\">Delete</button>" : "") + "</td></tr>";
     }).join("");
   }
   ["teSearch","teStatusFilter"].forEach(function(id){ $(id).addEventListener("input", renderSites); $(id).addEventListener("change", renderSites); });
@@ -1206,21 +1211,23 @@
         (s.required_documents ? '<div class="full">' + kv("Required documents", s.required_documents) + "</div>" : "") +
         (s.notes ? '<div class="full">' + kv("Notes", s.notes) + "</div>" : "") +
       "</div>" +
-      '<div class="workflow-stepper" style="margin-top:14px;">' + STUDY_STATUSES.map(function(st){
-        return '<button class="step-btn' + (st === s.status ? " current" : "") + '" data-set-study-status="' + st + '">' + st + "</button>";
-      }).join("") + "</div>";
+      (isAdmin()
+        ? '<div class="workflow-stepper" style="margin-top:14px;">' + STUDY_STATUSES.map(function(st){
+            return '<button class="step-btn' + (st === s.status ? " current" : "") + '" data-set-study-status="' + st + '">' + st + "</button>";
+          }).join("") + "</div>"
+        : '<div style="margin-top:14px;">' + pill(s.status) + "</div>");
 
-    var assignHtml = '<div class="mini-form"><form id="assignFromStudyForm"><div class="form-grid">' +
+    var assignHtml = (!isAdmin() ? "" : '<div class="mini-form"><form id="assignFromStudyForm"><div class="form-grid">' +
       '<div class="form-field"><label>Assign site</label><select id="afsSite">' + (availableSites.length ? availableSites.map(function(x){ return '<option value="' + x.id + '">' + escapeHtml(x.site_name) + "</option>"; }).join("") : '<option value="">All sites already assigned</option>') + "</select></div>" +
       '<div class="form-field"><label>SMO share %</label><input type="number" step="0.01" id="afsSmoPct"></div>' +
       '<div class="form-field"><label>PI share %</label><input type="number" step="0.01" id="afsPiPct"></div>' +
       '<div class="form-field"><label>Site share %</label><input type="number" step="0.01" id="afsSitePct"></div>' +
-      '</div><div class="form-error" id="assignFromStudyError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Assign site</button></div></form></div>' +
+      '</div><div class="form-error" id="assignFromStudyError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Assign site</button></div></form></div>') +
       (assigns.length === 0 ? '<p class="empty-note">No sites assigned to this study yet.</p>' :
         '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Site</th><th>Stage</th><th>SMO%</th><th>PI%</th><th>Site%</th><th>Activation</th><th></th></tr></thead><tbody>' +
         assigns.map(function(a){
           return "<tr><td>" + escapeHtml(siteName(a.site_id)) + "</td><td>" + pill(a.status) + "</td><td>" + (a.smo_share_pct != null ? a.smo_share_pct + "%" : "—") + "</td><td>" + (a.pi_share_pct != null ? a.pi_share_pct + "%" : "—") + "</td><td>" + (a.site_share_pct != null ? a.site_share_pct + "%" : "—") + "</td><td class=\"mono\">" + fmtDate(a.activation_date) + "</td>" +
-            "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-assign=\"" + a.id + "\">Manage</button><button class=\"btn-danger\" data-delete-assign=\"" + a.id + "\">Unassign</button></td></tr>";
+            "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-assign=\"" + a.id + "\">Manage</button>" + (isAdmin() ? "<button class=\"btn-danger\" data-delete-assign=\"" + a.id + "\">Unassign</button>" : "") + "</td></tr>";
         }).join("") + "</tbody></table></div>");
 
     var docsHtml = docs.length === 0 ? '<p class="empty-note">No study-level documents yet. Add them from the Documents tab.</p>' :
@@ -1283,22 +1290,24 @@
       kv("Default SMO / PI / Site %", (s.default_smo_share_pct != null ? s.default_smo_share_pct + "/" + s.default_pi_share_pct + "/" + s.default_site_share_pct : "—")) +
       (s.notes ? '<div class="full">' + kv("Notes", s.notes) + "</div>" : "") +
       "</div>" +
-      '<div class="workflow-stepper" style="margin-top:14px;">' + SITE_STATUSES.map(function(st){
-        return '<button class="step-btn' + (st === s.status ? " current" : "") + '" data-set-site-status="' + st + '">' + st + "</button>";
-      }).join("") + "</div>";
+      (isAdmin()
+        ? '<div class="workflow-stepper" style="margin-top:14px;">' + SITE_STATUSES.map(function(st){
+            return '<button class="step-btn' + (st === s.status ? " current" : "") + '" data-set-site-status="' + st + '">' + st + "</button>";
+          }).join("") + "</div>"
+        : '<div style="margin-top:14px;">' + pill(s.status) + "</div>");
 
-    var assignHtml = '<div class="mini-form"><form id="assignFromSiteForm"><div class="form-grid">' +
+    var assignHtml = (!isAdmin() ? "" : '<div class="mini-form"><form id="assignFromSiteForm"><div class="form-grid">' +
       '<div class="form-field"><label>Assign to study</label><select id="afzStudy">' + (availableStudies.length ? availableStudies.map(function(x){ return '<option value="' + x.id + '">' + escapeHtml(x.protocol_number + " — " + x.title) + "</option>"; }).join("") : '<option value="">Already assigned to all studies</option>') + "</select></div>" +
       '<div class="form-field"><label>SMO share %</label><input type="number" step="0.01" id="afzSmoPct" value="' + (s.default_smo_share_pct != null ? s.default_smo_share_pct : "") + '"></div>' +
       '<div class="form-field"><label>PI share %</label><input type="number" step="0.01" id="afzPiPct" value="' + (s.default_pi_share_pct != null ? s.default_pi_share_pct : "") + '"></div>' +
       '<div class="form-field"><label>Site share %</label><input type="number" step="0.01" id="afzSitePct" value="' + (s.default_site_share_pct != null ? s.default_site_share_pct : "") + '"></div>' +
-      '</div><div class="form-error" id="assignFromSiteError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Assign study</button></div></form></div>' +
+      '</div><div class="form-error" id="assignFromSiteError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Assign study</button></div></form></div>') +
       (assigns.length === 0 ? '<p class="empty-note">This site is not assigned to any study yet.</p>' :
         '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Study</th><th>Stage</th><th>SMO%</th><th>PI%</th><th>Site%</th><th></th></tr></thead><tbody>' +
         assigns.map(function(a){
           var st = state.studies.find(function(x){ return x.id === a.study_id; });
           return "<tr><td>" + escapeHtml(st ? st.protocol_number : "—") + "</td><td>" + pill(a.status) + "</td><td>" + (a.smo_share_pct != null ? a.smo_share_pct + "%" : "—") + "</td><td>" + (a.pi_share_pct != null ? a.pi_share_pct + "%" : "—") + "</td><td>" + (a.site_share_pct != null ? a.site_share_pct + "%" : "—") + "</td>" +
-            "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-assign=\"" + a.id + "\">Manage</button><button class=\"btn-danger\" data-delete-assign=\"" + a.id + "\">Unassign</button></td></tr>";
+            "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-assign=\"" + a.id + "\">Manage</button>" + (isAdmin() ? "<button class=\"btn-danger\" data-delete-assign=\"" + a.id + "\">Unassign</button>" : "") + "</td></tr>";
         }).join("") + "</tbody></table></div>");
 
     var docsHtml = docs.length === 0 ? '<p class="empty-note">No site-level documents yet. Add them from the Documents tab.</p>' :
@@ -1441,19 +1450,22 @@
       }).join("") + "</div>" +
       (a.activation_date
         ? '<div class="ok-box">Activated on ' + fmtDate(a.activation_date) + (a.activation_override_reason ? " — override: " + escapeHtml(a.activation_override_reason) : "") + "</div>"
-        : (allChecked ? '<div class="ok-box">All activation checklist items complete — ready to activate.</div>' : '<div class="warn-box">Checklist incomplete. Activation requires an authorized override reason.</div>') +
-          '<form id="activateForm"><div class="form-grid">' +
-          (allChecked ? "" : '<div class="form-field wide"><label>Override reason (required — checklist incomplete)</label><input type="text" id="actOverrideReason"></div>') +
-          '</div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">Activate site for this study</button></div></form>');
+        : !isAdmin()
+          ? (allChecked ? '<div class="ok-box">All activation checklist items complete — awaiting an SMO administrator to activate.</div>' : '<div class="warn-box">Checklist incomplete. Only an SMO administrator can activate with an override.</div>')
+          : (allChecked ? '<div class="ok-box">All activation checklist items complete — ready to activate.</div>' : '<div class="warn-box">Checklist incomplete. Activation requires an authorized override reason.</div>') +
+            '<form id="activateForm"><div class="form-grid">' +
+            (allChecked ? "" : '<div class="form-field wide"><label>Override reason (required — checklist incomplete)</label><input type="text" id="actOverrideReason"></div>') +
+            '</div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">Activate site for this study</button></div></form>');
 
     var shareHtml = '<div class="kv-grid">' + kv("Current split (SMO/PI/Site)", (a.smo_share_pct != null ? a.smo_share_pct + "% / " + a.pi_share_pct + "% / " + a.site_share_pct + "%" : "Not configured")) + kv("Version", a.share_version) + kv("Effective date", a.share_effective_date) + kv("Approved by", a.share_approved_by) + "</div>" +
+      (!isAdmin() ? '<p class="empty-note">Only an SMO administrator can change revenue-share terms.</p>' :
       '<form id="shareForm" style="margin-top:12px;"><div class="form-grid">' +
       '<div class="form-field"><label>SMO share %</label><input type="number" step="0.01" id="shSmoPct" value="' + (a.smo_share_pct != null ? a.smo_share_pct : "") + '"></div>' +
       '<div class="form-field"><label>PI share %</label><input type="number" step="0.01" id="shPiPct" value="' + (a.pi_share_pct != null ? a.pi_share_pct : "") + '"></div>' +
       '<div class="form-field"><label>Site share %</label><input type="number" step="0.01" id="shSitePct" value="' + (a.site_share_pct != null ? a.site_share_pct : "") + '"></div>' +
       '<div class="form-field"><label>Effective date</label><input type="date" id="shEffDate" value="' + todayStr() + '"></div>' +
       '<div class="form-field wide"><label>Approved by</label><input type="text" id="shApprover"></div>' +
-      '</div><div class="form-error" id="shareFormError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">Save new share version</button></div></form>';
+      '</div><div class="form-error" id="shareFormError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">Save new share version</button></div></form>');
 
     var subjStats = ["Screened","Enrolled","Completed","Withdrawn"].map(function(st){
       var n = subjects.filter(function(su){ return st === "Enrolled" ? ["Enrolled","Randomized","Active"].indexOf(su.status) !== -1 : su.status === st; }).length;
@@ -1523,7 +1535,8 @@
           return "<tr><td class=\"mono\">" + escapeHtml(s.settlement_number) + "</td><td class=\"mono\">" + fmtDate(s.approved_date) + "</td><td>" + fmtINR(s.gross_revenue) + "</td><td>" + fmtINR(s.approved_expenses_total) + "</td><td>" + fmtINR(s.net_distributable) + "</td><td>" + pill(s.status) + "</td><td>" + (canReverse ? '<button class="btn-sm bad" data-reverse-settlement="' + s.id + '">Reverse</button>' : "") + "</td></tr>";
         }).join("") + "</tbody></table></div></div>");
 
-    var tabs = ["feasibility","activation","revenue-share","recruitment","monitoring","finance","documents"];
+    var tabs = ["feasibility","activation","revenue-share","recruitment","monitoring","documents"];
+    if (isAdmin()) tabs.splice(5, 0, "finance");
     var panelHtml = {
       "feasibility": feasibilityHtml, "activation": activationHtml, "revenue-share": shareHtml,
       "recruitment": recruitmentHtml, "monitoring": monitoringHtml, "finance": financeHtml, "documents": docsHtml
@@ -1746,6 +1759,31 @@
     });
     $("signOutBtn").addEventListener("click", function(){ supabase.auth.signOut(); });
   }
+  function loadProfile(session){
+    return supabase.from("smo_profiles").select("*").eq("id", session.user.id).then(function(res){
+      var profile = res.data && res.data[0];
+      if (res.error || !profile) {
+        alert("No SMO platform profile is configured for this account. Contact your administrator.");
+        supabase.auth.signOut();
+        return Promise.reject(new Error("no profile"));
+      }
+      state.userRole = profile.role;
+      state.userFullName = profile.full_name;
+      if (profile.role === "admin") { state.userSiteIds = null; return; }
+      return supabase.from("smo_user_sites").select("site_id").eq("user_id", session.user.id).then(function(res2){
+        state.userSiteIds = (res2.data || []).map(function(r){ return r.site_id; });
+      });
+    });
+  }
+  function applyRoleUI(){
+    var admin = isAdmin();
+    document.querySelector('[data-tab="finance"]').style.display = admin ? "" : "none";
+    if (!admin && state.activeTab === "finance") document.querySelector('[data-tab="dashboard"]').click();
+    $("studyForm").style.display = admin ? "" : "none";
+    $("siteForm").style.display = admin ? "" : "none";
+    $("roleNoteStudies").hidden = admin;
+    $("roleNoteSites").hidden = admin;
+  }
   var lastHandledToken = null;
   function onSignedIn(session){
     if (session.access_token === lastHandledToken) { renderAccountStrip(session); return; }
@@ -1753,7 +1791,11 @@
     $("authGate").hidden = true;
     renderAccountStrip(session);
     setSyncStatus("pending", " Loading platform data…");
-    refreshAll().then(function(){ setSyncStatus("ok", " Synced with Supabase"); }).catch(function(e){ console.error(e); setSyncStatus("bad", " Could not load data"); });
+    loadProfile(session).then(function(){
+      applyRoleUI();
+      return refreshAll();
+    }).then(function(){ setSyncStatus("ok", " Synced with Supabase — signed in as " + (state.userFullName || session.user.email) + " (" + state.userRole + ")"); })
+      .catch(function(e){ console.error(e); if (e.message !== "no profile") setSyncStatus("bad", " Could not load data"); });
   }
 
   $("loginForm").addEventListener("submit", function(e){
