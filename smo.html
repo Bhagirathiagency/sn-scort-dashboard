@@ -385,6 +385,7 @@
       <p class="panel-sub">Open → Assigned → Action Required → Under Review → Resolved → Verified → Closed.</p>
     </div>
 
+    <p class="ok-box" id="roleNoteIssues" hidden>You have read-only access. Issues are logged by site coordinators and SMO administrators.</p>
     <form id="issueForm">
       <fieldset>
         <legend>Log a new issue</legend>
@@ -428,6 +429,7 @@
 
     <div class="stats" id="finStats"></div>
 
+    <p class="ok-box" id="roleNoteFinance" hidden>You have read-only access to finance and settlements.</p>
     <form id="expenseFormGlobal">
       <fieldset>
         <legend>Log a common study expense</legend>
@@ -472,6 +474,7 @@
       <p class="panel-sub">Metadata-driven, version-controlled document tracking with expiry alerts. No silent overwrite — superseding a document creates a new version and marks the old one Superseded.</p>
     </div>
 
+    <p class="ok-box" id="roleNoteDocuments" hidden>You have read-only access. Documents are uploaded by site coordinators and SMO administrators.</p>
     <form id="documentForm">
       <input type="hidden" id="dfSupersedes">
       <fieldset>
@@ -574,6 +577,9 @@
     userRole: null, userFullName: null, userSiteIds: []
   };
   function isAdmin(){ return state.userRole === "admin"; }
+  function isViewer(){ return state.userRole === "viewer"; }
+  function canEnterData(){ return state.userRole === "admin" || state.userRole === "coordinator"; }
+  function canViewAll(){ return state.userRole === "admin" || state.userRole === "viewer"; }
 
   // ---------- Helpers ----------
   function $(id){ return document.getElementById(id); }
@@ -1013,7 +1019,7 @@
       var overdue = i.due_date && daysUntil(i.due_date) < 0 && i.status !== "Closed";
       var studySiteLabel = (i.study_id ? state.studies.find(function(s){return s.id===i.study_id;}) : null);
       return "<tr class=\"" + (overdue ? "row-flag" : "") + "\"><td class=\"mono\">" + escapeHtml(i.issue_number) + "</td><td>" + escapeHtml(i.issue_type) + "</td><td>" + escapeHtml(studySiteLabel ? studySiteLabel.protocol_number : "—") + (i.site_id ? " / " + escapeHtml(siteName(i.site_id)) : "") + "</td><td>" + escapeHtml(i.severity) + "</td><td>" + pill(i.status) + "</td><td class=\"mono\">" + fmtDate(i.due_date) + (overdue ? ' <span style="color:var(--red);">⚠</span>' : "") + "</td><td>" + escapeHtml(i.responsible_person) + "</td>" +
-        "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-issue=\"" + i.id + "\">Open</button><button class=\"btn-danger\" data-delete-issue=\"" + i.id + "\">Delete</button></td></tr>";
+        "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-issue=\"" + i.id + "\">Open</button>" + (canEnterData() ? "<button class=\"btn-danger\" data-delete-issue=\"" + i.id + "\">Delete</button>" : "") + "</td></tr>";
     }).join("");
   }
   ["isSearch","isStudyFilter","isTypeFilter","isStatusFilter","isOverdueFilter"].forEach(function(id){ $(id).addEventListener("input", renderIssues); $(id).addEventListener("change", renderIssues); });
@@ -1070,10 +1076,10 @@
       expBody.innerHTML = state.expenses.map(function(e){
         var study = state.studies.find(function(s){ return s.id === e.study_id; });
         var assign = e.study_site_id ? assignById(e.study_site_id) : null;
-        var actions = e.approval_status === "Pending"
+        var actions = (isAdmin() && e.approval_status === "Pending")
           ? '<button class="btn-sm ok" data-approve-expense="' + e.id + '">Approve</button><button class="btn-sm bad" data-reject-expense="' + e.id + '">Reject</button>'
           : "";
-        return "<tr><td>" + escapeHtml(study ? study.protocol_number : "—") + "</td><td>" + (assign ? escapeHtml(siteName(assign.site_id)) : '<span class="empty-note">Unallocated</span>') + "</td><td>" + escapeHtml(e.category) + "</td><td>" + fmtINR(e.amount) + "</td><td class=\"mono\">" + escapeHtml(e.bill_reference) + "</td><td>" + pill(e.approval_status) + "</td><td class=\"row-actions\">" + actions + '<button class="btn-danger" data-delete-expense="' + e.id + '">Delete</button></td></tr>';
+        return "<tr><td>" + escapeHtml(study ? study.protocol_number : "—") + "</td><td>" + (assign ? escapeHtml(siteName(assign.site_id)) : '<span class="empty-note">Unallocated</span>') + "</td><td>" + escapeHtml(e.category) + "</td><td>" + fmtINR(e.amount) + "</td><td class=\"mono\">" + escapeHtml(e.bill_reference) + "</td><td>" + pill(e.approval_status) + "</td><td class=\"row-actions\">" + actions + (isAdmin() ? '<button class="btn-danger" data-delete-expense="' + e.id + '">Delete</button>' : "") + "</td></tr>";
       }).join("");
     }
 
@@ -1084,7 +1090,7 @@
       setBody.innerHTML = state.settlements.map(function(s){
         var assign = assignById(s.study_site_id);
         var study = state.studies.find(function(x){ return x.id === s.study_id; });
-        var canReverse = s.status === "Approved" && !state.settlements.some(function(r){ return r.reversal_of === s.id; });
+        var canReverse = isAdmin() && s.status === "Approved" && !state.settlements.some(function(r){ return r.reversal_of === s.id; });
         return "<tr><td class=\"mono\">" + escapeHtml(s.settlement_number) + "</td><td>" + escapeHtml(study ? study.protocol_number : "—") + (assign ? " / " + escapeHtml(siteName(assign.site_id)) : "") + "</td><td class=\"mono\">" + fmtDate(s.approved_date) + "</td><td>" + fmtINR(s.gross_revenue) + "</td><td>" + fmtINR(s.approved_expenses_total) + "</td><td>" + fmtINR(s.net_distributable) + "</td><td>" + pill(s.status) + "</td><td>" + (canReverse ? '<button class="btn-sm bad" data-reverse-settlement="' + s.id + '">Reverse</button>' : "") + "</td></tr>";
       }).join("");
     }
@@ -1167,7 +1173,7 @@
     body.innerHTML = rows.map(function(d){
       var expired = d.expiry_date && daysUntil(d.expiry_date) < 0 && d.status !== "Superseded" && d.status !== "Archived";
       return "<tr class=\"" + (expired ? "row-flag" : "") + "\"><td>" + escapeHtml(d.doc_type) + "</td><td>" + (d.study_id ? escapeHtml(studyLabel(d.study_id)) : "—") + "</td><td>" + (d.site_id ? escapeHtml(siteName(d.site_id)) : "—") + "</td><td class=\"mono\">" + escapeHtml(d.version) + "</td><td>" + pill(d.status) + "</td><td>" + expiryBadge(d.expiry_date) + "</td>" +
-        "<td class=\"row-actions\"><button class=\"btn-sm\" data-new-version=\"" + d.id + "\">New version</button><button class=\"btn-danger\" data-delete-document=\"" + d.id + "\">Delete</button></td></tr>";
+        "<td class=\"row-actions\">" + (canEnterData() ? "<button class=\"btn-sm\" data-new-version=\"" + d.id + "\">New version</button><button class=\"btn-danger\" data-delete-document=\"" + d.id + "\">Delete</button>" : "") + "</td></tr>";
     }).join("");
   }
   ["dcSearch","dcStudyFilter","dcSiteFilter","dcStatusFilter"].forEach(function(id){ $(id).addEventListener("input", renderDocuments); $(id).addEventListener("change", renderDocuments); });
@@ -1314,7 +1320,7 @@
       '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Type</th><th>Version</th><th>Status</th><th>Expiry</th></tr></thead><tbody>' +
       docs.map(function(d){ return "<tr><td>" + escapeHtml(d.doc_type) + "</td><td class=\"mono\">" + escapeHtml(d.version) + "</td><td>" + pill(d.status) + "</td><td>" + expiryBadge(d.expiry_date) + "</td></tr>"; }).join("") + "</tbody></table></div>";
 
-    var trainingHtml = '<div class="mini-form"><form id="trainingForm"><div class="form-grid">' +
+    var trainingHtml = (!canEnterData() ? "" : '<div class="mini-form"><form id="trainingForm"><div class="form-grid">' +
       '<div class="form-field wide"><label>Course / training type *</label><input type="text" id="tnCourse" required></div>' +
       '<div class="form-field"><label>Study (optional)</label><select id="tnStudy"><option value="">Not study-specific</option>' + assigns.map(function(a){ var st = state.studies.find(function(x){return x.id===a.study_id;}); return st ? '<option value="' + st.id + '">' + escapeHtml(st.protocol_number) + "</option>" : ""; }).join("") + "</select></div>" +
       '<div class="form-field"><label>Protocol version</label><input type="text" id="tnVersion"></div>' +
@@ -1324,10 +1330,10 @@
       '<div class="form-field"><label>Expiry / retraining date</label><input type="date" id="tnExpiry"></div>' +
       '<div class="form-field"><label>Certificate ref</label><input type="text" id="tnCert"></div>' +
       '<div class="form-field"><label>Status</label><select id="tnStatus">' + optionsHtml(TRAINING_STATUSES, "Completed") + "</select></div>" +
-      '</div><div class="form-error" id="trainingFormError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Add training record</button></div></form></div>' +
+      '</div><div class="form-error" id="trainingFormError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Add training record</button></div></form></div>') +
       (trainings.length === 0 ? '<p class="empty-note">No training records yet.</p>' :
         '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Course</th><th>Trainee</th><th>Date</th><th>Expiry</th><th>Status</th><th></th></tr></thead><tbody>' +
-        trainings.map(function(t){ return "<tr><td>" + escapeHtml(t.course) + "</td><td>" + escapeHtml(t.trainee_name) + "</td><td class=\"mono\">" + fmtDate(t.training_date) + "</td><td>" + expiryBadge(t.expiry_date) + "</td><td>" + pill(t.status) + "</td><td><button class=\"btn-danger\" data-delete-training=\"" + t.id + "\">Delete</button></td></tr>"; }).join("") + "</tbody></table></div>");
+        trainings.map(function(t){ return "<tr><td>" + escapeHtml(t.course) + "</td><td>" + escapeHtml(t.trainee_name) + "</td><td class=\"mono\">" + fmtDate(t.training_date) + "</td><td>" + expiryBadge(t.expiry_date) + "</td><td>" + pill(t.status) + "</td><td>" + (canEnterData() ? "<button class=\"btn-danger\" data-delete-training=\"" + t.id + "\">Delete</button>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>");
 
     var tabs = ["overview","study-assignments","documents","training"];
     var d = $("drawer");
@@ -1371,19 +1377,27 @@
     d.innerHTML =
       '<div class="drawer-head"><h2>' + escapeHtml(i.issue_number) + '</h2><button class="drawer-close" id="drawerCloseBtn">&times;</button></div>' +
       '<div class="drawer-sub">' + escapeHtml(i.issue_type) + " · " + escapeHtml(i.severity) + " · " + (i.study_id ? escapeHtml(studyLabel(i.study_id)) : "—") + (i.site_id ? " / " + escapeHtml(siteName(i.site_id)) : "") + "</div>" +
-      '<div class="drawer-section"><h4>Lifecycle</h4><div class="workflow-stepper">' + ISSUE_STATUSES.map(function(st){ return '<button class="step-btn' + (st === i.status ? " current" : "") + '" data-set-issue-status="' + st + '">' + st + "</button>"; }).join("") + "</div></div>" +
+      '<div class="drawer-section"><h4>Lifecycle</h4>' + (canEnterData()
+        ? '<div class="workflow-stepper">' + ISSUE_STATUSES.map(function(st){ return '<button class="step-btn' + (st === i.status ? " current" : "") + '" data-set-issue-status="' + st + '">' + st + "</button>"; }).join("") + "</div>"
+        : pill(i.status)) + "</div>" +
       '<div class="drawer-section"><h4>Description</h4><div class="kv-grid"><div class="full">' + escapeHtml(i.description) + "</div></div></div>" +
       '<div class="drawer-section"><h4>Details</h4><div class="kv-grid">' + kv("Source", i.source) + kv("Responsible person", i.responsible_person) + kv("Due date", i.due_date) + kv("Closure date", i.closure_date) + "</div></div>" +
-      '<div class="drawer-section"><h4>Corrective &amp; preventive action</h4>' +
-        '<form id="issueCapaForm"><div class="form-grid">' +
-        '<div class="form-field wide"><label>Corrective action</label><textarea id="icCorrective">' + escapeHtml(i.corrective_action || "") + "</textarea></div>" +
-        '<div class="form-field wide"><label>Preventive action</label><textarea id="icPreventive">' + escapeHtml(i.preventive_action || "") + "</textarea></div>" +
-        '<div class="form-field wide"><label>Supporting evidence</label><textarea id="icEvidence">' + escapeHtml(i.supporting_evidence || "") + "</textarea></div>" +
-        '<div class="form-field wide"><label>Verification</label><textarea id="icVerification">' + escapeHtml(i.verification || "") + "</textarea></div>" +
-        '</div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">Save</button></div></form>' +
-      "</div>";
+      (canEnterData()
+        ? '<div class="drawer-section"><h4>Corrective &amp; preventive action</h4>' +
+          '<form id="issueCapaForm"><div class="form-grid">' +
+          '<div class="form-field wide"><label>Corrective action</label><textarea id="icCorrective">' + escapeHtml(i.corrective_action || "") + "</textarea></div>" +
+          '<div class="form-field wide"><label>Preventive action</label><textarea id="icPreventive">' + escapeHtml(i.preventive_action || "") + "</textarea></div>" +
+          '<div class="form-field wide"><label>Supporting evidence</label><textarea id="icEvidence">' + escapeHtml(i.supporting_evidence || "") + "</textarea></div>" +
+          '<div class="form-field wide"><label>Verification</label><textarea id="icVerification">' + escapeHtml(i.verification || "") + "</textarea></div>" +
+          '</div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">Save</button></div></form>' +
+        "</div>"
+        : '<div class="drawer-section"><h4>Corrective &amp; preventive action</h4><div class="kv-grid">' +
+          kv("Corrective action", i.corrective_action) + kv("Preventive action", i.preventive_action) +
+          kv("Supporting evidence", i.supporting_evidence) + kv("Verification", i.verification) +
+          "</div></div>");
     $("drawerCloseBtn").addEventListener("click", closeDrawer);
-    $("issueCapaForm").addEventListener("submit", function(e){
+    var issueCapaForm = $("issueCapaForm");
+    if (issueCapaForm) issueCapaForm.addEventListener("submit", function(e){
       e.preventDefault();
       supabase.from("smo_issues").update({
         corrective_action: $("icCorrective").value.trim() || null, preventive_action: $("icPreventive").value.trim() || null,
@@ -1432,21 +1446,25 @@
     var docs = state.documents.filter(function(d){ return d.study_id === a.study_id && d.site_id === a.site_id; });
     var settlements = state.settlements.filter(function(s){ return s.study_site_id === a.id; });
 
-    var stageHtml = '<div class="workflow-stepper">' + ASSIGN_STAGES.map(function(st){ return '<button class="step-btn' + (st === a.status ? " current" : "") + '" data-set-stage="' + st + '">' + st + "</button>"; }).join("") + "</div>";
+    var stageHtml = canEnterData()
+      ? '<div class="workflow-stepper">' + ASSIGN_STAGES.map(function(st){ return '<button class="step-btn' + (st === a.status ? " current" : "") + '" data-set-stage="' + st + '">' + st + "</button>"; }).join("") + "</div>"
+      : '<div>' + pill(a.status) + "</div>";
 
-    var feasibilityHtml = stageHtml + '<form id="feasibilityForm"><div class="form-grid">' +
+    var feasibilityHtml = stageHtml + (!canEnterData()
+      ? '<div class="kv-grid" style="margin-top:12px;">' + kv("Feasibility score", a.feasibility_score) + kv("Decision", a.feasibility_decision) + kv("Reviewer", a.feasibility_reviewer) + kv("Decision date", a.feasibility_date) + kv("Notes", a.feasibility_notes) + "</div>"
+      : '<form id="feasibilityForm"><div class="form-grid">' +
       '<div class="form-field"><label>Feasibility score (0-100)</label><input type="number" min="0" max="100" id="fzScore" value="' + (a.feasibility_score != null ? a.feasibility_score : "") + '"></div>' +
       '<div class="form-field"><label>Decision</label><select id="fzDecision"><option value="">Pending</option><option' + (a.feasibility_decision === "Recommended" ? " selected" : "") + ">Recommended</option><option" + (a.feasibility_decision === "Not Recommended" ? " selected" : "") + ">Not Recommended</option></select></div>" +
       '<div class="form-field"><label>Reviewer</label><input type="text" id="fzReviewer" value="' + escapeHtml(a.feasibility_reviewer || "") + '"></div>' +
       '<div class="form-field"><label>Decision date</label><input type="date" id="fzDate" value="' + (a.feasibility_date || "") + '"></div>' +
       '<div class="form-field wide"><label>Notes</label><textarea id="fzNotes">' + escapeHtml(a.feasibility_notes || "") + "</textarea></div>" +
-      '</div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">Save feasibility</button></div></form>';
+      '</div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">Save feasibility</button></div></form>');
 
     var checklist = a.activation_checklist || {};
     var allChecked = ACTIVATION_ITEMS.every(function(item){ return !!checklist[item[0]]; });
     var activationHtml =
       '<div class="checklist">' + ACTIVATION_ITEMS.map(function(item){
-        return '<label><input type="checkbox" data-toggle-check="' + item[0] + '"' + (checklist[item[0]] ? " checked" : "") + "> " + item[1] + "</label>";
+        return '<label><input type="checkbox" data-toggle-check="' + item[0] + '"' + (checklist[item[0]] ? " checked" : "") + (canEnterData() ? "" : " disabled") + "> " + item[1] + "</label>";
       }).join("") + "</div>" +
       (a.activation_date
         ? '<div class="ok-box">Activated on ' + fmtDate(a.activation_date) + (a.activation_override_reason ? " — override: " + escapeHtml(a.activation_override_reason) : "") + "</div>"
@@ -1472,18 +1490,18 @@
       return '<div class="stat"><div class="num">' + n + '</div><div class="lbl">' + st + "</div></div>";
     }).join("");
     var recruitmentHtml = '<div class="stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">' + subjStats + "</div>" +
-      '<div class="mini-form"><form id="subjectForm"><div class="form-grid">' +
+      (!canEnterData() ? "" : '<div class="mini-form"><form id="subjectForm"><div class="form-grid">' +
       '<div class="form-field"><label>Subject code *</label><input type="text" id="sjCode" required></div>' +
       '<div class="form-field"><label>Screening date</label><input type="date" id="sjScreen"></div>' +
       '<div class="form-field"><label>Enrollment date</label><input type="date" id="sjEnroll"></div>' +
       '<div class="form-field"><label>Randomization ID</label><input type="text" id="sjRand"></div>' +
       '<div class="form-field"><label>Status</label><select id="sjStatus">' + optionsHtml(SUBJECT_STATUSES, "Screened") + "</select></div>" +
-      '</div><div class="form-error" id="subjectFormError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Add subject</button></div></form></div>' +
+      '</div><div class="form-error" id="subjectFormError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Add subject</button></div></form></div>') +
       (subjects.length === 0 ? '<p class="empty-note">No subjects logged yet.</p>' :
         '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Code</th><th>Screening</th><th>Enrollment</th><th>Status</th><th></th></tr></thead><tbody>' +
-        subjects.map(function(su){ return "<tr><td class=\"mono\">" + escapeHtml(su.subject_code) + "</td><td class=\"mono\">" + fmtDate(su.screening_date) + "</td><td class=\"mono\">" + fmtDate(su.enrollment_date) + "</td><td>" + pill(su.status) + "</td><td><button class=\"btn-danger\" data-delete-subject=\"" + su.id + "\">Delete</button></td></tr>"; }).join("") + "</tbody></table></div>");
+        subjects.map(function(su){ return "<tr><td class=\"mono\">" + escapeHtml(su.subject_code) + "</td><td class=\"mono\">" + fmtDate(su.screening_date) + "</td><td class=\"mono\">" + fmtDate(su.enrollment_date) + "</td><td>" + pill(su.status) + "</td><td>" + (canEnterData() ? "<button class=\"btn-danger\" data-delete-subject=\"" + su.id + "\">Delete</button>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>");
 
-    var monitoringHtml = '<div class="mini-form"><form id="visitForm"><div class="form-grid">' +
+    var monitoringHtml = (!canEnterData() ? "" : '<div class="mini-form"><form id="visitForm"><div class="form-grid">' +
       '<div class="form-field"><label>Visit type</label><select id="mvType">' + optionsHtml(VISIT_TYPES, "Routine") + "</select></div>" +
       '<div class="form-field"><label>Visit date</label><input type="date" id="mvDate"></div>' +
       '<div class="form-field"><label>Monitor</label><input type="text" id="mvMonitor"></div>' +
@@ -1492,10 +1510,10 @@
       '<div class="form-field wide"><label>Scope</label><input type="text" id="mvScope"></div>' +
       '<div class="form-field wide"><label>Findings</label><textarea id="mvFindings"></textarea></div>' +
       '<div class="form-field wide"><label>Actions</label><textarea id="mvActions"></textarea></div>' +
-      '</div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Add visit</button></div></form></div>' +
+      '</div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Add visit</button></div></form></div>') +
       (visits.length === 0 ? '<p class="empty-note">No monitoring visits logged yet.</p>' :
         '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Type</th><th>Date</th><th>Monitor</th><th>Status</th><th></th></tr></thead><tbody>' +
-        visits.map(function(v){ return "<tr><td>" + escapeHtml(v.visit_type) + "</td><td class=\"mono\">" + fmtDate(v.visit_date) + "</td><td>" + escapeHtml(v.monitor_name) + "</td><td>" + pill(v.status) + "</td><td><button class=\"btn-danger\" data-delete-visit=\"" + v.id + "\">Delete</button></td></tr>"; }).join("") + "</tbody></table></div>");
+        visits.map(function(v){ return "<tr><td>" + escapeHtml(v.visit_type) + "</td><td class=\"mono\">" + fmtDate(v.visit_date) + "</td><td>" + escapeHtml(v.monitor_name) + "</td><td>" + pill(v.status) + "</td><td>" + (canEnterData() ? "<button class=\"btn-danger\" data-delete-visit=\"" + v.id + "\">Delete</button>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>");
 
     var docsHtml = docs.length === 0 ? '<p class="empty-note">No documents linked to this study+site pairing yet. Add them from the Documents tab (set both Study and Site).</p>' :
       '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Type</th><th>Version</th><th>Status</th><th>Expiry</th></tr></thead><tbody>' +
@@ -1507,7 +1525,7 @@
     var sharesReady = a.smo_share_pct != null && a.pi_share_pct != null && a.site_share_pct != null;
 
     var financeHtml =
-      (unallocated.length > 0 ? '<div class="warn-box">' + unallocated.length + ' unallocated study-level expense(s) exist. <button type="button" class="btn-sm" id="showUnallocatedBtn">Attribute to this site</button></div>' +
+      (!isAdmin() ? "" : (unallocated.length > 0 ? '<div class="warn-box">' + unallocated.length + ' unallocated study-level expense(s) exist. <button type="button" class="btn-sm" id="showUnallocatedBtn">Attribute to this site</button></div>' +
         '<div id="unallocatedBox" style="display:none;" class="mini-form">' +
         unallocated.map(function(e){ return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;"><span>' + escapeHtml(e.category || "Expense") + " — " + fmtINR(e.amount) + '</span><button class="btn-sm" data-attribute-expense="' + e.id + '" data-target-assign="' + a.id + '">Attribute here</button></div>'; }).join("") +
         "</div>" : "") +
@@ -1516,12 +1534,13 @@
       '<div class="form-field"><label>Amount (₹) *</label><input type="number" step="0.01" min="0" id="eaAmount" required></div>' +
       '<div class="form-field"><label>Bill reference</label><input type="text" id="eaBillRef"></div>' +
       '<div class="form-field wide"><label>Description</label><textarea id="eaDescription"></textarea></div>' +
-      '</div><div class="form-error" id="expenseAssignError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Log expense for this site</button></div></form></div>' +
+      '</div><div class="form-error" id="expenseAssignError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Log expense for this site</button></div></form></div>') +
       (expenses.length === 0 ? '<p class="empty-note">No expenses logged for this site yet.</p>' :
         '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Category</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>' +
-        expenses.map(function(e){ var actions = e.approval_status === "Pending" ? '<button class="btn-sm ok" data-approve-expense="' + e.id + '">Approve</button><button class="btn-sm bad" data-reject-expense="' + e.id + '">Reject</button>' : ""; return "<tr><td>" + escapeHtml(e.category) + "</td><td>" + fmtINR(e.amount) + "</td><td>" + pill(e.approval_status) + "</td><td class=\"row-actions\">" + actions + "</td></tr>"; }).join("") + "</tbody></table></div>") +
+        expenses.map(function(e){ var actions = (isAdmin() && e.approval_status === "Pending") ? '<button class="btn-sm ok" data-approve-expense="' + e.id + '">Approve</button><button class="btn-sm bad" data-reject-expense="' + e.id + '">Reject</button>' : ""; return "<tr><td>" + escapeHtml(e.category) + "</td><td>" + fmtINR(e.amount) + "</td><td>" + pill(e.approval_status) + "</td><td class=\"row-actions\">" + actions + "</td></tr>"; }).join("") + "</tbody></table></div>") +
       '<div class="drawer-section" style="margin-top:18px;"><h4>Settlement — revenue sharing engine</h4>' +
-      (!sharesReady ? '<div class="warn-box">Configure the SMO / PI / Site share percentages above before recording a settlement.</div>' :
+      (!isAdmin() ? '<p class="empty-note">Only an SMO administrator can record settlements.</p>' :
+       !sharesReady ? '<div class="warn-box">Configure the SMO / PI / Site share percentages above before recording a settlement.</div>' :
         pendingHere.length > 0 ? '<div class="warn-box">' + pendingHere.length + ' expense(s) are still pending approval for this site. Approve or reject them before settling.</div>' :
         '<form id="settlementForm"><div class="form-grid">' +
         '<div class="form-field"><label>Gross study revenue for this site (₹) *</label><input type="number" step="0.01" min="0" id="stlGross" required></div>' +
@@ -1531,12 +1550,12 @@
       "</div>" +
       (settlements.length === 0 ? "" : '<div class="drawer-section"><h4>Settlement history for this site</h4><div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>#</th><th>Date</th><th>Gross</th><th>Expenses</th><th>Net</th><th>Status</th><th></th></tr></thead><tbody>' +
         settlements.map(function(s){
-          var canReverse = s.status === "Approved" && !state.settlements.some(function(r){ return r.reversal_of === s.id; });
+          var canReverse = isAdmin() && s.status === "Approved" && !state.settlements.some(function(r){ return r.reversal_of === s.id; });
           return "<tr><td class=\"mono\">" + escapeHtml(s.settlement_number) + "</td><td class=\"mono\">" + fmtDate(s.approved_date) + "</td><td>" + fmtINR(s.gross_revenue) + "</td><td>" + fmtINR(s.approved_expenses_total) + "</td><td>" + fmtINR(s.net_distributable) + "</td><td>" + pill(s.status) + "</td><td>" + (canReverse ? '<button class="btn-sm bad" data-reverse-settlement="' + s.id + '">Reverse</button>' : "") + "</td></tr>";
         }).join("") + "</tbody></table></div></div>");
 
     var tabs = ["feasibility","activation","revenue-share","recruitment","monitoring","documents"];
-    if (isAdmin()) tabs.splice(5, 0, "finance");
+    if (canViewAll()) tabs.splice(5, 0, "finance");
     var panelHtml = {
       "feasibility": feasibilityHtml, "activation": activationHtml, "revenue-share": shareHtml,
       "recruitment": recruitmentHtml, "monitoring": monitoringHtml, "finance": financeHtml, "documents": docsHtml
@@ -1777,12 +1796,20 @@
   }
   function applyRoleUI(){
     var admin = isAdmin();
-    document.querySelector('[data-tab="finance"]').style.display = admin ? "" : "none";
-    if (!admin && state.activeTab === "finance") document.querySelector('[data-tab="dashboard"]').click();
+    var entry = canEnterData();
+    var viewAll = canViewAll();
+    document.querySelector('[data-tab="finance"]').style.display = viewAll ? "" : "none";
+    if (!viewAll && state.activeTab === "finance") document.querySelector('[data-tab="dashboard"]').click();
     $("studyForm").style.display = admin ? "" : "none";
     $("siteForm").style.display = admin ? "" : "none";
     $("roleNoteStudies").hidden = admin;
     $("roleNoteSites").hidden = admin;
+    $("issueForm").style.display = entry ? "" : "none";
+    $("roleNoteIssues").hidden = entry;
+    $("documentForm").style.display = entry ? "" : "none";
+    $("roleNoteDocuments").hidden = entry;
+    $("expenseFormGlobal").style.display = admin ? "" : "none";
+    $("roleNoteFinance").hidden = admin;
   }
   var lastHandledToken = null;
   function onSignedIn(session){
