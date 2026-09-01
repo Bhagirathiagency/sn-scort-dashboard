@@ -36,6 +36,19 @@
   .back-link{font-family:'IBM Plex Mono',monospace; font-size:11px; color:rgba(247,245,240,0.65); text-decoration:none;}
   .back-link:hover{color:var(--paper);}
   .sync-status{font-family:'IBM Plex Mono',monospace; font-size:12px; color:rgba(247,245,240,0.75); text-align:right;}
+  .account-strip{font-family:'IBM Plex Mono',monospace; font-size:11px; color:rgba(247,245,240,0.65); text-align:right; margin-top:4px;}
+  .account-strip button{background:none; border:none; color:rgba(247,245,240,0.85); text-decoration:underline; cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:11px; padding:0; margin-left:10px;}
+  .account-strip button:hover{color:#fff;}
+
+  .auth-gate{position:fixed; inset:0; background:var(--console); display:flex; align-items:center; justify-content:center; z-index:200;}
+  .auth-gate[hidden]{display:none;}
+  .auth-card{background:var(--paper); border-radius:12px; padding:32px 30px; width:min(360px,90vw); box-shadow:0 10px 40px rgba(0,0,0,0.3);}
+  .auth-card h2{font-family:'Fraunces',serif; font-size:20px; margin:0 0 4px;}
+  .auth-card p{font-size:12.5px; color:var(--slate); margin:0 0 18px;}
+  .auth-card .form-field{margin-bottom:12px;}
+  .auth-card .form-field label{font-size:11px; color:var(--slate); font-weight:500; display:block; margin-bottom:4px;}
+  .auth-card .form-field input{width:100%; border:1px solid var(--line); border-radius:6px; padding:9px 10px; font-family:'Inter',sans-serif; font-size:13.5px; background:var(--paper); color:var(--ink);}
+  .auth-card .btn-primary{width:100%; padding:10px; margin-top:6px;}
   .sync-dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; background:var(--sage);}
   .sync-dot.bad{background:var(--red);}
   .sync-dot.pending{background:var(--amber);}
@@ -165,6 +178,19 @@
 </head>
 <body>
 
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <h2>SMO Platform sign-in</h2>
+    <p>Access is restricted to authorized SN SCORT staff. Contact your administrator for an account.</p>
+    <form id="loginForm">
+      <div class="form-field"><label>Email</label><input type="email" id="loginEmail" autocomplete="username" required></div>
+      <div class="form-field"><label>Password</label><input type="password" id="loginPassword" autocomplete="current-password" required></div>
+      <div class="form-error" id="loginError"></div>
+      <button type="submit" class="btn-primary" id="loginSubmitBtn">Sign in</button>
+    </form>
+  </div>
+</div>
+
 <div class="console">
   <div class="console-inner">
     <div style="display:flex; align-items:center; gap:14px;">
@@ -175,7 +201,10 @@
         <a href="index.html" class="back-link">&larr; 90-Day Execution Board</a>
       </div>
     </div>
-    <div class="sync-status" id="syncStatus"><span class="sync-dot pending" id="syncDot"></span>Connecting…</div>
+    <div>
+      <div class="sync-status" id="syncStatus"><span class="sync-dot pending" id="syncDot"></span>Connecting…</div>
+      <div class="account-strip" id="accountStrip" hidden></div>
+    </div>
   </div>
   <div class="console-strip">
     <div class="console-strip-inner" id="consoleStrip">
@@ -1692,12 +1721,67 @@
     }
   });
 
+  // ---------- Auth ----------
+  function showAuthGate(){
+    $("authGate").hidden = false;
+    $("accountStrip").hidden = true;
+    setSyncStatus("pending", " Sign in to load platform data");
+  }
+  function renderAccountStrip(session){
+    var strip = $("accountStrip");
+    strip.hidden = false;
+    strip.innerHTML = "Signed in as " + escapeHtml(session.user.email) +
+      '<button type="button" id="changePwBtn">Change password</button>' +
+      '<button type="button" id="signOutBtn">Sign out</button>';
+    $("changePwBtn").addEventListener("click", function(){
+      var pw1 = prompt("New password (minimum 6 characters):");
+      if (!pw1) return;
+      if (pw1.length < 6) { alert("Password must be at least 6 characters."); return; }
+      var pw2 = prompt("Confirm new password:");
+      if (pw1 !== pw2) { alert("Passwords did not match — no change made."); return; }
+      supabase.auth.updateUser({ password: pw1 }).then(function(res){
+        if (res.error) { alert("Could not update password — " + res.error.message); return; }
+        alert("Password updated.");
+      });
+    });
+    $("signOutBtn").addEventListener("click", function(){ supabase.auth.signOut(); });
+  }
+  var lastHandledToken = null;
+  function onSignedIn(session){
+    if (session.access_token === lastHandledToken) { renderAccountStrip(session); return; }
+    lastHandledToken = session.access_token;
+    $("authGate").hidden = true;
+    renderAccountStrip(session);
+    setSyncStatus("pending", " Loading platform data…");
+    refreshAll().then(function(){ setSyncStatus("ok", " Synced with Supabase"); }).catch(function(e){ console.error(e); setSyncStatus("bad", " Could not load data"); });
+  }
+
+  $("loginForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    showError("loginError", "");
+    if (!supabase) { showError("loginError", "Not connected to the database."); return; }
+    $("loginSubmitBtn").disabled = true;
+    supabase.auth.signInWithPassword({
+      email: $("loginEmail").value.trim(), password: $("loginPassword").value
+    }).then(function(res){
+      $("loginSubmitBtn").disabled = false;
+      if (res.error) { showError("loginError", res.error.message); return; }
+      $("loginForm").reset();
+    });
+  });
+
   // ---------- Init ----------
   if (!supabase) {
     setSyncStatus("bad", " Offline — Supabase client failed to load");
   } else {
-    setSyncStatus("pending", " Loading platform data…");
-    refreshAll().then(function(){ setSyncStatus("ok", " Synced with Supabase"); }).catch(function(e){ console.error(e); setSyncStatus("bad", " Could not load data"); });
+    supabase.auth.onAuthStateChange(function(event, session){
+      if (event === "SIGNED_IN" && session) onSignedIn(session);
+      else if (event === "SIGNED_OUT") { showAuthGate(); location.reload(); }
+    });
+    supabase.auth.getSession().then(function(res){
+      if (res.data && res.data.session) onSignedIn(res.data.session);
+      else showAuthGate();
+    });
   }
 })();
 </script>
