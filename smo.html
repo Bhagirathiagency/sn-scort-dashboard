@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SN SCORT — SMO Clinical Research Platform</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14213D;
+    --console:#0E1B33;
+    --paper:#F7F5F0;
+    --paper-2:#EFEBE1;
+    --teal:#2A6F77;
+    --teal-dark:#1D4F55;
+    --amber:#D68C45;
+    --sage:#6E8F73;
+    --red:#B4523F;
+    --red-dark:#8C3C2C;
+    --slate:#5B6570;
+    --line: rgba(20,33,61,0.12);
+    --card-shadow: 0 1px 2px rgba(20,33,61,0.06), 0 2px 8px rgba(20,33,61,0.04);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;}
+  a{color:var(--teal-dark);}
+  .wrap{max-width:1280px; margin:0 auto; padding:0 24px 80px;}
+
+  .console{background:var(--console); color:var(--paper); margin-bottom:24px;}
+  .console-inner{max-width:1280px; margin:0 auto; padding:20px 24px; display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap;}
+  .brand-logo{height:40px; width:auto; display:block;}
+  .brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); margin:0 0 6px;}
+  h1{font-family:'Fraunces',serif; font-weight:600; font-size:28px; margin:0; letter-spacing:-0.01em; color:var(--paper);}
+  .back-link{font-family:'IBM Plex Mono',monospace; font-size:11px; color:rgba(247,245,240,0.65); text-decoration:none;}
+  .back-link:hover{color:var(--paper);}
+  .sync-status{font-family:'IBM Plex Mono',monospace; font-size:12px; color:rgba(247,245,240,0.75); text-align:right;}
+  .sync-dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; background:var(--sage);}
+  .sync-dot.bad{background:var(--red);}
+  .sync-dot.pending{background:var(--amber);}
+  .console-strip{background:rgba(247,245,240,0.06); border-top:1px solid rgba(247,245,240,0.12);}
+  .console-strip-inner{max-width:1280px; margin:0 auto; padding:10px 24px; display:flex; gap:28px; flex-wrap:wrap; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:rgba(247,245,240,0.7);}
+  .console-strip b{color:var(--paper); font-weight:600;}
+  .console-strip .flag b{color:#F0A18F;}
+
+  .tabs{display:flex; gap:8px; margin-bottom:24px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+  .tab-btn{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; padding:10px 16px; cursor:pointer; border:none; background:none; color:var(--slate); border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s;}
+  .tab-btn.active{color:var(--ink); border-bottom-color:var(--teal);}
+  .tab-btn:hover{color:var(--ink);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .panel-head{margin-bottom:14px;}
+  .panel-head h2{font-family:'Fraunces',serif; font-weight:600; font-size:20px; margin:0 0 2px;}
+  .panel-sub{font-size:12.5px; color:var(--slate);}
+
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:24px;}
+  .stat{background:var(--paper); padding:16px 18px;}
+  .stat .num{font-family:'Fraunces',serif; font-size:26px; font-weight:600; line-height:1;}
+  .stat .lbl{font-size:12px; color:var(--slate); margin-top:6px;}
+  .stat.warn .num{color:var(--red);}
+  @media (max-width:780px){ .stats{grid-template-columns:repeat(2,1fr);} }
+
+  .dash-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:20px;}
+  @media (max-width:900px){ .dash-grid{grid-template-columns:1fr;} }
+  .card-block{background:var(--paper-2); border-radius:10px; padding:16px; margin-bottom:20px;}
+  .card-block h3{font-size:13px; text-transform:uppercase; letter-spacing:0.06em; color:var(--slate); margin:0 0 12px;}
+  .due-list{list-style:none; margin:0; padding:0;}
+  .due-list li{display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:12.5px;}
+  .due-list li:last-child{border-bottom:none;}
+  .due-badge{font-family:'IBM Plex Mono',monospace; font-size:11px; padding:2px 7px; border-radius:4px; white-space:nowrap;}
+  .due-badge.overdue{background:rgba(180,82,63,0.16); color:var(--red);}
+  .due-badge.soon{background:rgba(214,140,69,0.16); color:var(--amber);}
+  .due-badge.ok{background:rgba(110,143,115,0.16); color:var(--sage);}
+  .empty-note{color:var(--slate); font-style:italic; font-size:12.5px; padding:6px 0;}
+  .link-btn{background:none; border:none; padding:0; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; color:var(--teal-dark); cursor:pointer; text-decoration:underline;}
+
+  fieldset{border:1px solid var(--line); border-radius:8px; padding:14px 16px 16px; margin:0 0 16px;}
+  legend{font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--teal-dark); padding:0 6px;}
+  .form-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px;}
+  .form-field{display:flex; flex-direction:column; gap:4px;}
+  .form-field.wide{grid-column:1/-1;}
+  .form-field label{font-size:11px; color:var(--slate); font-weight:500;}
+  .form-field input, .form-field select, .form-field textarea{border:1px solid var(--line); border-radius:6px; padding:8px 10px; font-family:'Inter',sans-serif; font-size:13px; background:var(--paper); color:var(--ink); width:100%;}
+  .form-field textarea{min-height:60px; resize:vertical;}
+  .form-error{color:var(--red); font-size:12px; width:100%; margin-top:6px;}
+  .form-error:empty{display:none;}
+  .form-actions{display:flex; gap:8px; margin-top:4px; flex-wrap:wrap;}
+  .check-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px 16px;}
+  .check-field{display:flex; align-items:center; gap:8px; font-size:13px;}
+  .check-field input{width:16px; height:16px;}
+
+  button{font-family:'Inter',sans-serif; cursor:pointer;}
+  .btn-primary{background:var(--teal); border:none; color:#fff; font-weight:600; font-size:13px; padding:9px 18px; border-radius:6px;}
+  .btn-primary:hover{background:var(--teal-dark);}
+  .btn-secondary{background:var(--paper); border:1px solid var(--line); color:var(--slate); font-size:13px; padding:8px 14px; border-radius:6px;}
+  .btn-secondary:hover{color:var(--ink);}
+  .btn-danger{background:none; border:1px solid var(--red); color:var(--red); font-size:11.5px; padding:5px 9px; border-radius:5px;}
+  .btn-sm{font-size:11.5px; border:1px solid var(--line); background:var(--paper); color:var(--slate); border-radius:5px; padding:5px 9px;}
+  .btn-sm:hover{color:var(--ink); background:var(--paper-2);}
+  .btn-sm.ok{border-color:var(--sage); color:var(--teal-dark);}
+  .btn-sm.bad{border-color:var(--red); color:var(--red);}
+
+  .filter-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:center;}
+  .filter-row select, .filter-row input{border:1px solid var(--line); border-radius:6px; padding:7px 10px; font-size:13px; background:var(--paper); color:var(--ink);}
+  .filter-row input[type=search]{min-width:200px;}
+  .filter-count{margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--slate);}
+
+  table.data-table{width:100%; border-collapse:collapse; background:var(--paper); border-radius:10px; overflow:hidden; box-shadow:var(--card-shadow);}
+  table.data-table th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--slate); background:var(--paper-2); padding:10px 12px; font-weight:600;}
+  table.data-table td{padding:9px 12px; font-size:13px; border-top:1px solid var(--line); vertical-align:middle;}
+  table.data-table tr:hover td{background:rgba(42,111,119,0.04);}
+  table.data-table tr.row-flag td{background:rgba(180,82,63,0.05);}
+  .mono{font-family:'IBM Plex Mono',monospace; font-size:12px;}
+  .row-link{background:none; border:none; padding:0; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; color:var(--teal-dark); cursor:pointer; text-decoration:underline; text-align:left;}
+  .empty-row td{color:var(--slate); font-style:italic; text-align:center; padding:20px;}
+  .row-actions{display:flex; gap:6px; flex-wrap:wrap;}
+
+  .pill{font-size:11px; padding:2px 9px; border-radius:20px; font-weight:600; letter-spacing:0.02em; white-space:nowrap; display:inline-block;}
+  .pill-green{background:rgba(110,143,115,0.18); color:var(--sage);}
+  .pill-amber{background:rgba(214,140,69,0.18); color:#9C5E24;}
+  .pill-red{background:rgba(180,82,63,0.16); color:var(--red);}
+  .pill-teal{background:rgba(42,111,119,0.16); color:var(--teal-dark);}
+  .pill-slate{background:rgba(20,33,61,0.08); color:var(--slate);}
+
+  .warn-box{background:rgba(180,82,63,0.1); border:1px solid rgba(180,82,63,0.3); color:var(--red-dark); border-radius:8px; padding:10px 12px; font-size:12.5px; margin-bottom:12px;}
+  .ok-box{background:rgba(110,143,115,0.12); border:1px solid rgba(110,143,115,0.3); color:var(--teal-dark); border-radius:8px; padding:10px 12px; font-size:12.5px; margin-bottom:12px;}
+  .mini-form{background:var(--paper-2); border-radius:8px; padding:12px; margin-bottom:16px;}
+
+  /* Drawers */
+  .drawer-overlay{position:fixed; inset:0; background:rgba(14,27,51,0.5); display:none; align-items:flex-start; justify-content:flex-end; z-index:50;}
+  .drawer-overlay.open{display:flex;}
+  .drawer{background:var(--paper); width:min(640px,100%); height:100%; overflow-y:auto; padding:24px; box-shadow:-4px 0 24px rgba(0,0,0,0.2);}
+  #assignDrawerOverlay{z-index:60;}
+  #assignDrawerOverlay .drawer{width:min(760px,100%);}
+  .drawer-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:4px;}
+  .drawer-head h2{font-family:'Fraunces',serif; font-size:20px; margin:0;}
+  .drawer-close{background:none; border:none; font-size:20px; color:var(--slate); cursor:pointer; line-height:1;}
+  .drawer-sub{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--slate); margin-bottom:14px;}
+  .drawer-section{margin-bottom:18px;}
+  .drawer-section h4{font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--slate); margin:0 0 8px;}
+  .kv-grid{display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; font-size:13px;}
+  .kv-grid .k{color:var(--slate); font-size:11.5px;}
+  .kv-grid .full{grid-column:1/-1;}
+  .workflow-stepper{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
+  .step-btn{font-size:11px; padding:5px 10px; border-radius:20px; border:1px solid var(--line); background:var(--paper); color:var(--slate); cursor:pointer;}
+  .step-btn.current{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+
+  .subtabs{display:flex; gap:4px; margin:14px 0 16px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+  .subtab-btn{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; padding:7px 11px; border:none; background:none; color:var(--slate); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;}
+  .subtab-btn.active{color:var(--ink); border-bottom-color:var(--teal);}
+  .subpanel{display:none;}
+  .subpanel.active{display:block;}
+  .checklist{display:flex; flex-direction:column; gap:8px; margin-bottom:10px;}
+  .checklist label{display:flex; gap:8px; align-items:center; font-size:13px;}
+
+  @media (max-width:780px){
+    table.data-table{display:block; overflow-x:auto;}
+    .wrap{padding:0 14px 60px;}
+    .console-inner{padding:16px 14px;}
+    .drawer{width:100%;}
+    #assignDrawerOverlay .drawer{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="console">
+  <div class="console-inner">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <img src="assets/logo.png" alt="SN SCORT Research Solutions logo" class="brand-logo" onerror="this.style.display='none'">
+      <div>
+        <p class="brand-eyebrow">SN SCORT Research Solutions — SMO</p>
+        <h1>Clinical Research Management Platform</h1>
+        <a href="index.html" class="back-link">&larr; 90-Day Execution Board</a>
+      </div>
+    </div>
+    <div class="sync-status" id="syncStatus"><span class="sync-dot pending" id="syncDot"></span>Connecting…</div>
+  </div>
+  <div class="console-strip">
+    <div class="console-strip-inner" id="consoleStrip">
+      <span>ACTIVE STUDIES <b id="stripStudies">0</b></span>
+      <span>ACTIVE SITES <b id="stripSites">0</b></span>
+      <span class="flag">OPEN ISSUES/CAPA <b id="stripIssues">0</b></span>
+      <span class="flag">PENDING EXPENSE APPROVALS <b id="stripExpenses">0</b></span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="studies">Studies</button>
+    <button class="tab-btn" data-tab="sites">Sites</button>
+    <button class="tab-btn" data-tab="issues">Issues &amp; CAPA</button>
+    <button class="tab-btn" data-tab="finance">Finance</button>
+    <button class="tab-btn" data-tab="documents">Documents</button>
+  </div>
+
+  <!-- ================= DASHBOARD ================= -->
+  <section class="panel active" id="panel-dashboard">
+    <div class="panel-head">
+      <h2>Management Overview</h2>
+      <p class="panel-sub">Studies, sites, recruitment, monitoring, issues, documents and finance at a glance.</p>
+    </div>
+    <div class="stats" id="dashStats"></div>
+    <div class="dash-grid">
+      <div>
+        <div class="card-block">
+          <h3>Studies overview</h3>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th>Protocol #</th><th>Title</th><th>Status</th><th>Sites</th><th>Enrolled</th><th>Open issues</th></tr></thead>
+              <tbody id="dashStudiesBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card-block">
+          <h3>Pending common-expense approvals</h3>
+          <ul class="due-list" id="dashPendingExpenses"></ul>
+        </div>
+      </div>
+      <div>
+        <div class="card-block">
+          <h3>Monitoring — upcoming &amp; overdue</h3>
+          <ul class="due-list" id="dashMonitoring"></ul>
+        </div>
+        <div class="card-block">
+          <h3>Documents requiring attention</h3>
+          <ul class="due-list" id="dashDocuments"></ul>
+        </div>
+        <div class="card-block">
+          <h3>Training expiring / missing</h3>
+          <ul class="due-list" id="dashTraining"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STUDIES ================= -->
+  <section class="panel" id="panel-studies">
+    <div class="panel-head">
+      <h2>Study Management</h2>
+      <p class="panel-sub">Create and track studies. Open a study to manage its site assignments, feasibility, activation and finance.</p>
+    </div>
+
+    <form id="studyForm">
+      <input type="hidden" id="sfEditingId">
+      <fieldset>
+        <legend id="studyFormLegend">New study</legend>
+        <div class="form-grid">
+          <div class="form-field"><label>Protocol number *</label><input type="text" id="sfProtocol" required></div>
+          <div class="form-field wide"><label>Study title *</label><input type="text" id="sfTitle" required></div>
+          <div class="form-field"><label>Sponsor / CRO</label><input type="text" id="sfSponsor"></div>
+          <div class="form-field"><label>Therapeutic area</label><input type="text" id="sfTa"></div>
+          <div class="form-field"><label>Phase</label>
+            <select id="sfPhase"><option value="">Select…</option><option>Phase I</option><option>Phase II</option><option>Phase III</option><option>Phase IV</option><option>Observational</option><option>Other</option></select>
+          </div>
+          <div class="form-field"><label>Protocol version</label><input type="text" id="sfVersion"></div>
+          <div class="form-field"><label>Planned start date</label><input type="date" id="sfStart"></div>
+          <div class="form-field"><label>Planned end date</label><input type="date" id="sfEnd"></div>
+          <div class="form-field"><label>Target recruitment</label><input type="number" min="0" id="sfTarget"></div>
+          <div class="form-field"><label>Status</label><select id="sfStatus"></select></div>
+          <div class="form-field wide"><label>Assigned SMO team</label><input type="text" id="sfTeam" placeholder="e.g. Study manager, CRA"></div>
+          <div class="form-field wide"><label>Study-specific required documents</label><textarea id="sfReqDocs" placeholder="One per line"></textarea></div>
+          <div class="form-field wide"><label>Notes</label><textarea id="sfNotes"></textarea></div>
+        </div>
+        <div class="form-error" id="studyFormError"></div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="studyFormSubmitBtn">Create study</button>
+          <button type="button" class="btn-secondary" id="studyFormCancelBtn" style="display:none;">Cancel edit</button>
+        </div>
+      </fieldset>
+    </form>
+
+    <div class="filter-row">
+      <input type="search" id="stSearch" placeholder="Search protocol #, title, sponsor…">
+      <select id="stStatusFilter"><option value="">All statuses</option></select>
+      <span class="filter-count" id="stCount"></span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr><th>Protocol #</th><th>Title</th><th>Sponsor</th><th>Phase</th><th>Status</th><th>Sites</th><th></th></tr></thead>
+        <tbody id="studiesBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= SITES ================= -->
+  <section class="panel" id="panel-sites">
+    <div class="panel-head">
+      <h2>Site Management</h2>
+      <p class="panel-sub">Existing collaborating sites plus onboarding for new sites.</p>
+    </div>
+
+    <form id="siteForm">
+      <input type="hidden" id="tfEditingId">
+      <fieldset>
+        <legend id="siteFormLegend">+ Create new site</legend>
+        <div class="form-grid">
+          <div class="form-field"><label>Site name *</label><input type="text" id="tfName" required></div>
+          <div class="form-field"><label>Internal site ID</label><input type="text" id="tfCode"></div>
+          <div class="form-field"><label>Site type</label>
+            <select id="tfType"><option value="">Select…</option><option>Hospital</option><option>Clinic</option><option>Diagnostic Center</option><option>Academic Medical Center</option><option>Other</option></select>
+          </div>
+          <div class="form-field wide"><label>Address</label><input type="text" id="tfAddress"></div>
+          <div class="form-field"><label>City</label><input type="text" id="tfCity"></div>
+          <div class="form-field"><label>State</label><input type="text" id="tfState"></div>
+          <div class="form-field"><label>Country</label><input type="text" id="tfCountry" value="India"></div>
+          <div class="form-field"><label>Primary site contact</label><input type="text" id="tfContactName"></div>
+          <div class="form-field"><label>Contact phone</label><input type="text" id="tfContactPhone"></div>
+          <div class="form-field"><label>Contact email</label><input type="email" id="tfContactEmail"></div>
+          <div class="form-field"><label>Principal Investigator</label><input type="text" id="tfPiName"></div>
+          <div class="form-field"><label>PI qualification</label><input type="text" id="tfPiQual"></div>
+          <div class="form-field"><label>PI clinical research experience</label><input type="text" id="tfPiExp"></div>
+          <div class="form-field wide"><label>Sub-investigators / site staff</label><input type="text" id="tfSubInv"></div>
+          <div class="form-field wide"><label>Therapeutic areas / capabilities</label><input type="text" id="tfTa"></div>
+          <div class="form-field wide"><label>Lab / pharmacy / equipment capabilities</label><input type="text" id="tfCap"></div>
+          <div class="form-field"><label>Site status</label><select id="tfStatus"></select></div>
+        </div>
+        <div class="form-grid" style="margin-top:10px;">
+          <div class="form-field"><label>Default SMO share %</label><input type="number" step="0.01" id="tfSmoPct"></div>
+          <div class="form-field"><label>Default PI share %</label><input type="number" step="0.01" id="tfPiPct"></div>
+          <div class="form-field"><label>Default site share %</label><input type="number" step="0.01" id="tfSitePct"></div>
+        </div>
+        <p class="inline-note" id="tfPctSum" style="font-size:11.5px;color:var(--slate);margin:4px 0 0;">Defaults are copied onto each new study assignment for this site and can be edited per study.</p>
+        <div class="form-field wide" style="margin-top:10px;"><label>Notes</label><textarea id="tfNotes"></textarea></div>
+        <div class="form-error" id="siteFormError"></div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="siteFormSubmitBtn">Create site</button>
+          <button type="button" class="btn-secondary" id="siteFormCancelBtn" style="display:none;">Cancel edit</button>
+        </div>
+      </fieldset>
+    </form>
+
+    <div class="filter-row">
+      <input type="search" id="teSearch" placeholder="Search site name, code, city, PI…">
+      <select id="teStatusFilter"><option value="">All statuses</option></select>
+      <span class="filter-count" id="teCount"></span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr><th>Site</th><th>Code</th><th>City</th><th>PI</th><th>Status</th><th>Studies</th><th></th></tr></thead>
+        <tbody id="sitesBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= ISSUES & CAPA ================= -->
+  <section class="panel" id="panel-issues">
+    <div class="panel-head">
+      <h2>Queries, Deviations &amp; CAPA</h2>
+      <p class="panel-sub">Open → Assigned → Action Required → Under Review → Resolved → Verified → Closed.</p>
+    </div>
+
+    <form id="issueForm">
+      <fieldset>
+        <legend>Log a new issue</legend>
+        <div class="form-grid">
+          <div class="form-field"><label>Type</label><select id="ifType"><option>Query</option><option>Deviation</option><option>CAPA</option></select></div>
+          <div class="form-field"><label>Study</label><select id="ifStudy"><option value="">Select…</option></select></div>
+          <div class="form-field"><label>Site</label><select id="ifSite"><option value="">Select…</option></select></div>
+          <div class="form-field"><label>Severity</label><select id="ifSeverity"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div>
+          <div class="form-field"><label>Source</label><input type="text" id="ifSource" placeholder="e.g. Monitoring visit, audit"></div>
+          <div class="form-field"><label>Responsible person</label><input type="text" id="ifResponsible"></div>
+          <div class="form-field"><label>Due date</label><input type="date" id="ifDue"></div>
+          <div class="form-field wide"><label>Description *</label><textarea id="ifDescription" required></textarea></div>
+        </div>
+        <div class="form-error" id="issueFormError"></div>
+        <div class="form-actions"><button type="submit" class="btn-primary">Log issue</button></div>
+      </fieldset>
+    </form>
+
+    <div class="filter-row">
+      <input type="search" id="isSearch" placeholder="Search issue #, description…">
+      <select id="isStudyFilter"><option value="">All studies</option></select>
+      <select id="isTypeFilter"><option value="">All types</option><option>Query</option><option>Deviation</option><option>CAPA</option></select>
+      <select id="isStatusFilter"><option value="">All statuses</option></select>
+      <select id="isOverdueFilter"><option value="">All due dates</option><option value="1">Overdue only</option></select>
+      <span class="filter-count" id="isCount"></span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr><th>Issue #</th><th>Type</th><th>Study / Site</th><th>Severity</th><th>Status</th><th>Due</th><th>Responsible</th><th></th></tr></thead>
+        <tbody id="issuesBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= FINANCE ================= -->
+  <section class="panel" id="panel-finance">
+    <div class="panel-head">
+      <h2>Finance &amp; Revenue Sharing</h2>
+      <p class="panel-sub">Common study expenses require approval before they are deducted. Sharing percentages apply only to the remaining Net Distributable Revenue, per Study+Site assignment.</p>
+    </div>
+
+    <div class="stats" id="finStats"></div>
+
+    <form id="expenseFormGlobal">
+      <fieldset>
+        <legend>Log a common study expense</legend>
+        <div class="form-grid">
+          <div class="form-field"><label>Study *</label><select id="efStudy" required><option value="">Select…</option></select></div>
+          <div class="form-field"><label>Attribute to site assignment (optional)</label><select id="efAssign"><option value="">Unallocated — study level</option></select></div>
+          <div class="form-field"><label>Category</label><input type="text" id="efCategory" placeholder="e.g. Lab kits, travel, courier"></div>
+          <div class="form-field"><label>Amount (₹) *</label><input type="number" step="0.01" min="0" id="efAmount" required></div>
+          <div class="form-field"><label>Bill / supporting reference</label><input type="text" id="efBillRef"></div>
+          <div class="form-field wide"><label>Description</label><textarea id="efDescription"></textarea></div>
+        </div>
+        <div class="form-error" id="expenseFormError"></div>
+        <div class="form-actions"><button type="submit" class="btn-primary">Log expense</button></div>
+      </fieldset>
+    </form>
+
+    <div class="card-block">
+      <h3>Expense approval queue</h3>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead><tr><th>Study</th><th>Site assignment</th><th>Category</th><th>Amount</th><th>Bill ref</th><th>Status</th><th></th></tr></thead>
+          <tbody id="expensesBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card-block">
+      <h3>Settlement history — all studies</h3>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead><tr><th>Settlement #</th><th>Study / Site</th><th>Date</th><th>Gross</th><th>Expenses</th><th>Net</th><th>Status</th><th></th></tr></thead>
+          <tbody id="settlementsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DOCUMENTS ================= -->
+  <section class="panel" id="panel-documents">
+    <div class="panel-head">
+      <h2>Document Repository</h2>
+      <p class="panel-sub">Metadata-driven, version-controlled document tracking with expiry alerts. No silent overwrite — superseding a document creates a new version and marks the old one Superseded.</p>
+    </div>
+
+    <form id="documentForm">
+      <input type="hidden" id="dfSupersedes">
+      <fieldset>
+        <legend id="documentFormLegend">Add document</legend>
+        <div class="form-grid">
+          <div class="form-field"><label>Study</label><select id="dfStudy"><option value="">— none —</option></select></div>
+          <div class="form-field"><label>Site</label><select id="dfSite"><option value="">— none —</option></select></div>
+          <div class="form-field"><label>Document type *</label><input type="text" id="dfType" list="docTypeList" required></div>
+          <datalist id="docTypeList">
+            <option>PI CV</option><option>Signed Protocol</option><option>Informed Consent Form</option>
+            <option>EC/IRB Approval</option><option>Clinical Trial Agreement</option><option>Site SOP</option>
+            <option>Lab Certification</option><option>Insurance Certificate</option><option>Delegation Log</option>
+            <option>Training Certificate</option><option>1572 / Investigator Undertaking</option><option>Other</option>
+          </datalist>
+          <div class="form-field"><label>Version</label><input type="text" id="dfVersion" placeholder="e.g. v1"></div>
+          <div class="form-field"><label>File reference / name</label><input type="text" id="dfFile" placeholder="filename.pdf"></div>
+          <div class="form-field"><label>Document date</label><input type="date" id="dfDocDate"></div>
+          <div class="form-field"><label>Effective / approval date</label><input type="date" id="dfEffDate"></div>
+          <div class="form-field"><label>Expiry / review date</label><input type="date" id="dfExpDate"></div>
+          <div class="form-field"><label>Status</label><select id="dfStatus"></select></div>
+          <div class="form-field"><label>Uploaded by</label><input type="text" id="dfUploadedBy"></div>
+          <div class="form-field"><label>Approved by</label><input type="text" id="dfApprovedBy"></div>
+          <div class="form-field wide"><label>Notes</label><textarea id="dfNotes"></textarea></div>
+        </div>
+        <div class="form-error" id="documentFormError"></div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="documentFormSubmitBtn">Save document</button>
+          <button type="button" class="btn-secondary" id="documentFormCancelBtn" style="display:none;">Cancel new version</button>
+        </div>
+      </fieldset>
+    </form>
+
+    <div class="filter-row">
+      <input type="search" id="dcSearch" placeholder="Search type, file, notes…">
+      <select id="dcStudyFilter"><option value="">All studies</option></select>
+      <select id="dcSiteFilter"><option value="">All sites</option></select>
+      <select id="dcStatusFilter"><option value="">All statuses</option></select>
+      <span class="filter-count" id="dcCount"></span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr><th>Type</th><th>Study</th><th>Site</th><th>Version</th><th>Status</th><th>Expiry</th><th></th></tr></thead>
+        <tbody id="documentsBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<!-- Primary drawer: Study / Site / Issue detail -->
+<div class="drawer-overlay" id="drawerOverlay"><div class="drawer" id="drawer"></div></div>
+<!-- Nested drawer: Study+Site assignment detail -->
+<div class="drawer-overlay" id="assignDrawerOverlay"><div class="drawer" id="assignDrawer"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  "use strict";
+
+  var SUPABASE_URL = "https://sqmvnebnathateurqfeq.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_onNu45I1iy7rLdbn3uum5Q_hfgHoLRt";
+  var supabase = null;
+  try { if (window.supabase) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+  catch (e) { console.error("Supabase init failed:", e); }
+
+  // ---------- Constants ----------
+  var SITE_STATUSES = ["Potential","Feasibility","Selected","Contracting","Activation Pending","Active","Suspended","Closed","Archived"];
+  var STUDY_STATUSES = ["Draft","Feasibility","Start-up","Recruiting","Active/Conduct","Follow-up","Close-out","Archived"];
+  var ASSIGN_STAGES = ["Identification","Feasibility","Selection","Document Collection","Regulatory/EC","Contracting","Training","SIV/Initiation","Activation","Recruitment","Study Conduct","Monitoring","Close-out","Archived"];
+  var ISSUE_TYPES = ["Query","Deviation","CAPA"];
+  var ISSUE_STATUSES = ["Open","Assigned","Action Required","Under Review","Resolved","Verified","Closed"];
+  var DOC_STATUSES = ["Draft","Under Review","Approved","Superseded","Expired","Archived"];
+  var SUBJECT_STATUSES = ["Screened","Eligible","Ineligible","Enrolled","Randomized","Active","Completed","Withdrawn","Screen Failure"];
+  var VISIT_TYPES = ["SIV","Routine","Remote","Close-out"];
+  var VISIT_STATUSES = ["Scheduled","Completed","Overdue","Cancelled"];
+  var TRAINING_STATUSES = ["Completed","Scheduled","Overdue"];
+  var ACTIVATION_ITEMS = [
+    ["site_selected","Site selected"],
+    ["staff_docs_complete","PI & site staff documents complete"],
+    ["regulatory_complete","Required regulatory/EC documentation complete"],
+    ["contract_complete","Contract / financial terms complete"],
+    ["training_complete","Required training complete"],
+    ["study_docs_available","Required study documents available"],
+    ["siv_completed","SIV / site initiation completed"],
+    ["issues_resolved","Open critical issues resolved or formally accepted"],
+    ["approval_recorded","Activation approval recorded"]
+  ];
+  var PILL_GREEN = ["Active","Approved","Completed","Closed","Verified","Recruiting","Resolved"];
+  var PILL_RED = ["Suspended","Rejected","Overdue","Expired","Ineligible","Withdrawn","Screen Failure","Cancelled","Reversal"];
+  var PILL_TEAL = ["Enrolled","Randomized","Study Conduct","Monitoring","Follow-up","Active/Conduct"];
+  var OPEN_ISSUE_STATUSES = ["Open","Assigned","Action Required","Under Review","Resolved"];
+
+  // ---------- State ----------
+  var state = {
+    sites: [], studies: [], studySites: [], documents: [], subjects: [], visits: [], issues: [], trainings: [], expenses: [], settlements: [],
+    activeTab: "dashboard",
+    drawerType: null, drawerId: null, drawerSubtab: "overview",
+    assignId: null, assignSubtab: "feasibility",
+    issueFilterStudyId: ""
+  };
+
+  // ---------- Helpers ----------
+  function $(id){ return document.getElementById(id); }
+  function escapeHtml(s){ var d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  function fmtDate(d){ return d || "—"; }
+  function daysUntil(dateStr){
+    if (!dateStr) return null;
+    var a = new Date(todayStr() + "T00:00:00");
+    var b = new Date(dateStr + "T00:00:00");
+    return Math.round((b - a) / 86400000);
+  }
+  function round2(n){ return Math.round((Number(n) + Number.EPSILON) * 100) / 100; }
+  function fmtINR(n){
+    if (n == null || isNaN(n)) return "—";
+    var neg = n < 0; n = Math.abs(round2(n));
+    var parts = n.toFixed(2).split(".");
+    var intPart = parts[0];
+    var lastThree = intPart.length > 3 ? intPart.slice(-3) : intPart;
+    var other = intPart.length > 3 ? intPart.slice(0, -3) : "";
+    var formatted = other ? other.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + "," + lastThree : lastThree;
+    return (neg ? "-" : "") + "₹" + formatted + "." + parts[1];
+  }
+  function pillClass(s){
+    if (PILL_GREEN.indexOf(s) !== -1) return "pill-green";
+    if (PILL_RED.indexOf(s) !== -1) return "pill-red";
+    if (PILL_TEAL.indexOf(s) !== -1) return "pill-teal";
+    return "pill-amber";
+  }
+  function pill(s){ return s ? '<span class="pill ' + pillClass(s) + '">' + escapeHtml(s) + "</span>" : '<span class="pill pill-slate">—</span>'; }
+  function optionsHtml(list, selected){
+    return list.map(function(v){ return '<option value="' + escapeHtml(v) + '"' + (v === selected ? " selected" : "") + ">" + escapeHtml(v) + "</option>"; }).join("");
+  }
+  function kv(label, value){ return '<div><div class="k">' + escapeHtml(label) + '</div><div>' + (value == null || value === "" ? "—" : escapeHtml(value)) + "</div></div>"; }
+  function expiryBadge(expiryDate, activeStatus){
+    if (!expiryDate) return "";
+    var d = daysUntil(expiryDate);
+    if (d < 0) return '<span class="due-badge overdue">Expired ' + Math.abs(d) + "d ago</span>";
+    if (d <= 30) return '<span class="due-badge soon">' + d + "d left</span>";
+    return '<span class="due-badge ok">Valid</span>';
+  }
+  function siteName(id){ var s = state.sites.find(function(x){ return x.id === id; }); return s ? s.site_name : "—"; }
+  function studyLabel(id){ var s = state.studies.find(function(x){ return x.id === id; }); return s ? s.protocol_number + " — " + s.title : "—"; }
+  function assignById(id){ return state.studySites.find(function(a){ return a.id === id; }); }
+  function showError(id, msg){ var el = $(id); if (el) el.textContent = msg || ""; }
+  function setSyncStatus(mode, text){
+    var dot = $("syncDot"), wrap = $("syncStatus");
+    dot.className = "sync-dot" + (mode === "bad" ? " bad" : mode === "pending" ? " pending" : "");
+    wrap.childNodes[1].textContent = text;
+  }
+
+  // ---------- Data fetch ----------
+  function fetchAll(){
+    if (!supabase) return Promise.resolve();
+    return Promise.all([
+      supabase.from("smo_sites").select("*").order("site_name"),
+      supabase.from("smo_studies").select("*").order("created_at", { ascending: false }),
+      supabase.from("smo_study_sites").select("*"),
+      supabase.from("smo_documents").select("*").order("created_at", { ascending: false }),
+      supabase.from("smo_subjects").select("*").order("created_at", { ascending: false }),
+      supabase.from("smo_monitoring_visits").select("*").order("visit_date", { ascending: true }),
+      supabase.from("smo_issues").select("*").order("created_at", { ascending: false }),
+      supabase.from("smo_training_records").select("*").order("training_date", { ascending: false }),
+      supabase.from("smo_common_expenses").select("*").order("created_at", { ascending: false }),
+      supabase.from("smo_settlements").select("*").order("created_at", { ascending: false })
+    ]).then(function(results){
+      var keys = ["sites","studies","studySites","documents","subjects","visits","issues","trainings","expenses","settlements"];
+      results.forEach(function(res, i){
+        if (res.error) console.error(keys[i], res.error);
+        state[keys[i]] = res.data || [];
+      });
+    });
+  }
+  function refreshAll(){ return fetchAll().then(renderEverything); }
+
+  function renderEverything(){
+    renderConsoleStrip();
+    populateSelects();
+    renderDashboard();
+    renderStudies();
+    renderSites();
+    renderIssues();
+    renderFinance();
+    renderDocuments();
+    if (state.drawerType) renderDrawer();
+    if (state.assignId) renderAssignDrawer();
+  }
+
+  // ---------- Console strip ----------
+  function renderConsoleStrip(){
+    $("stripStudies").textContent = state.studies.filter(function(s){ return ["Recruiting","Active/Conduct","Follow-up"].indexOf(s.status) !== -1; }).length;
+    $("stripSites").textContent = state.sites.filter(function(s){ return s.status === "Active"; }).length;
+    $("stripIssues").textContent = state.issues.filter(function(i){ return OPEN_ISSUE_STATUSES.indexOf(i.status) !== -1; }).length;
+    $("stripExpenses").textContent = state.expenses.filter(function(e){ return e.approval_status === "Pending"; }).length;
+  }
+
+  // ---------- Populate shared <select> options ----------
+  function populateSelects(){
+    var studyOpts = '<option value="">Select…</option>' + state.studies.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.protocol_number + " — " + s.title) + "</option>"; }).join("");
+    var siteOpts = '<option value="">Select…</option>' + state.sites.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.site_name) + "</option>"; }).join("");
+
+    if ($("sfStatus").options.length === 0) $("sfStatus").innerHTML = optionsHtml(STUDY_STATUSES, "Draft");
+    if ($("tfStatus").options.length === 0) $("tfStatus").innerHTML = optionsHtml(SITE_STATUSES, "Potential");
+    if ($("dfStatus").options.length === 0) $("dfStatus").innerHTML = optionsHtml(DOC_STATUSES, "Draft");
+    if ($("stStatusFilter").options.length <= 1) $("stStatusFilter").innerHTML = '<option value="">All statuses</option>' + optionsHtml(STUDY_STATUSES);
+    if ($("teStatusFilter").options.length <= 1) $("teStatusFilter").innerHTML = '<option value="">All statuses</option>' + optionsHtml(SITE_STATUSES);
+    if ($("isStatusFilter").options.length <= 1) $("isStatusFilter").innerHTML = '<option value="">All statuses</option>' + optionsHtml(ISSUE_STATUSES);
+    if ($("dcStatusFilter").options.length <= 1) $("dcStatusFilter").innerHTML = '<option value="">All statuses</option>' + optionsHtml(DOC_STATUSES);
+
+    $("ifStudy").innerHTML = studyOpts;
+    $("isStudyFilter").innerHTML = '<option value="">All studies</option>' + state.studies.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.protocol_number) + "</option>"; }).join("");
+    $("efStudy").innerHTML = studyOpts;
+    $("dfStudy").innerHTML = '<option value="">— none —</option>' + state.studies.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.protocol_number + " — " + s.title) + "</option>"; }).join("");
+    $("dfSite").innerHTML = '<option value="">— none —</option>' + state.sites.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.site_name) + "</option>"; }).join("");
+    $("dcStudyFilter").innerHTML = '<option value="">All studies</option>' + state.studies.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.protocol_number) + "</option>"; }).join("");
+    $("dcSiteFilter").innerHTML = '<option value="">All sites</option>' + state.sites.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.site_name) + "</option>"; }).join("");
+
+    var ifStudyVal = $("ifStudy").value;
+    updateIssueSiteOptions(ifStudyVal);
+    updateExpenseAssignOptions($("efStudy").value);
+
+    if (state.issueFilterStudyId) { $("isStudyFilter").value = state.issueFilterStudyId; state.issueFilterStudyId = ""; }
+  }
+  function updateIssueSiteOptions(studyId){
+    var assigns = state.studySites.filter(function(a){ return a.study_id === studyId; });
+    $("ifSite").innerHTML = '<option value="">Select…</option>' + assigns.map(function(a){ return '<option value="' + a.site_id + '">' + escapeHtml(siteName(a.site_id)) + "</option>"; }).join("");
+  }
+  function updateExpenseAssignOptions(studyId){
+    var assigns = state.studySites.filter(function(a){ return a.study_id === studyId; });
+    $("efAssign").innerHTML = '<option value="">Unallocated — study level</option>' + assigns.map(function(a){ return '<option value="' + a.id + '">' + escapeHtml(siteName(a.site_id)) + " (" + a.status + ")</option>"; }).join("");
+  }
+  $("ifStudy").addEventListener("change", function(){ updateIssueSiteOptions(this.value); });
+  $("efStudy").addEventListener("change", function(){ updateExpenseAssignOptions(this.value); });
+
+  // ================= TABS =================
+  $("tabs").addEventListener("click", function(e){
+    var btn = e.target.closest(".tab-btn");
+    if (!btn) return;
+    state.activeTab = btn.dataset.tab;
+    document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.toggle("active", b === btn); });
+    document.querySelectorAll(".panel").forEach(function(p){ p.classList.toggle("active", p.id === "panel-" + btn.dataset.tab); });
+  });
+  function jumpToIssuesForStudy(studyId){
+    state.issueFilterStudyId = studyId;
+    $("tabs").querySelector('[data-tab="issues"]').click();
+    $("isStudyFilter").value = studyId;
+    renderIssues();
+  }
+
+  // ================= DASHBOARD =================
+  function renderDashboard(){
+    var activeStudies = state.studies.filter(function(s){ return ["Recruiting","Active/Conduct","Follow-up"].indexOf(s.status) !== -1; }).length;
+    var activeSites = state.sites.filter(function(s){ return s.status === "Active"; }).length;
+    var openIssues = state.issues.filter(function(i){ return OPEN_ISSUE_STATUSES.indexOf(i.status) !== -1; }).length;
+    var enrolled = state.subjects.filter(function(s){ return ["Enrolled","Randomized","Active","Completed"].indexOf(s.status) !== -1; }).length;
+
+    $("dashStats").innerHTML = [
+      ["Active studies", activeStudies, false],
+      ["Active sites", activeSites, false],
+      ["Subjects enrolled", enrolled, false],
+      ["Open issues / CAPA", openIssues, openIssues > 0]
+    ].map(function(s){ return '<div class="stat' + (s[2] ? " warn" : "") + '"><div class="num">' + s[1] + '</div><div class="lbl">' + s[0] + "</div></div>"; }).join("");
+
+    var studiesBody = $("dashStudiesBody");
+    if (state.studies.length === 0) {
+      studiesBody.innerHTML = '<tr class="empty-row"><td colspan="6">No studies yet — create one from the Studies tab.</td></tr>';
+    } else {
+      studiesBody.innerHTML = state.studies.slice(0, 10).map(function(s){
+        var assigns = state.studySites.filter(function(a){ return a.study_id === s.id; });
+        var assignIds = assigns.map(function(a){ return a.id; });
+        var enrolledN = state.subjects.filter(function(sub){ return assignIds.indexOf(sub.study_site_id) !== -1 && ["Enrolled","Randomized","Active","Completed"].indexOf(sub.status) !== -1; }).length;
+        var openN = state.issues.filter(function(i){ return i.study_id === s.id && OPEN_ISSUE_STATUSES.indexOf(i.status) !== -1; }).length;
+        return "<tr><td class=\"mono\">" + escapeHtml(s.protocol_number) + "</td><td><button class=\"row-link\" data-open-study=\"" + s.id + "\">" + escapeHtml(s.title) + "</button></td><td>" + pill(s.status) + "</td><td>" + assigns.length + "</td><td>" + enrolledN + "</td><td>" + openN + "</td></tr>";
+      }).join("");
+    }
+
+    var pendingExp = state.expenses.filter(function(e){ return e.approval_status === "Pending"; }).slice(0, 8);
+    $("dashPendingExpenses").innerHTML = pendingExp.length === 0
+      ? '<li class="empty-note" style="border:none;">No pending expense approvals.</li>'
+      : pendingExp.map(function(e){
+          var study = state.studies.find(function(s){ return s.id === e.study_id; });
+          return "<li><span>" + escapeHtml(study ? study.protocol_number : "—") + " · " + escapeHtml(e.category || "Expense") + "</span><span class=\"due-badge soon\">" + fmtINR(e.amount) + "</span></li>";
+        }).join("");
+
+    var openVisits = state.visits.filter(function(v){ return v.status === "Scheduled"; })
+      .sort(function(a,b){ return new Date(a.visit_date || "9999-12-31") - new Date(b.visit_date || "9999-12-31"); }).slice(0, 8);
+    $("dashMonitoring").innerHTML = openVisits.length === 0
+      ? '<li class="empty-note" style="border:none;">No scheduled monitoring visits.</li>'
+      : openVisits.map(function(v){
+          var a = assignById(v.study_site_id);
+          var d = v.visit_date ? daysUntil(v.visit_date) : null;
+          var cls = d == null ? "ok" : d < 0 ? "overdue" : d <= 7 ? "soon" : "ok";
+          var label = d == null ? "no date" : d < 0 ? Math.abs(d) + "d overdue" : d === 0 ? "today" : d + "d left";
+          return "<li><span>" + escapeHtml(v.visit_type) + " · " + escapeHtml(a ? siteName(a.site_id) : "—") + "</span><span class=\"due-badge " + cls + "\">" + label + "</span></li>";
+        }).join("");
+
+    var docAlerts = state.documents.filter(function(d){ return d.expiry_date && d.status !== "Superseded" && d.status !== "Archived" && daysUntil(d.expiry_date) <= 30; })
+      .sort(function(a,b){ return new Date(a.expiry_date) - new Date(b.expiry_date); }).slice(0, 8);
+    $("dashDocuments").innerHTML = docAlerts.length === 0
+      ? '<li class="empty-note" style="border:none;">No documents expiring soon.</li>'
+      : docAlerts.map(function(d){ return "<li><span>" + escapeHtml(d.doc_type) + " · " + escapeHtml(d.site_id ? siteName(d.site_id) : (d.study_id ? studyLabel(d.study_id) : "—")) + "</span>" + expiryBadge(d.expiry_date) + "</li>"; }).join("");
+
+    var trainingAlerts = state.trainings.filter(function(t){ return t.expiry_date && daysUntil(t.expiry_date) <= 30; })
+      .sort(function(a,b){ return new Date(a.expiry_date) - new Date(b.expiry_date); }).slice(0, 8);
+    $("dashTraining").innerHTML = trainingAlerts.length === 0
+      ? '<li class="empty-note" style="border:none;">No training records expiring soon.</li>'
+      : trainingAlerts.map(function(t){ return "<li><span>" + escapeHtml(t.trainee_name || "—") + " · " + escapeHtml(t.course) + "</span>" + expiryBadge(t.expiry_date) + "</li>"; }).join("");
+  }
+
+  // ================= STUDIES =================
+  function resetStudyForm(){
+    $("sfEditingId").value = "";
+    $("studyForm").reset();
+    $("sfStatus").value = "Draft";
+    $("studyFormLegend").textContent = "New study";
+    $("studyFormSubmitBtn").textContent = "Create study";
+    $("studyFormCancelBtn").style.display = "none";
+    showError("studyFormError", "");
+  }
+  function fillStudyForm(s){
+    $("sfEditingId").value = s.id;
+    $("sfProtocol").value = s.protocol_number || "";
+    $("sfTitle").value = s.title || "";
+    $("sfSponsor").value = s.sponsor || "";
+    $("sfTa").value = s.therapeutic_area || "";
+    $("sfPhase").value = s.phase || "";
+    $("sfVersion").value = s.protocol_version || "";
+    $("sfStart").value = s.start_date || "";
+    $("sfEnd").value = s.end_date || "";
+    $("sfTarget").value = s.target_recruitment || "";
+    $("sfStatus").value = s.status || "Draft";
+    $("sfTeam").value = s.smo_team || "";
+    $("sfReqDocs").value = s.required_documents || "";
+    $("sfNotes").value = s.notes || "";
+    $("studyFormLegend").textContent = "Editing " + s.protocol_number;
+    $("studyFormSubmitBtn").textContent = "Save changes";
+    $("studyFormCancelBtn").style.display = "inline-block";
+    window.scrollTo({ top: $("studyForm").offsetTop - 20, behavior: "smooth" });
+  }
+  $("studyFormCancelBtn").addEventListener("click", resetStudyForm);
+
+  $("studyForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    showError("studyFormError", "");
+    if (!supabase) { showError("studyFormError", "Not connected to the database."); return; }
+    var protocol = $("sfProtocol").value.trim(), title = $("sfTitle").value.trim();
+    if (!protocol || !title) { showError("studyFormError", "Protocol number and title are required."); return; }
+    var payload = {
+      protocol_number: protocol, title: title,
+      sponsor: $("sfSponsor").value.trim() || null,
+      therapeutic_area: $("sfTa").value.trim() || null,
+      phase: $("sfPhase").value || null,
+      protocol_version: $("sfVersion").value.trim() || null,
+      start_date: $("sfStart").value || null,
+      end_date: $("sfEnd").value || null,
+      target_recruitment: $("sfTarget").value || null,
+      status: $("sfStatus").value,
+      smo_team: $("sfTeam").value.trim() || null,
+      required_documents: $("sfReqDocs").value.trim() || null,
+      notes: $("sfNotes").value.trim() || null,
+      updated_at: new Date().toISOString()
+    };
+    var editingId = $("sfEditingId").value;
+    var op = editingId ? supabase.from("smo_studies").update(payload).eq("id", editingId) : supabase.from("smo_studies").insert(payload);
+    op.then(function(res){
+      if (res.error) { showError("studyFormError", "Save failed — " + res.error.message); return; }
+      resetStudyForm();
+      refreshAll();
+    });
+  });
+
+  function filteredStudies(){
+    var q = $("stSearch").value.trim().toLowerCase();
+    var statusF = $("stStatusFilter").value;
+    return state.studies.filter(function(s){
+      if (statusF && s.status !== statusF) return false;
+      if (q) {
+        var hay = [s.protocol_number, s.title, s.sponsor].map(function(v){ return (v || "").toLowerCase(); }).join(" ");
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+  }
+  function renderStudies(){
+    var rows = filteredStudies();
+    $("stCount").textContent = rows.length + " of " + state.studies.length + " studies";
+    var body = $("studiesBody");
+    if (rows.length === 0) { body.innerHTML = '<tr class="empty-row"><td colspan="7">No studies match these filters.</td></tr>'; return; }
+    body.innerHTML = rows.map(function(s){
+      var n = state.studySites.filter(function(a){ return a.study_id === s.id; }).length;
+      return "<tr><td class=\"mono\">" + escapeHtml(s.protocol_number) + "</td><td><button class=\"row-link\" data-open-study=\"" + s.id + "\">" + escapeHtml(s.title) + "</button></td><td>" + escapeHtml(s.sponsor) + "</td><td>" + escapeHtml(s.phase) + "</td><td>" + pill(s.status) + "</td><td>" + n + "</td>" +
+        "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-study=\"" + s.id + "\">Open</button><button class=\"btn-sm\" data-edit-study=\"" + s.id + "\">Edit</button><button class=\"btn-danger\" data-delete-study=\"" + s.id + "\">Delete</button></td></tr>";
+    }).join("");
+  }
+  ["stSearch","stStatusFilter"].forEach(function(id){ $(id).addEventListener("input", renderStudies); $(id).addEventListener("change", renderStudies); });
+
+  // ================= SITES =================
+  function resetSiteForm(){
+    $("tfEditingId").value = "";
+    $("siteForm").reset();
+    $("tfCountry").value = "India";
+    $("tfStatus").value = "Potential";
+    $("siteFormLegend").textContent = "+ Create new site";
+    $("siteFormSubmitBtn").textContent = "Create site";
+    $("siteFormCancelBtn").style.display = "none";
+    showError("siteFormError", "");
+  }
+  function fillSiteForm(s){
+    $("tfEditingId").value = s.id;
+    $("tfName").value = s.site_name || "";
+    $("tfCode").value = s.site_code || "";
+    $("tfType").value = s.site_type || "";
+    $("tfAddress").value = s.address || "";
+    $("tfCity").value = s.city || "";
+    $("tfState").value = s.state || "";
+    $("tfCountry").value = s.country || "India";
+    $("tfContactName").value = s.contact_name || "";
+    $("tfContactPhone").value = s.contact_phone || "";
+    $("tfContactEmail").value = s.contact_email || "";
+    $("tfPiName").value = s.pi_name || "";
+    $("tfPiQual").value = s.pi_qualification || "";
+    $("tfPiExp").value = s.pi_experience || "";
+    $("tfSubInv").value = s.sub_investigators || "";
+    $("tfTa").value = s.therapeutic_areas || "";
+    $("tfCap").value = s.capabilities || "";
+    $("tfStatus").value = s.status || "Potential";
+    $("tfSmoPct").value = s.default_smo_share_pct != null ? s.default_smo_share_pct : "";
+    $("tfPiPct").value = s.default_pi_share_pct != null ? s.default_pi_share_pct : "";
+    $("tfSitePct").value = s.default_site_share_pct != null ? s.default_site_share_pct : "";
+    $("tfNotes").value = s.notes || "";
+    $("siteFormLegend").textContent = "Editing " + s.site_name;
+    $("siteFormSubmitBtn").textContent = "Save changes";
+    $("siteFormCancelBtn").style.display = "inline-block";
+    window.scrollTo({ top: $("siteForm").offsetTop - 20, behavior: "smooth" });
+  }
+  $("siteFormCancelBtn").addEventListener("click", resetSiteForm);
+
+  $("siteForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    showError("siteFormError", "");
+    if (!supabase) { showError("siteFormError", "Not connected to the database."); return; }
+    var name = $("tfName").value.trim();
+    if (!name) { showError("siteFormError", "Site name is required."); return; }
+    var smoPct = $("tfSmoPct").value === "" ? null : Number($("tfSmoPct").value);
+    var piPct = $("tfPiPct").value === "" ? null : Number($("tfPiPct").value);
+    var sitePct = $("tfSitePct").value === "" ? null : Number($("tfSitePct").value);
+    if (smoPct != null && piPct != null && sitePct != null && Math.abs(smoPct + piPct + sitePct - 100) > 0.01) {
+      showError("siteFormError", "Default SMO + PI + Site share percentages must total 100%.");
+      return;
+    }
+    var payload = {
+      site_name: name, site_code: $("tfCode").value.trim() || null, site_type: $("tfType").value || null,
+      address: $("tfAddress").value.trim() || null, city: $("tfCity").value.trim() || null, state: $("tfState").value.trim() || null,
+      country: $("tfCountry").value.trim() || "India",
+      contact_name: $("tfContactName").value.trim() || null, contact_phone: $("tfContactPhone").value.trim() || null, contact_email: $("tfContactEmail").value.trim() || null,
+      pi_name: $("tfPiName").value.trim() || null, pi_qualification: $("tfPiQual").value.trim() || null, pi_experience: $("tfPiExp").value.trim() || null,
+      sub_investigators: $("tfSubInv").value.trim() || null, therapeutic_areas: $("tfTa").value.trim() || null, capabilities: $("tfCap").value.trim() || null,
+      status: $("tfStatus").value, default_smo_share_pct: smoPct, default_pi_share_pct: piPct, default_site_share_pct: sitePct,
+      notes: $("tfNotes").value.trim() || null, updated_at: new Date().toISOString()
+    };
+    var editingId = $("tfEditingId").value;
+    var op = editingId ? supabase.from("smo_sites").update(payload).eq("id", editingId) : supabase.from("smo_sites").insert(payload);
+    op.then(function(res){
+      if (res.error) { showError("siteFormError", "Save failed — " + res.error.message); return; }
+      resetSiteForm();
+      refreshAll();
+    });
+  });
+
+  function filteredSites(){
+    var q = $("teSearch").value.trim().toLowerCase();
+    var statusF = $("teStatusFilter").value;
+    return state.sites.filter(function(s){
+      if (statusF && s.status !== statusF) return false;
+      if (q) {
+        var hay = [s.site_name, s.site_code, s.city, s.pi_name].map(function(v){ return (v || "").toLowerCase(); }).join(" ");
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+  }
+  function renderSites(){
+    var rows = filteredSites();
+    $("teCount").textContent = rows.length + " of " + state.sites.length + " sites";
+    var body = $("sitesBody");
+    if (rows.length === 0) { body.innerHTML = '<tr class="empty-row"><td colspan="7">No sites match these filters.</td></tr>'; return; }
+    body.innerHTML = rows.map(function(s){
+      var n = state.studySites.filter(function(a){ return a.site_id === s.id; }).length;
+      return "<tr><td><button class=\"row-link\" data-open-site=\"" + s.id + "\">" + escapeHtml(s.site_name) + "</button></td><td class=\"mono\">" + escapeHtml(s.site_code) + "</td><td>" + escapeHtml(s.city) + "</td><td>" + escapeHtml(s.pi_name) + "</td><td>" + pill(s.status) + "</td><td>" + n + "</td>" +
+        "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-site=\"" + s.id + "\">Open</button><button class=\"btn-sm\" data-edit-site=\"" + s.id + "\">Edit</button><button class=\"btn-danger\" data-delete-site=\"" + s.id + "\">Delete</button></td></tr>";
+    }).join("");
+  }
+  ["teSearch","teStatusFilter"].forEach(function(id){ $(id).addEventListener("input", renderSites); $(id).addEventListener("change", renderSites); });
+
+  // ================= ISSUES & CAPA =================
+  $("issueForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    showError("issueFormError", "");
+    if (!supabase) { showError("issueFormError", "Not connected to the database."); return; }
+    var desc = $("ifDescription").value.trim();
+    if (!desc) { showError("issueFormError", "Description is required."); return; }
+    var payload = {
+      issue_type: $("ifType").value, study_id: $("ifStudy").value || null, site_id: $("ifSite").value || null,
+      severity: $("ifSeverity").value, source: $("ifSource").value.trim() || null,
+      responsible_person: $("ifResponsible").value.trim() || null, due_date: $("ifDue").value || null,
+      description: desc, status: "Open"
+    };
+    supabase.from("smo_issues").insert(payload).then(function(res){
+      if (res.error) { showError("issueFormError", "Save failed — " + res.error.message); return; }
+      $("issueForm").reset();
+      refreshAll();
+    });
+  });
+
+  function filteredIssues(){
+    var q = $("isSearch").value.trim().toLowerCase();
+    var studyF = $("isStudyFilter").value, typeF = $("isTypeFilter").value, statusF = $("isStatusFilter").value, overdueF = $("isOverdueFilter").value;
+    return state.issues.filter(function(i){
+      if (studyF && i.study_id !== studyF) return false;
+      if (typeF && i.issue_type !== typeF) return false;
+      if (statusF && i.status !== statusF) return false;
+      if (overdueF === "1" && !(i.due_date && daysUntil(i.due_date) < 0 && i.status !== "Closed")) return false;
+      if (q) {
+        var hay = [i.issue_number, i.description].map(function(v){ return (v || "").toLowerCase(); }).join(" ");
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+  }
+  function renderIssues(){
+    var rows = filteredIssues();
+    $("isCount").textContent = rows.length + " of " + state.issues.length + " issues";
+    var body = $("issuesBody");
+    if (rows.length === 0) { body.innerHTML = '<tr class="empty-row"><td colspan="8">No issues match these filters.</td></tr>'; return; }
+    body.innerHTML = rows.map(function(i){
+      var overdue = i.due_date && daysUntil(i.due_date) < 0 && i.status !== "Closed";
+      var studySiteLabel = (i.study_id ? state.studies.find(function(s){return s.id===i.study_id;}) : null);
+      return "<tr class=\"" + (overdue ? "row-flag" : "") + "\"><td class=\"mono\">" + escapeHtml(i.issue_number) + "</td><td>" + escapeHtml(i.issue_type) + "</td><td>" + escapeHtml(studySiteLabel ? studySiteLabel.protocol_number : "—") + (i.site_id ? " / " + escapeHtml(siteName(i.site_id)) : "") + "</td><td>" + escapeHtml(i.severity) + "</td><td>" + pill(i.status) + "</td><td class=\"mono\">" + fmtDate(i.due_date) + (overdue ? ' <span style="color:var(--red);">⚠</span>' : "") + "</td><td>" + escapeHtml(i.responsible_person) + "</td>" +
+        "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-issue=\"" + i.id + "\">Open</button><button class=\"btn-danger\" data-delete-issue=\"" + i.id + "\">Delete</button></td></tr>";
+    }).join("");
+  }
+  ["isSearch","isStudyFilter","isTypeFilter","isStatusFilter","isOverdueFilter"].forEach(function(id){ $(id).addEventListener("input", renderIssues); $(id).addEventListener("change", renderIssues); });
+
+  // ================= FINANCE =================
+  $("expenseFormGlobal").addEventListener("submit", function(e){
+    e.preventDefault();
+    showError("expenseFormError", "");
+    if (!supabase) { showError("expenseFormError", "Not connected to the database."); return; }
+    var studyId = $("efStudy").value, amount = $("efAmount").value;
+    if (!studyId || !amount) { showError("expenseFormError", "Study and amount are required."); return; }
+    var payload = {
+      study_id: studyId, study_site_id: $("efAssign").value || null, category: $("efCategory").value.trim() || null,
+      amount: Number(amount), description: $("efDescription").value.trim() || null, bill_reference: $("efBillRef").value.trim() || null,
+      approval_status: "Pending"
+    };
+    supabase.from("smo_common_expenses").insert(payload).then(function(res){
+      if (res.error) { showError("expenseFormError", "Save failed — " + res.error.message); return; }
+      $("expenseFormGlobal").reset();
+      refreshAll();
+    });
+  });
+
+  function decideExpense(id, approve){
+    var approvedBy = prompt(approve ? "Approve as (name):" : "Reject as (name):", "");
+    if (approvedBy === null) return;
+    supabase.from("smo_common_expenses").update({
+      approval_status: approve ? "Approved" : "Rejected", approved_by: approvedBy || null, approved_date: todayStr()
+    }).eq("id", id).then(function(res){
+      if (res.error) { alert("Update failed — " + res.error.message); return; }
+      refreshAll();
+    });
+  }
+
+  function renderFinance(){
+    var approvedSettlements = state.settlements.filter(function(s){ return s.status === "Approved"; });
+    var totalNet = approvedSettlements.reduce(function(sum, s){ return sum + Number(s.net_distributable); }, 0)
+      + state.settlements.filter(function(s){ return s.status === "Reversal"; }).reduce(function(sum, s){ return sum + Number(s.net_distributable); }, 0);
+    var pendingExp = state.expenses.filter(function(e){ return e.approval_status === "Pending"; });
+    var pendingExpTotal = pendingExp.reduce(function(sum, e){ return sum + Number(e.amount); }, 0);
+    var approvedExpTotal = state.expenses.filter(function(e){ return e.approval_status === "Approved"; }).reduce(function(sum, e){ return sum + Number(e.amount); }, 0);
+
+    $("finStats").innerHTML = [
+      ["Settlements recorded", state.settlements.length, false],
+      ["Net distributed (all-time)", fmtINR(totalNet), false],
+      ["Approved expenses (all-time)", fmtINR(approvedExpTotal), false],
+      ["Pending expense approvals", pendingExp.length + " · " + fmtINR(pendingExpTotal), pendingExp.length > 0]
+    ].map(function(s){ return '<div class="stat' + (s[2] ? " warn" : "") + '"><div class="num">' + s[1] + '</div><div class="lbl">' + s[0] + "</div></div>"; }).join("");
+
+    var expBody = $("expensesBody");
+    if (state.expenses.length === 0) {
+      expBody.innerHTML = '<tr class="empty-row"><td colspan="7">No common expenses logged yet.</td></tr>';
+    } else {
+      expBody.innerHTML = state.expenses.map(function(e){
+        var study = state.studies.find(function(s){ return s.id === e.study_id; });
+        var assign = e.study_site_id ? assignById(e.study_site_id) : null;
+        var actions = e.approval_status === "Pending"
+          ? '<button class="btn-sm ok" data-approve-expense="' + e.id + '">Approve</button><button class="btn-sm bad" data-reject-expense="' + e.id + '">Reject</button>'
+          : "";
+        return "<tr><td>" + escapeHtml(study ? study.protocol_number : "—") + "</td><td>" + (assign ? escapeHtml(siteName(assign.site_id)) : '<span class="empty-note">Unallocated</span>') + "</td><td>" + escapeHtml(e.category) + "</td><td>" + fmtINR(e.amount) + "</td><td class=\"mono\">" + escapeHtml(e.bill_reference) + "</td><td>" + pill(e.approval_status) + "</td><td class=\"row-actions\">" + actions + '<button class="btn-danger" data-delete-expense="' + e.id + '">Delete</button></td></tr>';
+      }).join("");
+    }
+
+    var setBody = $("settlementsBody");
+    if (state.settlements.length === 0) {
+      setBody.innerHTML = '<tr class="empty-row"><td colspan="8">No settlements recorded yet — record one from a study\'s site assignment.</td></tr>';
+    } else {
+      setBody.innerHTML = state.settlements.map(function(s){
+        var assign = assignById(s.study_site_id);
+        var study = state.studies.find(function(x){ return x.id === s.study_id; });
+        var canReverse = s.status === "Approved" && !state.settlements.some(function(r){ return r.reversal_of === s.id; });
+        return "<tr><td class=\"mono\">" + escapeHtml(s.settlement_number) + "</td><td>" + escapeHtml(study ? study.protocol_number : "—") + (assign ? " / " + escapeHtml(siteName(assign.site_id)) : "") + "</td><td class=\"mono\">" + fmtDate(s.approved_date) + "</td><td>" + fmtINR(s.gross_revenue) + "</td><td>" + fmtINR(s.approved_expenses_total) + "</td><td>" + fmtINR(s.net_distributable) + "</td><td>" + pill(s.status) + "</td><td>" + (canReverse ? '<button class="btn-sm bad" data-reverse-settlement="' + s.id + '">Reverse</button>' : "") + "</td></tr>";
+      }).join("");
+    }
+  }
+
+  // ================= DOCUMENTS =================
+  function resetDocumentForm(){
+    $("documentForm").reset();
+    $("dfSupersedes").value = "";
+    $("dfStatus").value = "Draft";
+    $("documentFormLegend").textContent = "Add document";
+    $("documentFormSubmitBtn").textContent = "Save document";
+    $("documentFormCancelBtn").style.display = "none";
+    showError("documentFormError", "");
+  }
+  function startNewVersion(doc){
+    $("dfSupersedes").value = doc.id;
+    $("dfStudy").value = doc.study_id || "";
+    $("dfSite").value = doc.site_id || "";
+    $("dfType").value = doc.doc_type || "";
+    $("dfVersion").value = "";
+    $("dfFile").value = "";
+    $("dfDocDate").value = todayStr();
+    $("dfEffDate").value = "";
+    $("dfExpDate").value = "";
+    $("dfStatus").value = "Draft";
+    $("dfUploadedBy").value = "";
+    $("dfApprovedBy").value = "";
+    $("dfNotes").value = "";
+    $("documentFormLegend").textContent = "New version supersedes " + doc.doc_type + (doc.version ? " " + doc.version : "");
+    $("documentFormSubmitBtn").textContent = "Save new version";
+    $("documentFormCancelBtn").style.display = "inline-block";
+    window.scrollTo({ top: $("documentForm").offsetTop - 20, behavior: "smooth" });
+  }
+  $("documentFormCancelBtn").addEventListener("click", resetDocumentForm);
+
+  $("documentForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    showError("documentFormError", "");
+    if (!supabase) { showError("documentFormError", "Not connected to the database."); return; }
+    var docType = $("dfType").value.trim();
+    if (!docType) { showError("documentFormError", "Document type is required."); return; }
+    var payload = {
+      study_id: $("dfStudy").value || null, site_id: $("dfSite").value || null, doc_type: docType,
+      version: $("dfVersion").value.trim() || null, file_name: $("dfFile").value.trim() || null,
+      doc_date: $("dfDocDate").value || null, effective_date: $("dfEffDate").value || null, expiry_date: $("dfExpDate").value || null,
+      status: $("dfStatus").value, uploaded_by: $("dfUploadedBy").value.trim() || null, approved_by: $("dfApprovedBy").value.trim() || null,
+      notes: $("dfNotes").value.trim() || null
+    };
+    var supersedes = $("dfSupersedes").value;
+    supabase.from("smo_documents").insert(payload).select().then(function(res){
+      if (res.error) { showError("documentFormError", "Save failed — " + res.error.message); return; }
+      var newDoc = res.data && res.data[0];
+      var chain = supersedes && newDoc
+        ? supabase.from("smo_documents").update({ status: "Superseded", superseded_by: newDoc.id }).eq("id", supersedes)
+        : Promise.resolve();
+      chain.then(function(){ resetDocumentForm(); refreshAll(); });
+    });
+  });
+
+  function filteredDocuments(){
+    var q = $("dcSearch").value.trim().toLowerCase();
+    var studyF = $("dcStudyFilter").value, siteF = $("dcSiteFilter").value, statusF = $("dcStatusFilter").value;
+    return state.documents.filter(function(d){
+      if (studyF && d.study_id !== studyF) return false;
+      if (siteF && d.site_id !== siteF) return false;
+      if (statusF && d.status !== statusF) return false;
+      if (q) {
+        var hay = [d.doc_type, d.file_name, d.notes].map(function(v){ return (v || "").toLowerCase(); }).join(" ");
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+  }
+  function renderDocuments(){
+    var rows = filteredDocuments();
+    $("dcCount").textContent = rows.length + " of " + state.documents.length + " documents";
+    var body = $("documentsBody");
+    if (rows.length === 0) { body.innerHTML = '<tr class="empty-row"><td colspan="7">No documents match these filters.</td></tr>'; return; }
+    body.innerHTML = rows.map(function(d){
+      var expired = d.expiry_date && daysUntil(d.expiry_date) < 0 && d.status !== "Superseded" && d.status !== "Archived";
+      return "<tr class=\"" + (expired ? "row-flag" : "") + "\"><td>" + escapeHtml(d.doc_type) + "</td><td>" + (d.study_id ? escapeHtml(studyLabel(d.study_id)) : "—") + "</td><td>" + (d.site_id ? escapeHtml(siteName(d.site_id)) : "—") + "</td><td class=\"mono\">" + escapeHtml(d.version) + "</td><td>" + pill(d.status) + "</td><td>" + expiryBadge(d.expiry_date) + "</td>" +
+        "<td class=\"row-actions\"><button class=\"btn-sm\" data-new-version=\"" + d.id + "\">New version</button><button class=\"btn-danger\" data-delete-document=\"" + d.id + "\">Delete</button></td></tr>";
+    }).join("");
+  }
+  ["dcSearch","dcStudyFilter","dcSiteFilter","dcStatusFilter"].forEach(function(id){ $(id).addEventListener("input", renderDocuments); $(id).addEventListener("change", renderDocuments); });
+
+  // ================= PRIMARY DRAWER (Study / Site / Issue) =================
+  function openDrawer(type, id){
+    state.drawerType = type; state.drawerId = id; state.drawerSubtab = "overview";
+    $("drawerOverlay").classList.add("open");
+    renderDrawer();
+  }
+  function closeDrawer(){ $("drawerOverlay").classList.remove("open"); state.drawerType = null; state.drawerId = null; }
+  $("drawerOverlay").addEventListener("click", function(e){ if (e.target.id === "drawerOverlay") closeDrawer(); });
+
+  function renderDrawer(){
+    if (state.drawerType === "study") renderStudyDrawer();
+    else if (state.drawerType === "site") renderSiteDrawer();
+    else if (state.drawerType === "issue") renderIssueDrawer();
+  }
+
+  function subtabsHtml(names, active, group){
+    return '<div class="subtabs" data-subtab-group="' + group + '">' + names.map(function(n){
+      return '<button type="button" class="subtab-btn' + (n === active ? " active" : "") + '" data-subtab="' + n + '">' + n.replace(/-/g, " ") + "</button>";
+    }).join("") + "</div>";
+  }
+
+  function renderStudyDrawer(){
+    var s = state.studies.find(function(x){ return x.id === state.drawerId; });
+    if (!s) { closeDrawer(); return; }
+    var assigns = state.studySites.filter(function(a){ return a.study_id === s.id; });
+    var assignedSiteIds = assigns.map(function(a){ return a.site_id; });
+    var availableSites = state.sites.filter(function(x){ return assignedSiteIds.indexOf(x.id) === -1; });
+    var docs = state.documents.filter(function(d){ return d.study_id === s.id; });
+    var issues = state.issues.filter(function(i){ return i.study_id === s.id; });
+
+    var overviewHtml =
+      '<div class="kv-grid">' +
+        kv("Sponsor / CRO", s.sponsor) + kv("Therapeutic area", s.therapeutic_area) +
+        kv("Phase", s.phase) + kv("Protocol version", s.protocol_version) +
+        kv("Planned start", s.start_date) + kv("Planned end", s.end_date) +
+        kv("Target recruitment", s.target_recruitment) + kv("Assigned SMO team", s.smo_team) +
+        (s.required_documents ? '<div class="full">' + kv("Required documents", s.required_documents) + "</div>" : "") +
+        (s.notes ? '<div class="full">' + kv("Notes", s.notes) + "</div>" : "") +
+      "</div>" +
+      '<div class="workflow-stepper" style="margin-top:14px;">' + STUDY_STATUSES.map(function(st){
+        return '<button class="step-btn' + (st === s.status ? " current" : "") + '" data-set-study-status="' + st + '">' + st + "</button>";
+      }).join("") + "</div>";
+
+    var assignHtml = '<div class="mini-form"><form id="assignFromStudyForm"><div class="form-grid">' +
+      '<div class="form-field"><label>Assign site</label><select id="afsSite">' + (availableSites.length ? availableSites.map(function(x){ return '<option value="' + x.id + '">' + escapeHtml(x.site_name) + "</option>"; }).join("") : '<option value="">All sites already assigned</option>') + "</select></div>" +
+      '<div class="form-field"><label>SMO share %</label><input type="number" step="0.01" id="afsSmoPct"></div>' +
+      '<div class="form-field"><label>PI share %</label><input type="number" step="0.01" id="afsPiPct"></div>' +
+      '<div class="form-field"><label>Site share %</label><input type="number" step="0.01" id="afsSitePct"></div>' +
+      '</div><div class="form-error" id="assignFromStudyError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Assign site</button></div></form></div>' +
+      (assigns.length === 0 ? '<p class="empty-note">No sites assigned to this study yet.</p>' :
+        '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Site</th><th>Stage</th><th>SMO%</th><th>PI%</th><th>Site%</th><th>Activation</th><th></th></tr></thead><tbody>' +
+        assigns.map(function(a){
+          return "<tr><td>" + escapeHtml(siteName(a.site_id)) + "</td><td>" + pill(a.status) + "</td><td>" + (a.smo_share_pct != null ? a.smo_share_pct + "%" : "—") + "</td><td>" + (a.pi_share_pct != null ? a.pi_share_pct + "%" : "—") + "</td><td>" + (a.site_share_pct != null ? a.site_share_pct + "%" : "—") + "</td><td class=\"mono\">" + fmtDate(a.activation_date) + "</td>" +
+            "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-assign=\"" + a.id + "\">Manage</button><button class=\"btn-danger\" data-delete-assign=\"" + a.id + "\">Unassign</button></td></tr>";
+        }).join("") + "</tbody></table></div>");
+
+    var docsHtml = docs.length === 0 ? '<p class="empty-note">No study-level documents yet. Add them from the Documents tab.</p>' :
+      '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Type</th><th>Version</th><th>Status</th><th>Expiry</th></tr></thead><tbody>' +
+      docs.map(function(d){ return "<tr><td>" + escapeHtml(d.doc_type) + "</td><td class=\"mono\">" + escapeHtml(d.version) + "</td><td>" + pill(d.status) + "</td><td>" + expiryBadge(d.expiry_date) + "</td></tr>"; }).join("") + "</tbody></table></div>";
+
+    var issuesHtml = '<button type="button" class="btn-sm" id="jumpToIssuesBtn">Manage in Issues &amp; CAPA tab &rarr;</button>' +
+      (issues.length === 0 ? '<p class="empty-note">No issues logged for this study.</p>' :
+      '<div style="overflow-x:auto;margin-top:10px;"><table class="data-table"><thead><tr><th>Issue #</th><th>Type</th><th>Status</th><th>Due</th></tr></thead><tbody>' +
+      issues.map(function(i){ return "<tr><td class=\"mono\">" + escapeHtml(i.issue_number) + "</td><td>" + escapeHtml(i.issue_type) + "</td><td>" + pill(i.status) + "</td><td class=\"mono\">" + fmtDate(i.due_date) + "</td></tr>"; }).join("") + "</tbody></table></div>");
+
+    var tabs = ["overview","site-assignments","documents","issues"];
+    var d = $("drawer");
+    d.innerHTML =
+      '<div class="drawer-head"><h2>' + escapeHtml(s.title) + '</h2><button class="drawer-close" id="drawerCloseBtn">&times;</button></div>' +
+      '<div class="drawer-sub">' + escapeHtml(s.protocol_number) + " · " + pill(s.status) + "</div>" +
+      subtabsHtml(tabs, state.drawerSubtab, "study") +
+      '<div class="subpanel' + (state.drawerSubtab === "overview" ? " active" : "") + '" data-subpanel="overview">' + overviewHtml + "</div>" +
+      '<div class="subpanel' + (state.drawerSubtab === "site-assignments" ? " active" : "") + '" data-subpanel="site-assignments">' + assignHtml + "</div>" +
+      '<div class="subpanel' + (state.drawerSubtab === "documents" ? " active" : "") + '" data-subpanel="documents">' + docsHtml + "</div>" +
+      '<div class="subpanel' + (state.drawerSubtab === "issues" ? " active" : "") + '" data-subpanel="issues">' + issuesHtml + "</div>";
+
+    $("drawerCloseBtn").addEventListener("click", closeDrawer);
+    var jumpBtn = $("jumpToIssuesBtn");
+    if (jumpBtn) jumpBtn.addEventListener("click", function(){ closeDrawer(); jumpToIssuesForStudy(s.id); });
+    var afsForm = $("assignFromStudyForm");
+    if (afsForm) {
+      var siteSel = $("afsSite");
+      function prefillShares(){
+        var site = state.sites.find(function(x){ return x.id === siteSel.value; });
+        $("afsSmoPct").value = site && site.default_smo_share_pct != null ? site.default_smo_share_pct : "";
+        $("afsPiPct").value = site && site.default_pi_share_pct != null ? site.default_pi_share_pct : "";
+        $("afsSitePct").value = site && site.default_site_share_pct != null ? site.default_site_share_pct : "";
+      }
+      siteSel.addEventListener("change", prefillShares);
+      prefillShares();
+      afsForm.addEventListener("submit", function(e){
+        e.preventDefault();
+        createAssignment(s.id, siteSel.value, $("afsSmoPct").value, $("afsPiPct").value, $("afsSitePct").value, "assignFromStudyError");
+      });
+    }
+  }
+
+  function renderSiteDrawer(){
+    var s = state.sites.find(function(x){ return x.id === state.drawerId; });
+    if (!s) { closeDrawer(); return; }
+    var assigns = state.studySites.filter(function(a){ return a.site_id === s.id; });
+    var assignedStudyIds = assigns.map(function(a){ return a.study_id; });
+    var availableStudies = state.studies.filter(function(x){ return assignedStudyIds.indexOf(x.id) === -1; });
+    var docs = state.documents.filter(function(d){ return d.site_id === s.id; });
+    var trainings = state.trainings.filter(function(t){ return t.site_id === s.id; });
+
+    var overviewHtml = '<div class="kv-grid">' +
+      kv("Site code", s.site_code) + kv("Type", s.site_type) +
+      kv("Address", s.address) + kv("City / State", [s.city, s.state].filter(Boolean).join(", ")) +
+      kv("Contact", s.contact_name) + kv("Contact phone / email", [s.contact_phone, s.contact_email].filter(Boolean).join(" / ")) +
+      kv("Principal Investigator", s.pi_name) + kv("PI qualification", s.pi_qualification) +
+      kv("PI experience", s.pi_experience) + kv("Sub-investigators", s.sub_investigators) +
+      kv("Therapeutic areas", s.therapeutic_areas) + kv("Capabilities", s.capabilities) +
+      kv("Default SMO / PI / Site %", (s.default_smo_share_pct != null ? s.default_smo_share_pct + "/" + s.default_pi_share_pct + "/" + s.default_site_share_pct : "—")) +
+      (s.notes ? '<div class="full">' + kv("Notes", s.notes) + "</div>" : "") +
+      "</div>" +
+      '<div class="workflow-stepper" style="margin-top:14px;">' + SITE_STATUSES.map(function(st){
+        return '<button class="step-btn' + (st === s.status ? " current" : "") + '" data-set-site-status="' + st + '">' + st + "</button>";
+      }).join("") + "</div>";
+
+    var assignHtml = '<div class="mini-form"><form id="assignFromSiteForm"><div class="form-grid">' +
+      '<div class="form-field"><label>Assign to study</label><select id="afzStudy">' + (availableStudies.length ? availableStudies.map(function(x){ return '<option value="' + x.id + '">' + escapeHtml(x.protocol_number + " — " + x.title) + "</option>"; }).join("") : '<option value="">Already assigned to all studies</option>') + "</select></div>" +
+      '<div class="form-field"><label>SMO share %</label><input type="number" step="0.01" id="afzSmoPct" value="' + (s.default_smo_share_pct != null ? s.default_smo_share_pct : "") + '"></div>' +
+      '<div class="form-field"><label>PI share %</label><input type="number" step="0.01" id="afzPiPct" value="' + (s.default_pi_share_pct != null ? s.default_pi_share_pct : "") + '"></div>' +
+      '<div class="form-field"><label>Site share %</label><input type="number" step="0.01" id="afzSitePct" value="' + (s.default_site_share_pct != null ? s.default_site_share_pct : "") + '"></div>' +
+      '</div><div class="form-error" id="assignFromSiteError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Assign study</button></div></form></div>' +
+      (assigns.length === 0 ? '<p class="empty-note">This site is not assigned to any study yet.</p>' :
+        '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Study</th><th>Stage</th><th>SMO%</th><th>PI%</th><th>Site%</th><th></th></tr></thead><tbody>' +
+        assigns.map(function(a){
+          var st = state.studies.find(function(x){ return x.id === a.study_id; });
+          return "<tr><td>" + escapeHtml(st ? st.protocol_number : "—") + "</td><td>" + pill(a.status) + "</td><td>" + (a.smo_share_pct != null ? a.smo_share_pct + "%" : "—") + "</td><td>" + (a.pi_share_pct != null ? a.pi_share_pct + "%" : "—") + "</td><td>" + (a.site_share_pct != null ? a.site_share_pct + "%" : "—") + "</td>" +
+            "<td class=\"row-actions\"><button class=\"btn-sm\" data-open-assign=\"" + a.id + "\">Manage</button><button class=\"btn-danger\" data-delete-assign=\"" + a.id + "\">Unassign</button></td></tr>";
+        }).join("") + "</tbody></table></div>");
+
+    var docsHtml = docs.length === 0 ? '<p class="empty-note">No site-level documents yet. Add them from the Documents tab.</p>' :
+      '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Type</th><th>Version</th><th>Status</th><th>Expiry</th></tr></thead><tbody>' +
+      docs.map(function(d){ return "<tr><td>" + escapeHtml(d.doc_type) + "</td><td class=\"mono\">" + escapeHtml(d.version) + "</td><td>" + pill(d.status) + "</td><td>" + expiryBadge(d.expiry_date) + "</td></tr>"; }).join("") + "</tbody></table></div>";
+
+    var trainingHtml = '<div class="mini-form"><form id="trainingForm"><div class="form-grid">' +
+      '<div class="form-field wide"><label>Course / training type *</label><input type="text" id="tnCourse" required></div>' +
+      '<div class="form-field"><label>Study (optional)</label><select id="tnStudy"><option value="">Not study-specific</option>' + assigns.map(function(a){ var st = state.studies.find(function(x){return x.id===a.study_id;}); return st ? '<option value="' + st.id + '">' + escapeHtml(st.protocol_number) + "</option>" : ""; }).join("") + "</select></div>" +
+      '<div class="form-field"><label>Protocol version</label><input type="text" id="tnVersion"></div>' +
+      '<div class="form-field"><label>Trainer</label><input type="text" id="tnTrainer"></div>' +
+      '<div class="form-field"><label>Trainee *</label><input type="text" id="tnTrainee" required></div>' +
+      '<div class="form-field"><label>Training date</label><input type="date" id="tnDate" value="' + todayStr() + '"></div>' +
+      '<div class="form-field"><label>Expiry / retraining date</label><input type="date" id="tnExpiry"></div>' +
+      '<div class="form-field"><label>Certificate ref</label><input type="text" id="tnCert"></div>' +
+      '<div class="form-field"><label>Status</label><select id="tnStatus">' + optionsHtml(TRAINING_STATUSES, "Completed") + "</select></div>" +
+      '</div><div class="form-error" id="trainingFormError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Add training record</button></div></form></div>' +
+      (trainings.length === 0 ? '<p class="empty-note">No training records yet.</p>' :
+        '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Course</th><th>Trainee</th><th>Date</th><th>Expiry</th><th>Status</th><th></th></tr></thead><tbody>' +
+        trainings.map(function(t){ return "<tr><td>" + escapeHtml(t.course) + "</td><td>" + escapeHtml(t.trainee_name) + "</td><td class=\"mono\">" + fmtDate(t.training_date) + "</td><td>" + expiryBadge(t.expiry_date) + "</td><td>" + pill(t.status) + "</td><td><button class=\"btn-danger\" data-delete-training=\"" + t.id + "\">Delete</button></td></tr>"; }).join("") + "</tbody></table></div>");
+
+    var tabs = ["overview","study-assignments","documents","training"];
+    var d = $("drawer");
+    d.innerHTML =
+      '<div class="drawer-head"><h2>' + escapeHtml(s.site_name) + '</h2><button class="drawer-close" id="drawerCloseBtn">&times;</button></div>' +
+      '<div class="drawer-sub">' + escapeHtml(s.site_code || "no code") + " · " + pill(s.status) + "</div>" +
+      subtabsHtml(tabs, state.drawerSubtab, "site") +
+      '<div class="subpanel' + (state.drawerSubtab === "overview" ? " active" : "") + '" data-subpanel="overview">' + overviewHtml + "</div>" +
+      '<div class="subpanel' + (state.drawerSubtab === "study-assignments" ? " active" : "") + '" data-subpanel="study-assignments">' + assignHtml + "</div>" +
+      '<div class="subpanel' + (state.drawerSubtab === "documents" ? " active" : "") + '" data-subpanel="documents">' + docsHtml + "</div>" +
+      '<div class="subpanel' + (state.drawerSubtab === "training" ? " active" : "") + '" data-subpanel="training">' + trainingHtml + "</div>";
+
+    $("drawerCloseBtn").addEventListener("click", closeDrawer);
+    var afzForm = $("assignFromSiteForm");
+    if (afzForm) afzForm.addEventListener("submit", function(e){
+      e.preventDefault();
+      createAssignment($("afzStudy").value, s.id, $("afzSmoPct").value, $("afzPiPct").value, $("afzSitePct").value, "assignFromSiteError");
+    });
+    var tnForm = $("trainingForm");
+    if (tnForm) tnForm.addEventListener("submit", function(e){
+      e.preventDefault();
+      showError("trainingFormError", "");
+      var payload = {
+        site_id: s.id, study_id: $("tnStudy").value || null, course: $("tnCourse").value.trim(),
+        protocol_version: $("tnVersion").value.trim() || null, trainer_name: $("tnTrainer").value.trim() || null,
+        trainee_name: $("tnTrainee").value.trim(), training_date: $("tnDate").value || null, expiry_date: $("tnExpiry").value || null,
+        certificate_ref: $("tnCert").value.trim() || null, status: $("tnStatus").value
+      };
+      if (!payload.course || !payload.trainee_name) { showError("trainingFormError", "Course and trainee are required."); return; }
+      supabase.from("smo_training_records").insert(payload).then(function(res){
+        if (res.error) { showError("trainingFormError", "Save failed — " + res.error.message); return; }
+        refreshAll();
+      });
+    });
+  }
+
+  function renderIssueDrawer(){
+    var i = state.issues.find(function(x){ return x.id === state.drawerId; });
+    if (!i) { closeDrawer(); return; }
+    var d = $("drawer");
+    d.innerHTML =
+      '<div class="drawer-head"><h2>' + escapeHtml(i.issue_number) + '</h2><button class="drawer-close" id="drawerCloseBtn">&times;</button></div>' +
+      '<div class="drawer-sub">' + escapeHtml(i.issue_type) + " · " + escapeHtml(i.severity) + " · " + (i.study_id ? escapeHtml(studyLabel(i.study_id)) : "—") + (i.site_id ? " / " + escapeHtml(siteName(i.site_id)) : "") + "</div>" +
+      '<div class="drawer-section"><h4>Lifecycle</h4><div class="workflow-stepper">' + ISSUE_STATUSES.map(function(st){ return '<button class="step-btn' + (st === i.status ? " current" : "") + '" data-set-issue-status="' + st + '">' + st + "</button>"; }).join("") + "</div></div>" +
+      '<div class="drawer-section"><h4>Description</h4><div class="kv-grid"><div class="full">' + escapeHtml(i.description) + "</div></div></div>" +
+      '<div class="drawer-section"><h4>Details</h4><div class="kv-grid">' + kv("Source", i.source) + kv("Responsible person", i.responsible_person) + kv("Due date", i.due_date) + kv("Closure date", i.closure_date) + "</div></div>" +
+      '<div class="drawer-section"><h4>Corrective &amp; preventive action</h4>' +
+        '<form id="issueCapaForm"><div class="form-grid">' +
+        '<div class="form-field wide"><label>Corrective action</label><textarea id="icCorrective">' + escapeHtml(i.corrective_action || "") + "</textarea></div>" +
+        '<div class="form-field wide"><label>Preventive action</label><textarea id="icPreventive">' + escapeHtml(i.preventive_action || "") + "</textarea></div>" +
+        '<div class="form-field wide"><label>Supporting evidence</label><textarea id="icEvidence">' + escapeHtml(i.supporting_evidence || "") + "</textarea></div>" +
+        '<div class="form-field wide"><label>Verification</label><textarea id="icVerification">' + escapeHtml(i.verification || "") + "</textarea></div>" +
+        '</div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">Save</button></div></form>' +
+      "</div>";
+    $("drawerCloseBtn").addEventListener("click", closeDrawer);
+    $("issueCapaForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      supabase.from("smo_issues").update({
+        corrective_action: $("icCorrective").value.trim() || null, preventive_action: $("icPreventive").value.trim() || null,
+        supporting_evidence: $("icEvidence").value.trim() || null, verification: $("icVerification").value.trim() || null,
+        updated_at: new Date().toISOString()
+      }).eq("id", i.id).then(function(res){ if (res.error) { alert("Save failed — " + res.error.message); return; } refreshAll(); });
+    });
+  }
+
+  function createAssignment(studyId, siteId, smoPct, piPct, sitePct, errorElId){
+    showError(errorElId, "");
+    if (!studyId || !siteId) { showError(errorElId, "Select a study and a site."); return; }
+    var smo = smoPct === "" ? null : Number(smoPct), pi = piPct === "" ? null : Number(piPct), site = sitePct === "" ? null : Number(sitePct);
+    if (smo != null && pi != null && site != null && Math.abs(smo + pi + site - 100) > 0.01) {
+      showError(errorElId, "SMO + PI + Site share percentages must total 100%.");
+      return;
+    }
+    supabase.from("smo_study_sites").insert({
+      study_id: studyId, site_id: siteId, status: "Identification",
+      smo_share_pct: smo, pi_share_pct: pi, site_share_pct: site,
+      share_effective_date: (smo != null ? todayStr() : null)
+    }).then(function(res){
+      if (res.error) { showError(errorElId, "Save failed — " + res.error.message); return; }
+      refreshAll();
+    });
+  }
+
+  // ================= ASSIGNMENT DRAWER (Study + Site engagement) =================
+  function openAssignDrawer(id){
+    state.assignId = id; state.assignSubtab = "feasibility";
+    $("assignDrawerOverlay").classList.add("open");
+    renderAssignDrawer();
+  }
+  function closeAssignDrawer(){ $("assignDrawerOverlay").classList.remove("open"); state.assignId = null; }
+  $("assignDrawerOverlay").addEventListener("click", function(e){ if (e.target.id === "assignDrawerOverlay") closeAssignDrawer(); });
+
+  function renderAssignDrawer(){
+    var a = assignById(state.assignId);
+    if (!a) { closeAssignDrawer(); return; }
+    var study = state.studies.find(function(s){ return s.id === a.study_id; });
+    var site = state.sites.find(function(s){ return s.id === a.site_id; });
+    var subjects = state.subjects.filter(function(su){ return su.study_site_id === a.id; });
+    var visits = state.visits.filter(function(v){ return v.study_site_id === a.id; });
+    var expenses = state.expenses.filter(function(e){ return e.study_site_id === a.id; });
+    var unallocated = state.expenses.filter(function(e){ return e.study_id === a.study_id && !e.study_site_id; });
+    var docs = state.documents.filter(function(d){ return d.study_id === a.study_id && d.site_id === a.site_id; });
+    var settlements = state.settlements.filter(function(s){ return s.study_site_id === a.id; });
+
+    var stageHtml = '<div class="workflow-stepper">' + ASSIGN_STAGES.map(function(st){ return '<button class="step-btn' + (st === a.status ? " current" : "") + '" data-set-stage="' + st + '">' + st + "</button>"; }).join("") + "</div>";
+
+    var feasibilityHtml = stageHtml + '<form id="feasibilityForm"><div class="form-grid">' +
+      '<div class="form-field"><label>Feasibility score (0-100)</label><input type="number" min="0" max="100" id="fzScore" value="' + (a.feasibility_score != null ? a.feasibility_score : "") + '"></div>' +
+      '<div class="form-field"><label>Decision</label><select id="fzDecision"><option value="">Pending</option><option' + (a.feasibility_decision === "Recommended" ? " selected" : "") + ">Recommended</option><option" + (a.feasibility_decision === "Not Recommended" ? " selected" : "") + ">Not Recommended</option></select></div>" +
+      '<div class="form-field"><label>Reviewer</label><input type="text" id="fzReviewer" value="' + escapeHtml(a.feasibility_reviewer || "") + '"></div>' +
+      '<div class="form-field"><label>Decision date</label><input type="date" id="fzDate" value="' + (a.feasibility_date || "") + '"></div>' +
+      '<div class="form-field wide"><label>Notes</label><textarea id="fzNotes">' + escapeHtml(a.feasibility_notes || "") + "</textarea></div>" +
+      '</div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">Save feasibility</button></div></form>';
+
+    var checklist = a.activation_checklist || {};
+    var allChecked = ACTIVATION_ITEMS.every(function(item){ return !!checklist[item[0]]; });
+    var activationHtml =
+      '<div class="checklist">' + ACTIVATION_ITEMS.map(function(item){
+        return '<label><input type="checkbox" data-toggle-check="' + item[0] + '"' + (checklist[item[0]] ? " checked" : "") + "> " + item[1] + "</label>";
+      }).join("") + "</div>" +
+      (a.activation_date
+        ? '<div class="ok-box">Activated on ' + fmtDate(a.activation_date) + (a.activation_override_reason ? " — override: " + escapeHtml(a.activation_override_reason) : "") + "</div>"
+        : (allChecked ? '<div class="ok-box">All activation checklist items complete — ready to activate.</div>' : '<div class="warn-box">Checklist incomplete. Activation requires an authorized override reason.</div>') +
+          '<form id="activateForm"><div class="form-grid">' +
+          (allChecked ? "" : '<div class="form-field wide"><label>Override reason (required — checklist incomplete)</label><input type="text" id="actOverrideReason"></div>') +
+          '</div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">Activate site for this study</button></div></form>');
+
+    var shareHtml = '<div class="kv-grid">' + kv("Current split (SMO/PI/Site)", (a.smo_share_pct != null ? a.smo_share_pct + "% / " + a.pi_share_pct + "% / " + a.site_share_pct + "%" : "Not configured")) + kv("Version", a.share_version) + kv("Effective date", a.share_effective_date) + kv("Approved by", a.share_approved_by) + "</div>" +
+      '<form id="shareForm" style="margin-top:12px;"><div class="form-grid">' +
+      '<div class="form-field"><label>SMO share %</label><input type="number" step="0.01" id="shSmoPct" value="' + (a.smo_share_pct != null ? a.smo_share_pct : "") + '"></div>' +
+      '<div class="form-field"><label>PI share %</label><input type="number" step="0.01" id="shPiPct" value="' + (a.pi_share_pct != null ? a.pi_share_pct : "") + '"></div>' +
+      '<div class="form-field"><label>Site share %</label><input type="number" step="0.01" id="shSitePct" value="' + (a.site_share_pct != null ? a.site_share_pct : "") + '"></div>' +
+      '<div class="form-field"><label>Effective date</label><input type="date" id="shEffDate" value="' + todayStr() + '"></div>' +
+      '<div class="form-field wide"><label>Approved by</label><input type="text" id="shApprover"></div>' +
+      '</div><div class="form-error" id="shareFormError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">Save new share version</button></div></form>';
+
+    var subjStats = ["Screened","Enrolled","Completed","Withdrawn"].map(function(st){
+      var n = subjects.filter(function(su){ return st === "Enrolled" ? ["Enrolled","Randomized","Active"].indexOf(su.status) !== -1 : su.status === st; }).length;
+      return '<div class="stat"><div class="num">' + n + '</div><div class="lbl">' + st + "</div></div>";
+    }).join("");
+    var recruitmentHtml = '<div class="stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">' + subjStats + "</div>" +
+      '<div class="mini-form"><form id="subjectForm"><div class="form-grid">' +
+      '<div class="form-field"><label>Subject code *</label><input type="text" id="sjCode" required></div>' +
+      '<div class="form-field"><label>Screening date</label><input type="date" id="sjScreen"></div>' +
+      '<div class="form-field"><label>Enrollment date</label><input type="date" id="sjEnroll"></div>' +
+      '<div class="form-field"><label>Randomization ID</label><input type="text" id="sjRand"></div>' +
+      '<div class="form-field"><label>Status</label><select id="sjStatus">' + optionsHtml(SUBJECT_STATUSES, "Screened") + "</select></div>" +
+      '</div><div class="form-error" id="subjectFormError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Add subject</button></div></form></div>' +
+      (subjects.length === 0 ? '<p class="empty-note">No subjects logged yet.</p>' :
+        '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Code</th><th>Screening</th><th>Enrollment</th><th>Status</th><th></th></tr></thead><tbody>' +
+        subjects.map(function(su){ return "<tr><td class=\"mono\">" + escapeHtml(su.subject_code) + "</td><td class=\"mono\">" + fmtDate(su.screening_date) + "</td><td class=\"mono\">" + fmtDate(su.enrollment_date) + "</td><td>" + pill(su.status) + "</td><td><button class=\"btn-danger\" data-delete-subject=\"" + su.id + "\">Delete</button></td></tr>"; }).join("") + "</tbody></table></div>");
+
+    var monitoringHtml = '<div class="mini-form"><form id="visitForm"><div class="form-grid">' +
+      '<div class="form-field"><label>Visit type</label><select id="mvType">' + optionsHtml(VISIT_TYPES, "Routine") + "</select></div>" +
+      '<div class="form-field"><label>Visit date</label><input type="date" id="mvDate"></div>' +
+      '<div class="form-field"><label>Monitor</label><input type="text" id="mvMonitor"></div>' +
+      '<div class="form-field"><label>Status</label><select id="mvStatus">' + optionsHtml(VISIT_STATUSES, "Scheduled") + "</select></div>" +
+      '<div class="form-field"><label>Follow-up date</label><input type="date" id="mvFollowUp"></div>' +
+      '<div class="form-field wide"><label>Scope</label><input type="text" id="mvScope"></div>' +
+      '<div class="form-field wide"><label>Findings</label><textarea id="mvFindings"></textarea></div>' +
+      '<div class="form-field wide"><label>Actions</label><textarea id="mvActions"></textarea></div>' +
+      '</div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Add visit</button></div></form></div>' +
+      (visits.length === 0 ? '<p class="empty-note">No monitoring visits logged yet.</p>' :
+        '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Type</th><th>Date</th><th>Monitor</th><th>Status</th><th></th></tr></thead><tbody>' +
+        visits.map(function(v){ return "<tr><td>" + escapeHtml(v.visit_type) + "</td><td class=\"mono\">" + fmtDate(v.visit_date) + "</td><td>" + escapeHtml(v.monitor_name) + "</td><td>" + pill(v.status) + "</td><td><button class=\"btn-danger\" data-delete-visit=\"" + v.id + "\">Delete</button></td></tr>"; }).join("") + "</tbody></table></div>");
+
+    var docsHtml = docs.length === 0 ? '<p class="empty-note">No documents linked to this study+site pairing yet. Add them from the Documents tab (set both Study and Site).</p>' :
+      '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Type</th><th>Version</th><th>Status</th><th>Expiry</th></tr></thead><tbody>' +
+      docs.map(function(d){ return "<tr><td>" + escapeHtml(d.doc_type) + "</td><td class=\"mono\">" + escapeHtml(d.version) + "</td><td>" + pill(d.status) + "</td><td>" + expiryBadge(d.expiry_date) + "</td></tr>"; }).join("") + "</tbody></table></div>";
+
+    var pendingHere = expenses.filter(function(e){ return e.approval_status === "Pending"; });
+    var approvedHere = expenses.filter(function(e){ return e.approval_status === "Approved"; });
+    var approvedTotal = approvedHere.reduce(function(sum, e){ return sum + Number(e.amount); }, 0);
+    var sharesReady = a.smo_share_pct != null && a.pi_share_pct != null && a.site_share_pct != null;
+
+    var financeHtml =
+      (unallocated.length > 0 ? '<div class="warn-box">' + unallocated.length + ' unallocated study-level expense(s) exist. <button type="button" class="btn-sm" id="showUnallocatedBtn">Attribute to this site</button></div>' +
+        '<div id="unallocatedBox" style="display:none;" class="mini-form">' +
+        unallocated.map(function(e){ return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;"><span>' + escapeHtml(e.category || "Expense") + " — " + fmtINR(e.amount) + '</span><button class="btn-sm" data-attribute-expense="' + e.id + '" data-target-assign="' + a.id + '">Attribute here</button></div>'; }).join("") +
+        "</div>" : "") +
+      '<div class="mini-form"><form id="expenseFormAssign"><div class="form-grid">' +
+      '<div class="form-field"><label>Category</label><input type="text" id="eaCategory"></div>' +
+      '<div class="form-field"><label>Amount (₹) *</label><input type="number" step="0.01" min="0" id="eaAmount" required></div>' +
+      '<div class="form-field"><label>Bill reference</label><input type="text" id="eaBillRef"></div>' +
+      '<div class="form-field wide"><label>Description</label><textarea id="eaDescription"></textarea></div>' +
+      '</div><div class="form-error" id="expenseAssignError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">+ Log expense for this site</button></div></form></div>' +
+      (expenses.length === 0 ? '<p class="empty-note">No expenses logged for this site yet.</p>' :
+        '<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>Category</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>' +
+        expenses.map(function(e){ var actions = e.approval_status === "Pending" ? '<button class="btn-sm ok" data-approve-expense="' + e.id + '">Approve</button><button class="btn-sm bad" data-reject-expense="' + e.id + '">Reject</button>' : ""; return "<tr><td>" + escapeHtml(e.category) + "</td><td>" + fmtINR(e.amount) + "</td><td>" + pill(e.approval_status) + "</td><td class=\"row-actions\">" + actions + "</td></tr>"; }).join("") + "</tbody></table></div>") +
+      '<div class="drawer-section" style="margin-top:18px;"><h4>Settlement — revenue sharing engine</h4>' +
+      (!sharesReady ? '<div class="warn-box">Configure the SMO / PI / Site share percentages above before recording a settlement.</div>' :
+        pendingHere.length > 0 ? '<div class="warn-box">' + pendingHere.length + ' expense(s) are still pending approval for this site. Approve or reject them before settling.</div>' :
+        '<form id="settlementForm"><div class="form-grid">' +
+        '<div class="form-field"><label>Gross study revenue for this site (₹) *</label><input type="number" step="0.01" min="0" id="stlGross" required></div>' +
+        '<div class="form-field"><label>Approved by</label><input type="text" id="stlApprover"></div>' +
+        '</div><p class="inline-note" style="font-size:11.5px;color:var(--slate);">Approved expenses for this site so far: ' + fmtINR(approvedTotal) + '. Net distributable = gross − approved expenses, then split ' + a.smo_share_pct + '% SMO / ' + a.pi_share_pct + '% PI / ' + a.site_share_pct + '% Site.</p>' +
+        '<div class="form-error" id="settlementFormError"></div><div class="form-actions"><button type="submit" class="btn-primary btn-sm">Record settlement</button></div></form>') +
+      "</div>" +
+      (settlements.length === 0 ? "" : '<div class="drawer-section"><h4>Settlement history for this site</h4><div style="overflow-x:auto;"><table class="data-table"><thead><tr><th>#</th><th>Date</th><th>Gross</th><th>Expenses</th><th>Net</th><th>Status</th><th></th></tr></thead><tbody>' +
+        settlements.map(function(s){
+          var canReverse = s.status === "Approved" && !state.settlements.some(function(r){ return r.reversal_of === s.id; });
+          return "<tr><td class=\"mono\">" + escapeHtml(s.settlement_number) + "</td><td class=\"mono\">" + fmtDate(s.approved_date) + "</td><td>" + fmtINR(s.gross_revenue) + "</td><td>" + fmtINR(s.approved_expenses_total) + "</td><td>" + fmtINR(s.net_distributable) + "</td><td>" + pill(s.status) + "</td><td>" + (canReverse ? '<button class="btn-sm bad" data-reverse-settlement="' + s.id + '">Reverse</button>' : "") + "</td></tr>";
+        }).join("") + "</tbody></table></div></div>");
+
+    var tabs = ["feasibility","activation","revenue-share","recruitment","monitoring","finance","documents"];
+    var panelHtml = {
+      "feasibility": feasibilityHtml, "activation": activationHtml, "revenue-share": shareHtml,
+      "recruitment": recruitmentHtml, "monitoring": monitoringHtml, "finance": financeHtml, "documents": docsHtml
+    };
+
+    var d = $("assignDrawer");
+    d.innerHTML =
+      '<div class="drawer-head"><h2>' + escapeHtml(site ? site.site_name : "—") + '</h2><button class="drawer-close" id="assignDrawerCloseBtn">&times;</button></div>' +
+      '<div class="drawer-sub">' + escapeHtml(study ? study.protocol_number + " — " + study.title : "—") + " · " + pill(a.status) + "</div>" +
+      subtabsHtml(tabs, state.assignSubtab, "assign") +
+      tabs.map(function(t){ return '<div class="subpanel' + (t === state.assignSubtab ? " active" : "") + '" data-subpanel="' + t + '">' + panelHtml[t] + "</div>"; }).join("");
+
+    $("assignDrawerCloseBtn").addEventListener("click", closeAssignDrawer);
+
+    var feasForm = $("feasibilityForm");
+    if (feasForm) feasForm.addEventListener("submit", function(e){
+      e.preventDefault();
+      supabase.from("smo_study_sites").update({
+        feasibility_score: $("fzScore").value === "" ? null : Number($("fzScore").value),
+        feasibility_decision: $("fzDecision").value || null, feasibility_reviewer: $("fzReviewer").value.trim() || null,
+        feasibility_date: $("fzDate").value || null, feasibility_notes: $("fzNotes").value.trim() || null,
+        updated_at: new Date().toISOString()
+      }).eq("id", a.id).then(function(res){ if (res.error) { alert("Save failed — " + res.error.message); return; } refreshAll(); });
+    });
+
+    var actForm = $("activateForm");
+    if (actForm) actForm.addEventListener("submit", function(e){
+      e.preventDefault();
+      var reasonInput = $("actOverrideReason");
+      if (!allChecked && (!reasonInput || !reasonInput.value.trim())) { alert("An override reason is required when the activation checklist is incomplete."); return; }
+      supabase.from("smo_study_sites").update({
+        activation_date: todayStr(), activation_override_reason: reasonInput ? reasonInput.value.trim() : null,
+        status: "Recruitment", updated_at: new Date().toISOString()
+      }).eq("id", a.id).then(function(res){ if (res.error) { alert("Activation failed — " + res.error.message); return; } refreshAll(); });
+    });
+
+    var shareForm = $("shareForm");
+    if (shareForm) shareForm.addEventListener("submit", function(e){
+      e.preventDefault();
+      showError("shareFormError", "");
+      var smo = $("shSmoPct").value === "" ? null : Number($("shSmoPct").value);
+      var pi = $("shPiPct").value === "" ? null : Number($("shPiPct").value);
+      var site2 = $("shSitePct").value === "" ? null : Number($("shSitePct").value);
+      if (smo == null || pi == null || site2 == null) { showError("shareFormError", "All three percentages are required."); return; }
+      if (Math.abs(smo + pi + site2 - 100) > 0.01) { showError("shareFormError", "Percentages must total 100%."); return; }
+      supabase.from("smo_study_sites").update({
+        smo_share_pct: smo, pi_share_pct: pi, site_share_pct: site2,
+        share_effective_date: $("shEffDate").value || todayStr(), share_approved_by: $("shApprover").value.trim() || null,
+        share_version: (a.share_version || 1) + 1, updated_at: new Date().toISOString()
+      }).eq("id", a.id).then(function(res){ if (res.error) { showError("shareFormError", "Save failed — " + res.error.message); return; } refreshAll(); });
+    });
+
+    var subjForm = $("subjectForm");
+    if (subjForm) subjForm.addEventListener("submit", function(e){
+      e.preventDefault();
+      showError("subjectFormError", "");
+      var code = $("sjCode").value.trim();
+      if (!code) { showError("subjectFormError", "Subject code is required."); return; }
+      supabase.from("smo_subjects").insert({
+        study_site_id: a.id, subject_code: code, screening_date: $("sjScreen").value || null,
+        enrollment_date: $("sjEnroll").value || null, randomization_id: $("sjRand").value.trim() || null, status: $("sjStatus").value
+      }).then(function(res){ if (res.error) { showError("subjectFormError", "Save failed — " + res.error.message); return; } refreshAll(); });
+    });
+
+    var visitForm = $("visitForm");
+    if (visitForm) visitForm.addEventListener("submit", function(e){
+      e.preventDefault();
+      supabase.from("smo_monitoring_visits").insert({
+        study_site_id: a.id, visit_type: $("mvType").value, visit_date: $("mvDate").value || null, monitor_name: $("mvMonitor").value.trim() || null,
+        status: $("mvStatus").value, follow_up_date: $("mvFollowUp").value || null, scope: $("mvScope").value.trim() || null,
+        findings: $("mvFindings").value.trim() || null, actions: $("mvActions").value.trim() || null
+      }).then(function(res){ if (res.error) { alert("Save failed — " + res.error.message); return; } refreshAll(); });
+    });
+
+    var showUnallocBtn = $("showUnallocatedBtn");
+    if (showUnallocBtn) showUnallocBtn.addEventListener("click", function(){ $("unallocatedBox").style.display = $("unallocatedBox").style.display === "none" ? "block" : "none"; });
+
+    var expAssignForm = $("expenseFormAssign");
+    if (expAssignForm) expAssignForm.addEventListener("submit", function(e){
+      e.preventDefault();
+      showError("expenseAssignError", "");
+      var amount = $("eaAmount").value;
+      if (!amount) { showError("expenseAssignError", "Amount is required."); return; }
+      supabase.from("smo_common_expenses").insert({
+        study_id: a.study_id, study_site_id: a.id, category: $("eaCategory").value.trim() || null,
+        amount: Number(amount), bill_reference: $("eaBillRef").value.trim() || null, description: $("eaDescription").value.trim() || null,
+        approval_status: "Pending"
+      }).then(function(res){ if (res.error) { showError("expenseAssignError", "Save failed — " + res.error.message); return; } refreshAll(); });
+    });
+
+    var settlementForm = $("settlementForm");
+    if (settlementForm) settlementForm.addEventListener("submit", function(e){
+      e.preventDefault();
+      showError("settlementFormError", "");
+      var gross = Number($("stlGross").value);
+      if (!gross || gross <= 0) { showError("settlementFormError", "Enter a valid gross revenue amount."); return; }
+      var net = round2(gross - approvedTotal);
+      var smoAmt = round2(net * a.smo_share_pct / 100);
+      var piAmt = round2(net * a.pi_share_pct / 100);
+      var siteAmt = round2(net - smoAmt - piAmt);
+      var snapshot = {
+        study_protocol: study ? study.protocol_number : null, study_title: study ? study.title : null, site_name: site ? site.site_name : null,
+        smo_pct: a.smo_share_pct, pi_pct: a.pi_share_pct, site_pct: a.site_share_pct,
+        smo_amount: smoAmt, pi_amount: piAmt, site_amount: siteAmt,
+        expense_ids: approvedHere.map(function(ex){ return ex.id; })
+      };
+      supabase.from("smo_settlements").insert({
+        study_id: a.study_id, study_site_id: a.id, gross_revenue: gross, approved_expenses_total: approvedTotal,
+        net_distributable: net, calculation_snapshot: snapshot, status: "Approved",
+        approved_by: $("stlApprover").value.trim() || null, approved_date: todayStr()
+      }).then(function(res){ if (res.error) { showError("settlementFormError", "Save failed — " + res.error.message); return; } refreshAll(); });
+    });
+  }
+
+  // ================= GLOBAL DELEGATED EVENTS =================
+  document.body.addEventListener("click", function(e){
+    var el;
+    if ((el = e.target.closest("[data-open-study]"))) { closeAssignDrawer(); openDrawer("study", el.dataset.openStudy); return; }
+    if ((el = e.target.closest("[data-open-site]"))) { closeAssignDrawer(); openDrawer("site", el.dataset.openSite); return; }
+    if ((el = e.target.closest("[data-open-issue]"))) { openDrawer("issue", el.dataset.openIssue); return; }
+    if ((el = e.target.closest("[data-open-assign]"))) { openAssignDrawer(el.dataset.openAssign); return; }
+
+    if ((el = e.target.closest("[data-edit-study]"))) { var s1 = state.studies.find(function(x){ return x.id === el.dataset.editStudy; }); if (s1) fillStudyForm(s1); return; }
+    if ((el = e.target.closest("[data-edit-site]"))) { var s2 = state.sites.find(function(x){ return x.id === el.dataset.editSite; }); if (s2) fillSiteForm(s2); return; }
+
+    if ((el = e.target.closest("[data-delete-study]"))) {
+      if (confirm("Delete this study and all its site assignments, documents, issues and settlements? This cannot be undone.")) supabase.from("smo_studies").delete().eq("id", el.dataset.deleteStudy).then(refreshAll);
+      return;
+    }
+    if ((el = e.target.closest("[data-delete-site]"))) {
+      if (confirm("Delete this site and all its study assignments? This cannot be undone.")) supabase.from("smo_sites").delete().eq("id", el.dataset.deleteSite).then(refreshAll);
+      return;
+    }
+    if ((el = e.target.closest("[data-delete-assign]"))) {
+      if (confirm("Unassign this site from the study? Recruitment, monitoring, documents and finance for this pairing will be removed.")) supabase.from("smo_study_sites").delete().eq("id", el.dataset.deleteAssign).then(refreshAll);
+      return;
+    }
+    if ((el = e.target.closest("[data-delete-issue]"))) { if (confirm("Delete this issue?")) supabase.from("smo_issues").delete().eq("id", el.dataset.deleteIssue).then(refreshAll); return; }
+    if ((el = e.target.closest("[data-delete-document]"))) { if (confirm("Delete this document record?")) supabase.from("smo_documents").delete().eq("id", el.dataset.deleteDocument).then(refreshAll); return; }
+    if ((el = e.target.closest("[data-delete-expense]"))) { if (confirm("Delete this expense?")) supabase.from("smo_common_expenses").delete().eq("id", el.dataset.deleteExpense).then(refreshAll); return; }
+    if ((el = e.target.closest("[data-delete-subject]"))) { if (confirm("Delete this subject record?")) supabase.from("smo_subjects").delete().eq("id", el.dataset.deleteSubject).then(function(){ refreshAll().then(renderAssignDrawer); }); return; }
+    if ((el = e.target.closest("[data-delete-visit]"))) { if (confirm("Delete this monitoring visit?")) supabase.from("smo_monitoring_visits").delete().eq("id", el.dataset.deleteVisit).then(function(){ refreshAll().then(renderAssignDrawer); }); return; }
+    if ((el = e.target.closest("[data-delete-training]"))) { if (confirm("Delete this training record?")) supabase.from("smo_training_records").delete().eq("id", el.dataset.deleteTraining).then(function(){ refreshAll().then(renderDrawer); }); return; }
+
+    if ((el = e.target.closest("[data-new-version]"))) { var doc = state.documents.find(function(x){ return x.id === el.dataset.newVersion; }); if (doc) startNewVersion(doc); return; }
+
+    if ((el = e.target.closest("[data-approve-expense]"))) { decideExpense(el.dataset.approveExpense, true); return; }
+    if ((el = e.target.closest("[data-reject-expense]"))) { decideExpense(el.dataset.rejectExpense, false); return; }
+    if ((el = e.target.closest("[data-attribute-expense]"))) {
+      supabase.from("smo_common_expenses").update({ study_site_id: el.dataset.targetAssign }).eq("id", el.dataset.attributeExpense).then(function(res){
+        if (res.error) { alert("Update failed — " + res.error.message); return; }
+        refreshAll().then(renderAssignDrawer);
+      });
+      return;
+    }
+    if ((el = e.target.closest("[data-reverse-settlement]"))) {
+      if (!confirm("Record a reversal for this settlement? This creates a new offsetting transaction — the original record is kept unchanged.")) return;
+      var orig = state.settlements.find(function(x){ return x.id === el.dataset.reverseSettlement; });
+      if (!orig) return;
+      var snap = orig.calculation_snapshot || {};
+      var revSnap = Object.assign({}, snap, {
+        smo_amount: -Number(snap.smo_amount || 0), pi_amount: -Number(snap.pi_amount || 0), site_amount: -Number(snap.site_amount || 0), reversal_of_settlement: orig.settlement_number
+      });
+      supabase.from("smo_settlements").insert({
+        study_id: orig.study_id, study_site_id: orig.study_site_id, gross_revenue: -orig.gross_revenue,
+        approved_expenses_total: -orig.approved_expenses_total, net_distributable: -orig.net_distributable,
+        calculation_snapshot: revSnap, status: "Reversal", reversal_of: orig.id, approved_date: todayStr()
+      }).then(function(res){ if (res.error) { alert("Reversal failed — " + res.error.message); return; } refreshAll(); });
+      return;
+    }
+
+    if ((el = e.target.closest("[data-set-study-status]"))) { supabase.from("smo_studies").update({ status: el.dataset.setStudyStatus, updated_at: new Date().toISOString() }).eq("id", state.drawerId).then(refreshAll); return; }
+    if ((el = e.target.closest("[data-set-site-status]"))) { supabase.from("smo_sites").update({ status: el.dataset.setSiteStatus, updated_at: new Date().toISOString() }).eq("id", state.drawerId).then(refreshAll); return; }
+    if ((el = e.target.closest("[data-set-issue-status]"))) {
+      var payload = { status: el.dataset.setIssueStatus, updated_at: new Date().toISOString() };
+      if (el.dataset.setIssueStatus === "Closed") payload.closure_date = todayStr();
+      supabase.from("smo_issues").update(payload).eq("id", state.drawerId).then(refreshAll);
+      return;
+    }
+    if ((el = e.target.closest("[data-set-stage]"))) { supabase.from("smo_study_sites").update({ status: el.dataset.setStage, updated_at: new Date().toISOString() }).eq("id", state.assignId).then(refreshAll); return; }
+    if ((el = e.target.closest("[data-toggle-check]"))) {
+      var a2 = assignById(state.assignId);
+      if (!a2) return;
+      var checklist2 = Object.assign({}, a2.activation_checklist || {});
+      checklist2[el.dataset.toggleCheck] = !checklist2[el.dataset.toggleCheck];
+      supabase.from("smo_study_sites").update({ activation_checklist: checklist2, updated_at: new Date().toISOString() }).eq("id", a2.id).then(refreshAll);
+      return;
+    }
+
+    if ((el = e.target.closest(".subtab-btn"))) {
+      var group = el.closest("[data-subtab-group]").dataset.subtabGroup;
+      if (group === "assign") { state.assignSubtab = el.dataset.subtab; renderAssignDrawer(); }
+      else { state.drawerSubtab = el.dataset.subtab; renderDrawer(); }
+      return;
+    }
+  });
+
+  // ---------- Init ----------
+  if (!supabase) {
+    setSyncStatus("bad", " Offline — Supabase client failed to load");
+  } else {
+    setSyncStatus("pending", " Loading platform data…");
+    refreshAll().then(function(){ setSyncStatus("ok", " Synced with Supabase"); }).catch(function(e){ console.error(e); setSyncStatus("bad", " Could not load data"); });
+  }
+})();
+</script>
+</body>
+</html>
