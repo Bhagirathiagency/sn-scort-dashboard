@@ -280,6 +280,8 @@
             <div class="form-field"><label>ID proof type</label><select id="hIdType"><option value="">—</option><option>Aadhaar</option><option>PAN</option><option>Passport</option><option>Voter ID</option><option>Driving Licence</option></select></div>
             <div class="form-field"><label>ID proof reference / last 4</label><input type="text" id="hIdRef" placeholder="e.g. XXXX-XXXX-1234"></div>
             <div class="form-field wide"><label>Ownership / authorization note</label><textarea id="hOwnership" placeholder="Describe your proof of ownership or lawful authorization to list this resource"></textarea></div>
+            <div class="form-field"><label>Upload ID proof (image/PDF, private — admin only)</label><input type="file" id="hIdFile" accept="image/*,application/pdf"><span id="hIdFileStatus" class="mono" style="font-size:11px;"></span></div>
+            <div class="form-field"><label>Upload ownership/authorization proof (private — admin only)</label><input type="file" id="hOwnershipFile" accept="image/*,application/pdf"><span id="hOwnershipFileStatus" class="mono" style="font-size:11px;"></span></div>
           </div>
         </fieldset>
         <fieldset>
@@ -352,7 +354,7 @@
     <section class="panel" id="panel-a-hosts">
       <div class="panel-head"><h2>Host Verification Queue</h2></div>
       <div class="table-scroll"><table class="data-table">
-        <thead><tr><th>Host</th><th>Business</th><th>ID proof</th><th>Agreement</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>Host</th><th>Business</th><th>ID proof</th><th>Documents</th><th>Agreement</th><th>Status</th><th></th></tr></thead>
         <tbody id="adminHostsBody"></tbody>
       </table></div>
     </section>
@@ -457,7 +459,12 @@
         <div class="form-field"><label>City</label><input type="text" id="elCity" required></div>
         <div class="form-field"><label>Area</label><input type="text" id="elArea"></div>
         <div class="form-field wide"><label>Address</label><input type="text" id="elAddress"></div>
-        <div class="form-field wide"><label>Photo URL (optional)</label><input type="url" id="elPhoto" placeholder="https://…"></div>
+        <div class="form-field wide">
+          <label>Photo</label>
+          <input type="url" id="elPhoto" placeholder="https://… (or upload below)">
+          <div style="margin-top:6px;"><input type="file" id="elPhotoFile" accept="image/*"> <span id="elPhotoFileStatus" class="mono" style="font-size:11px;"></span></div>
+          <img id="elPhotoPreview" style="max-width:100%;max-height:140px;margin-top:6px;border-radius:6px;display:none;">
+        </div>
 
         <div class="form-field elRoomOnly"><label>Max occupancy (guests)</label><input type="number" id="elGuests" min="1"></div>
         <div class="form-field elRoomOnly"><label>Food</label>
@@ -928,6 +935,9 @@ function loadHost(){
 }
 
 function loadHostVerification(){
+  state.pendingIdProofPath = null;
+  state.pendingOwnershipPath = null;
+  $("hIdFileStatus").textContent = ""; $("hOwnershipFileStatus").textContent = "";
   supabase.from("dg_hosts").select("*").eq("id", state.user.id).maybeSingle().then(function(res){
     var h = res.data;
     state.host = h;
@@ -942,10 +952,38 @@ function loadHostVerification(){
       $("hUpi").value = h.upi_id || "";
       $("hPanNote").value = h.pan_note || "";
       $("hAgreement").checked = !!h.agreement_accepted;
+      $("hIdFileStatus").textContent = h.id_proof_file_path ? "On file ✓ (upload to replace)" : "";
+      $("hOwnershipFileStatus").textContent = h.ownership_proof_file_path ? "On file ✓ (upload to replace)" : "";
       $("hOk").textContent = "Status: " + h.verification_status + (h.verification_notes ? " — " + h.verification_notes : "");
     }
   });
 }
+
+function uploadToStorage(bucket, path, file){
+  return supabase.storage.from(bucket).upload(path, file, { upsert: true, contentType: file.type || undefined });
+}
+function safeFileName(name){ return String(name).replace(/[^a-zA-Z0-9_.-]/g, "_"); }
+
+$("hIdFile").addEventListener("change", function(){
+  var f = this.files[0]; if (!f) return;
+  $("hIdFileStatus").textContent = "Uploading…";
+  var path = state.user.id + "/id-proof-" + Date.now() + "-" + safeFileName(f.name);
+  uploadToStorage("dg-host-documents", path, f).then(function(res){
+    if (res.error) { $("hIdFileStatus").textContent = "Upload failed: " + res.error.message; return; }
+    state.pendingIdProofPath = path;
+    $("hIdFileStatus").textContent = "Uploaded ✓ (save form to attach)";
+  });
+});
+$("hOwnershipFile").addEventListener("change", function(){
+  var f = this.files[0]; if (!f) return;
+  $("hOwnershipFileStatus").textContent = "Uploading…";
+  var path = state.user.id + "/ownership-proof-" + Date.now() + "-" + safeFileName(f.name);
+  uploadToStorage("dg-host-documents", path, f).then(function(res){
+    if (res.error) { $("hOwnershipFileStatus").textContent = "Upload failed: " + res.error.message; return; }
+    state.pendingOwnershipPath = path;
+    $("hOwnershipFileStatus").textContent = "Uploaded ✓ (save form to attach)";
+  });
+});
 
 $("hostForm").addEventListener("submit", function(e){
   e.preventDefault();
@@ -956,6 +994,8 @@ $("hostForm").addEventListener("submit", function(e){
     id_proof_type: $("hIdType").value || null,
     id_proof_ref: $("hIdRef").value.trim() || null,
     ownership_proof_note: $("hOwnership").value.trim() || null,
+    id_proof_file_path: state.pendingIdProofPath || (state.host && state.host.id_proof_file_path) || null,
+    ownership_proof_file_path: state.pendingOwnershipPath || (state.host && state.host.ownership_proof_file_path) || null,
     bank_account_name: $("hBankName").value.trim() || null,
     bank_account_last4: $("hBankLast4").value.trim() || null,
     bank_ifsc: $("hBankIfsc").value.trim() || null,
@@ -968,6 +1008,7 @@ $("hostForm").addEventListener("submit", function(e){
     if (res.error) { $("hError").textContent = res.error.message; return; }
     $("hOk").textContent = "Saved. Status: " + res.data.verification_status;
     state.host = res.data;
+    state.pendingIdProofPath = null; state.pendingOwnershipPath = null;
   });
 });
 
@@ -1066,6 +1107,8 @@ $("newListingBtn").addEventListener("click", function(){ openEditListing(null); 
 function openEditListing(p){
   $("elError").textContent = "";
   $("editListingForm").reset();
+  $("elPhotoFileStatus").textContent = "";
+  $("elPhotoPreview").style.display = "none";
   $("elId").value = p ? p.id : "";
   $("editModalTitle").textContent = p ? "Edit listing" : "New listing";
   var cat = p ? p.category : "room";
@@ -1079,6 +1122,7 @@ function openEditListing(p){
     $("elArea").value = p.area || "";
     $("elAddress").value = p.address || "";
     $("elPhoto").value = p.photo_url || "";
+    if (safeUrl(p.photo_url)) { $("elPhotoPreview").src = safeUrl(p.photo_url); $("elPhotoPreview").style.display = "block"; }
     $("elGuests").value = p.capacity_guests || "";
     $("elFood").value = p.food_pref || "";
     $("elVehicle").value = p.vehicle_type || "car";
@@ -1098,6 +1142,20 @@ function openEditListing(p){
 }
 $("editModalClose").addEventListener("click", function(){ $("editModalBackdrop").hidden = true; });
 $("editModalBackdrop").addEventListener("click", function(e){ if (e.target === $("editModalBackdrop")) $("editModalBackdrop").hidden = true; });
+
+$("elPhotoFile").addEventListener("change", function(){
+  var f = this.files[0]; if (!f) return;
+  $("elPhotoFileStatus").textContent = "Uploading…";
+  var path = state.user.id + "/" + Date.now() + "-" + safeFileName(f.name);
+  uploadToStorage("dg-listing-photos", path, f).then(function(res){
+    if (res.error) { $("elPhotoFileStatus").textContent = "Upload failed: " + res.error.message; return; }
+    var pub = supabase.storage.from("dg-listing-photos").getPublicUrl(path);
+    var url = pub && pub.data ? pub.data.publicUrl : "";
+    $("elPhoto").value = url;
+    $("elPhotoFileStatus").textContent = "Uploaded ✓";
+    if (url) { $("elPhotoPreview").src = url; $("elPhotoPreview").style.display = "block"; }
+  });
+});
 
 function collectListingPayload(){
   var cat = $("elCategory").value;
@@ -1189,12 +1247,17 @@ function loadAdminHosts(){
   supabase.from("dg_hosts").select("*, dg_profiles!dg_hosts_id_fkey(full_name, email, phone)").order("updated_at",{ascending:false}).then(function(res){
     if (res.error) { console.error(res.error); return; }
     var body = $("adminHostsBody");
-    if (!res.data.length) { body.innerHTML = '<tr><td colspan="5" class="empty-note">No host submissions yet.</td></tr>'; return; }
+    if (!res.data.length) { body.innerHTML = '<tr><td colspan="7" class="empty-note">No host submissions yet.</td></tr>'; return; }
     body.innerHTML = res.data.map(function(h){
       var prof = h.dg_profiles || {};
+      var docBtns = "";
+      if (h.id_proof_file_path) docBtns += '<button class="btn-secondary btn-sm admin-view-doc" data-path="'+escapeAttr(h.id_proof_file_path)+'">ID proof</button> ';
+      if (h.ownership_proof_file_path) docBtns += '<button class="btn-secondary btn-sm admin-view-doc" data-path="'+escapeAttr(h.ownership_proof_file_path)+'">Ownership</button>';
+      if (!docBtns) docBtns = '<span class="empty-note">None uploaded</span>';
       return '<tr><td>'+escapeHtml(prof.full_name||prof.email||h.id)+'<div style="font-size:11px;color:var(--slate);">'+escapeHtml(prof.email||"")+'</div></td>' +
         '<td>'+escapeHtml(h.business_name||"—")+'</td>' +
         '<td>'+escapeHtml((h.id_proof_type||"—")+" "+(h.id_proof_ref||""))+'</td>' +
+        '<td>'+docBtns+'</td>' +
         '<td>'+(h.agreement_accepted ? "Accepted" : "Not yet")+'</td>' +
         '<td>'+badge(h.verification_status)+'</td>' +
         '<td>' +
@@ -1202,6 +1265,14 @@ function loadAdminHosts(){
           '<button class="btn-danger btn-sm admin-host-reject" data-id="'+h.id+'">Reject</button>' +
         '</td></tr>';
     }).join("");
+    body.querySelectorAll(".admin-view-doc").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        supabase.storage.from("dg-host-documents").createSignedUrl(btn.dataset.path, 120).then(function(res2){
+          if (res2.error) { alert("Could not open document: " + res2.error.message); return; }
+          window.open(res2.data.signedUrl, "_blank", "noopener,noreferrer");
+        });
+      });
+    });
     body.querySelectorAll(".admin-host-verify").forEach(function(btn){
       btn.addEventListener("click", function(){
         supabase.from("dg_hosts").update({verification_status:"verified", verification_notes:null, badges:["Identity Verified"]}).eq("id", btn.dataset.id).then(function(r){
