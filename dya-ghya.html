@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dya-Ghya — Product &amp; Technical Requirements Specification</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14213D;
+    --paper:#F7F5F0;
+    --paper-2:#EFEBE1;
+    --teal:#2A6F77;
+    --teal-dark:#1D4F55;
+    --amber:#D68C45;
+    --sage:#6E8F73;
+    --slate:#5B6570;
+    --red:#B4523F;
+    --line: rgba(20,33,61,0.12);
+    --card-shadow: 0 1px 2px rgba(20,33,61,0.06), 0 2px 8px rgba(20,33,61,0.04);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; line-height:1.55;}
+  a{color:var(--teal-dark);}
+
+  /* Header */
+  header{background:var(--ink); color:var(--paper); padding:36px 24px 30px;}
+  .hwrap{max-width:1180px; margin:0 auto;}
+  .top-nav{display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; flex-wrap:wrap; gap:10px;}
+  .brand-logo{height:36px; width:auto; display:block;}
+  .home-links{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.04em;}
+  .home-links a{color:rgba(247,245,240,0.65); text-decoration:none; margin-left:14px;}
+  .home-links a:hover{color:var(--paper);}
+  .brand-eyebrow{font-family:'Noto Sans Devanagari','IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.02em; color:var(--amber); margin:0 0 8px;}
+  h1.title{font-family:'Fraunces',serif; font-weight:600; font-size:38px; margin:0 0 6px; letter-spacing:-0.01em;}
+  .subtitle{font-size:14.5px; color:rgba(247,245,240,0.72); max-width:640px; margin:0 0 18px;}
+  .tagline-row{display:flex; gap:22px; flex-wrap:wrap; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:rgba(247,245,240,0.55);}
+  .tagline-row b{color:var(--paper); font-weight:600;}
+
+  .layout{max-width:1180px; margin:0 auto; padding:32px 24px 100px; display:grid; grid-template-columns:250px 1fr; gap:36px; align-items:start;}
+
+  /* Sidebar */
+  nav.toc{position:sticky; top:20px; max-height:calc(100vh - 40px); overflow-y:auto; padding-right:6px;}
+  nav.toc .toc-label{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.1em; color:var(--slate); margin-bottom:10px;}
+  nav.toc ol{list-style:none; margin:0; padding:0; counter-reset:sec;}
+  nav.toc li{margin-bottom:2px;}
+  nav.toc a{
+    display:block; counter-increment:sec; font-size:12.5px; color:var(--slate); text-decoration:none;
+    padding:5px 8px; border-radius:6px; border-left:2px solid transparent;
+  }
+  nav.toc a::before{content: counter(sec) ". "; font-family:'IBM Plex Mono',monospace; color:var(--teal); font-size:11px;}
+  nav.toc a:hover{color:var(--ink); background:var(--paper-2);}
+  nav.toc a.active{color:var(--ink); background:var(--paper-2); border-left-color:var(--teal); font-weight:600;}
+
+  main{min-width:0;}
+  section{margin-bottom:44px; scroll-margin-top:20px;}
+  section h2{font-family:'Fraunces',serif; font-weight:600; font-size:22px; margin:0 0 6px; padding-top:2px;}
+  section .sec-num{font-family:'IBM Plex Mono',monospace; color:var(--teal); font-size:13px; margin-right:6px;}
+  section > p{font-size:14px; color:var(--ink); margin:8px 0;}
+  section h3{font-family:'Fraunces',serif; font-weight:600; font-size:15.5px; margin:20px 0 6px;}
+  .lede{font-size:14.5px; color:var(--slate); margin-bottom:14px;}
+
+  ul.reqs, ol.reqs{margin:8px 0; padding-left:20px; font-size:13.5px;}
+  ul.reqs li, ol.reqs li{margin-bottom:5px;}
+  ul.reqs.tight li{margin-bottom:3px;}
+
+  table{width:100%; border-collapse:collapse; margin:10px 0 18px; font-size:13px; background:var(--paper); border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  thead th{background:var(--paper-2); text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--slate); padding:9px 12px; border-bottom:1px solid var(--line);}
+  tbody td{padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody td:first-child{font-weight:600; white-space:nowrap;}
+
+  .table-wrap{overflow-x:auto; border-radius:8px;}
+  .table-wrap table{margin:10px 0 18px;}
+
+  .callout{background:var(--paper-2); border-left:3px solid var(--amber); border-radius:0 8px 8px 0; padding:12px 16px; font-size:13px; color:var(--ink); margin:14px 0;}
+  .callout.warn{border-left-color:var(--red);}
+  .callout b{color:var(--teal-dark);}
+
+  .badge-row{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0;}
+  .badge{font-family:'IBM Plex Mono',monospace; font-size:10.5px; background:var(--paper-2); border:1px solid var(--line); border-radius:20px; padding:3px 10px; color:var(--teal-dark);}
+
+  .role-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; margin:12px 0;}
+  .role-card{background:var(--paper-2); border-radius:8px; padding:12px 14px; border:1px solid var(--line);}
+  .role-card b{display:block; font-size:12.5px; margin-bottom:3px; color:var(--teal-dark);}
+  .role-card span{font-size:12px; color:var(--slate);}
+
+  .model-list{columns:2; column-gap:24px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink); margin:12px 0;}
+  .model-list div{break-inside:avoid; padding:2px 0; border-bottom:1px dashed var(--line);}
+  @media (max-width:640px){ .model-list{columns:1;} }
+
+  footer{border-top:1px solid var(--line); padding:26px 24px 60px; max-width:1180px; margin:0 auto; font-size:12px; color:var(--slate); font-family:'IBM Plex Mono',monospace;}
+
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr;}
+    nav.toc{position:static; max-height:none; margin-bottom:20px; border:1px solid var(--line); border-radius:10px; padding:14px; background:var(--paper-2);}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hwrap">
+    <div class="top-nav">
+      <img src="assets/logo.png" alt="SN SCORT Research Solutions logo" class="brand-logo" onerror="this.style.display='none'">
+      <div class="home-links">
+        <a href="index.html">Execution Board</a>
+        <a href="hr.html">HR Software</a>
+        <a href="pv.html">PV Safety Console</a>
+        <a href="smo.html">SMO Platform</a>
+      </div>
+    </div>
+    <p class="brand-eyebrow">द्या • घ्या • कमवा — Give • Take • Earn</p>
+    <h1 class="title">Dya-Ghya</h1>
+    <p class="subtitle">Complete Product &amp; Technical Requirements Specification — a marketplace for unused rooms, parking, storage and other permitted resources.</p>
+    <div class="tagline-row">
+      <span><b>Initial categories</b> Rooms + Parking</span>
+      <span><b>Initial market</b> Nashik–Trimbakeshwar · Kumbh 2027</span>
+      <span><b>Vision</b> India-wide unused-resource marketplace</span>
+      <span><b>Approach</b> Lean MVP, module-by-module with Claude</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="toc" id="toc">
+    <p class="toc-label">Contents</p>
+    <ol id="tocList">
+      <li><a href="#s1">Executive Summary</a></li>
+      <li><a href="#s2">Product Vision</a></li>
+      <li><a href="#s3">Scope</a></li>
+      <li><a href="#s4">User Roles</a></li>
+      <li><a href="#s5">Customer App Requirements</a></li>
+      <li><a href="#s6">Host/Owner App Requirements</a></li>
+      <li><a href="#s7">Host Earnings &amp; Reporting</a></li>
+      <li><a href="#s8">Admin &amp; Management Requirements</a></li>
+      <li><a href="#s9">Safety, Compliance &amp; Disputes</a></li>
+      <li><a href="#s10">Data Model</a></li>
+      <li><a href="#s11">Technical Architecture</a></li>
+      <li><a href="#s12">Security Requirements</a></li>
+      <li><a href="#s13">Privacy &amp; Data Governance</a></li>
+      <li><a href="#s14">Notifications</a></li>
+      <li><a href="#s15">Reviews &amp; Reputation</a></li>
+      <li><a href="#s16">Document &amp; Compliance Expiry</a></li>
+      <li><a href="#s17">Financial Ledger &amp; Reconciliation</a></li>
+      <li><a href="#s18">Legal &amp; Regulatory Requirements</a></li>
+      <li><a href="#s19">Core Management KPIs</a></li>
+      <li><a href="#s20">MVP Acceptance Scope</a></li>
+      <li><a href="#s21">Development Roadmap</a></li>
+      <li><a href="#s22">Claude Development Rules</a></li>
+      <li><a href="#s23">Automated Reporting</a></li>
+      <li><a href="#s24">Go-Live Checklist</a></li>
+      <li><a href="#s25">Final Product Definition</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="s1">
+      <h2><span class="sec-num">1</span>Executive Summary</h2>
+      <p>Dya-Ghya is a two-sided marketplace that enables owners or authorized providers to monetize underused resources by listing them for short- or longer-duration use. Customers discover, compare, book and pay through the platform. The first release focuses on rooms and private/authorized parking, with storage as the next category.</p>
+      <div class="callout"><b>Launch context:</b> the Nashik–Trimbakeshwar Simhastha Kumbh 2027 is the initial high-demand launch opportunity, but the architecture must remain city-agnostic and must not hard-code Kumbh rules, locations or dates.</div>
+    </section>
+
+    <section id="s2">
+      <h2><span class="sec-num">2</span>Product Vision</h2>
+      <p class="lede">Core promise: <em>Have something unused? List it. Let others use it. Earn from it.</em></p>
+      <ul class="reqs">
+        <li>Permanent brand: <b>Dya-Ghya</b>.</li>
+        <li>Brand line: द्या • घ्या • कमवा / Give • Take • Earn.</li>
+        <li>The platform is a marketplace, not the owner/operator of every listed space.</li>
+        <li>Prioritize lawful use, verification, transparency, evidence and dispute resolution.</li>
+        <li>Must scale beyond Nashik and beyond the 2027 Kumbh.</li>
+      </ul>
+    </section>
+
+    <section id="s3">
+      <h2><span class="sec-num">3</span>Scope</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Release</th><th>Scope</th></tr></thead>
+        <tbody>
+          <tr><td>MVP</td><td>Rooms, parking, customer booking/payment, host listing/verification/earnings, admin operations/finance/safety.</td></tr>
+          <tr><td>Phase 2</td><td>Storage with permitted-goods controls and recurring/monthly options where appropriate.</td></tr>
+          <tr><td>Phase 3</td><td>Workspaces, event spaces and other controlled categories.</td></tr>
+          <tr><td>Phase 4</td><td>Equipment and additional permitted assets after category-specific legal/operational review.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="s4">
+      <h2><span class="sec-num">4</span>User Roles</h2>
+      <div class="role-grid">
+        <div class="role-card"><b>Customer</b><span>Search, filter, view listings, book, pay, cancel, communicate, review, report issues.</span></div>
+        <div class="role-card"><b>Host / Owner</b><span>Register, verify, list resources, manage availability/pricing, accept/manage bookings, view earnings and payouts.</span></div>
+        <div class="role-card"><b>Super Admin</b><span>Full platform control and configuration.</span></div>
+        <div class="role-card"><b>Finance Admin</b><span>Payments, refunds, payouts, ledger and financial reports.</span></div>
+        <div class="role-card"><b>Operations Admin</b><span>Listings, hosts, bookings and operational workflows.</span></div>
+        <div class="role-card"><b>Compliance Admin</b><span>Verification, documents, safety and policy controls.</span></div>
+        <div class="role-card"><b>Support Admin</b><span>Customer/host support, complaints and tickets.</span></div>
+        <div class="role-card"><b>Management</b><span>Executive dashboards and management reports with read access to authorized data.</span></div>
+      </div>
+    </section>
+
+    <section id="s5">
+      <h2><span class="sec-num">5</span>Customer Application Requirements</h2>
+
+      <h3>5.1 Authentication &amp; Profile</h3>
+      <ul class="reqs tight">
+        <li>Mobile OTP login.</li>
+        <li>Profile with minimum necessary personal information.</li>
+        <li>Identity/age verification before check-in where required by policy or law.</li>
+        <li>Consent and privacy records.</li>
+        <li>Account security, session management and logout from other sessions where appropriate.</li>
+      </ul>
+
+      <h3>5.2 Home &amp; Search</h3>
+      <ul class="reqs tight">
+        <li>Location/city/area selection.</li>
+        <li>Category selection: Rooms, Parking; future categories must be configurable.</li>
+        <li>Date, start time and end time.</li>
+        <li>Duration: hourly, half-day, full-day, overnight, multi-day, weekly/monthly where supported.</li>
+        <li>Guest count for rooms and vehicle type/count for parking.</li>
+        <li>Map and list views.</li>
+        <li>Sort by relevance, price, distance, rating and availability.</li>
+      </ul>
+
+      <h3>5.3 Filters</h3>
+      <div class="badge-row">
+        <span class="badge">Price range</span><span class="badge">Distance</span><span class="badge">Availability</span>
+        <span class="badge">Capacity</span><span class="badge">Amenities</span><span class="badge">Covered/open parking</span>
+        <span class="badge">Vehicle type</span><span class="badge">Food preferences</span><span class="badge">House rules</span>
+        <span class="badge">Verification badges</span><span class="badge">Cancellation policy</span><span class="badge">Accessibility</span>
+      </div>
+
+      <h3>5.4 Listing Details</h3>
+      <ul class="reqs tight">
+        <li>Photos and listing description.</li>
+        <li>Location and approximate/map presentation as appropriate.</li>
+        <li>Verification badges with separate meanings.</li>
+        <li>Amenities and capacity.</li>
+        <li>Price and all applicable charges shown before payment.</li>
+        <li>Availability and booking duration.</li>
+        <li>House rules and cancellation policy.</li>
+        <li>Host information limited to what is necessary and permitted.</li>
+        <li>Report listing function.</li>
+      </ul>
+
+      <h3>5.5 Room Requirements</h3>
+      <ul class="reqs tight">
+        <li>Room/property type; maximum occupancy; bed/bathroom information.</li>
+        <li>AC / fan / Wi-Fi / hot water / bedding / drinking water / parking / power backup and other configurable amenities.</li>
+        <li>Food: vegetarian, non-vegetarian, Jain, vegan, both, no food; breakfast/lunch/dinner; outside food; cooking where applicable.</li>
+        <li>Smoking, pets, visitors, quiet hours and other house rules.</li>
+      </ul>
+      <div class="callout warn"><b>Alcohol:</b> MVP status is <b>Not permitted</b>. Any future alcohol-related functionality requires specific legal/excise review.</div>
+
+      <h3>5.6 Parking Requirements</h3>
+      <ul class="reqs tight">
+        <li>Private or properly authorized parking only.</li>
+        <li>Car/bike/other permitted vehicle type; covered/open; vehicle dimensions and capacity.</li>
+        <li>Entry/exit timings; lighting/security/CCTV if applicable.</li>
+        <li>Hourly/daily/multi-day pricing.</li>
+      </ul>
+      <div class="callout warn">Do not permit public roads, footpaths, no-parking zones, fire access or unauthorized land/common spaces.</div>
+
+      <h3>5.7 Booking &amp; Payment</h3>
+      <ul class="reqs tight">
+        <li>Booking ID generated for every booking.</li>
+        <li>Availability locked during checkout to prevent double booking.</li>
+        <li>Customer must see price, taxes/fees, cancellation terms and key house rules before payment.</li>
+        <li>Payment gateway integration; card/payment credentials must not be stored by Dya-Ghya.</li>
+        <li>Store gateway transaction reference, amount, status and timestamp.</li>
+        <li>Booking confirmation and receipt/statement.</li>
+        <li>Off-platform payment discouraged/prohibited for platform bookings.</li>
+      </ul>
+
+      <h3>5.8 Customer Booking Statuses</h3>
+      <div class="badge-row">
+        <span class="badge">Pending</span><span class="badge">Confirmed</span><span class="badge">Checked-in</span>
+        <span class="badge">Completed</span><span class="badge">Cancelled</span><span class="badge">Refunded</span><span class="badge">Disputed</span>
+      </div>
+    </section>
+
+    <section id="s6">
+      <h2><span class="sec-num">6</span>Host/Owner Application Requirements</h2>
+
+      <h3>6.1 Host Onboarding</h3>
+      <ul class="reqs tight">
+        <li>Mobile OTP; identity verification; contact information.</li>
+        <li>Bank/payout information; applicable tax information.</li>
+        <li>Compliance declarations; acceptance of Host Agreement and platform policies.</li>
+      </ul>
+
+      <h3>6.2 Property/Resource Verification</h3>
+      <ul class="reqs tight">
+        <li>Ownership proof or lawful authorization evidence; relevant property documents.</li>
+        <li>Accommodation registration information where applicable.</li>
+        <li>Photographs; address/location evidence; safety and capacity information.</li>
+        <li>Document expiry tracking.</li>
+        <li>Admin review and approval before listing becomes bookable.</li>
+      </ul>
+
+      <h3>6.3 Verification Badges</h3>
+      <div class="badge-row">
+        <span class="badge">Identity Verified</span><span class="badge">Ownership/Authorization Verified</span>
+        <span class="badge">Property Documents Reviewed</span><span class="badge">Accommodation Registration Verified*</span>
+        <span class="badge">Platform Safety Check</span>
+      </div>
+      <div class="callout warn">Do not use a misleading "100% Verified" badge.</div>
+
+      <h3>6.4 Listing Workflow</h3>
+      <p style="font-family:'IBM Plex Mono',monospace; font-size:13px;">Draft → Submitted → Under Review → Verified/Approved → Live</p>
+      <p>Other controlled states: Rejected, Expired, Suspended. Only <b>Live</b> listings may receive bookings.</p>
+
+      <h3>6.5 Host Pricing &amp; Availability</h3>
+      <ul class="reqs tight">
+        <li>Hourly, half-day, daily, overnight, multi-day and weekly/monthly pricing where appropriate.</li>
+        <li>Availability calendar; blackout dates/times; minimum/maximum duration; capacity.</li>
+        <li>Configurable event/seasonal pricing; admin-configurable commission.</li>
+        <li>No automatic price changes without host control.</li>
+      </ul>
+    </section>
+
+    <section id="s7">
+      <h2><span class="sec-num">7</span>Host Earnings &amp; Reporting</h2>
+      <p class="lede">Every host must have a dedicated financial center showing exactly how their earnings are calculated.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Item</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Customer paid</td><td>₹1,500</td></tr>
+          <tr><td>Dya-Ghya commission</td><td>-₹180</td></tr>
+          <tr><td>Refund/adjustment</td><td>₹0</td></tr>
+          <tr><td>Other applicable deductions</td><td>₹0</td></tr>
+          <tr><td>Host earning</td><td><b>₹1,320</b></td></tr>
+        </tbody>
+      </table></div>
+      <ul class="reqs tight">
+        <li>This Month, Pending, Paid and Lifetime earnings.</li>
+        <li>Total bookings, completed bookings, cancellations, average booking value and utilization.</li>
+        <li>Property-wise and category-wise earnings; transaction-level statements.</li>
+        <li>Payout history with status: Paid, Processing, On Hold, Failed.</li>
+        <li>Refund and adjustment history.</li>
+        <li>Tax-ready transaction statement — clearly labeled as a platform statement, not tax advice or an audited tax return.</li>
+        <li>Download reports as PDF, Excel and CSV; monthly and annual host statements.</li>
+        <li>Performance metrics: bookings, utilization, average earnings, rating and cancellation rate.</li>
+        <li>Optional recommendations (listing completeness, price review); no automatic legal or safety decisions.</li>
+      </ul>
+    </section>
+
+    <section id="s8">
+      <h2><span class="sec-num">8</span>Admin &amp; Management Requirements</h2>
+
+      <h3>8.1 Executive Dashboard</h3>
+      <ul class="reqs tight">
+        <li>Customers, hosts and active listings; bookings and GMV.</li>
+        <li>Dya-Ghya revenue/commission; host payouts; refunds.</li>
+        <li>Operating expenses entered/configured for management reporting; net operating contribution.</li>
+        <li>Cancellation and complaint rates; repeat customers; verification backlog.</li>
+      </ul>
+
+      <h3>8.2 Financial Reports</h3>
+      <ul class="reqs tight">
+        <li>Daily, weekly, monthly, quarterly, annual and custom date reports.</li>
+        <li>Gross Booking Value (GMV); platform commission revenue; service/convenience fees where applicable.</li>
+        <li>Payment gateway charges; refunds; host payouts; other recorded operating costs.</li>
+        <li>Net platform revenue/contribution.</li>
+        <li>Reconciliation between booking, payment, refund, payout and ledger records.</li>
+      </ul>
+
+      <h3>8.3 Commission Reports</h3>
+      <ul class="reqs tight">
+        <li>Commission by category, city, host, campaign and event period.</li>
+        <li>Commission rate must be configurable.</li>
+        <li>Historical bookings retain the commission rule applicable at booking time.</li>
+      </ul>
+
+      <h3>8.4 Payout Reports</h3>
+      <ul class="reqs tight">
+        <li>Pending, processing, successful, failed and on-hold payouts.</li>
+        <li>Host, booking, amount, payout date and transaction reference.</li>
+        <li>Payout hold for active disputes according to published policy.</li>
+      </ul>
+
+      <h3>8.5 Refund Reports</h3>
+      <ul class="reqs tight">
+        <li>Booking ID, customer, host, original amount, refund amount, reason, cancellation actor, policy applied and refund status.</li>
+        <li>Refund audit trail.</li>
+      </ul>
+
+      <h3>8.6 Host / Customer / Location / Category Reports</h3>
+      <ul class="reqs tight">
+        <li>Host performance: bookings, revenue, utilization, rating, cancellations and complaints.</li>
+        <li>Customer behavior: new/repeat customers, booking value, cancellation and complaint trends.</li>
+        <li>Location performance: listings, bookings, GMV, revenue, price, utilization and complaints.</li>
+        <li>Category performance: Rooms, Parking, Storage and future categories.</li>
+      </ul>
+
+      <h3>8.7 Kumbh 2027 Command Center</h3>
+      <ul class="reqs tight">
+        <li>Rooms and parking inventory; demand by date and location.</li>
+        <li>Bookings and revenue; average price; booking lead time; peak dates.</li>
+        <li>Cancellation and complaint trends; host availability.</li>
+        <li>Configurable event rules with source, effective dates and last verification.</li>
+      </ul>
+      <div class="callout warn">Do not hard-code official Kumbh rules.</div>
+    </section>
+
+    <section id="s9">
+      <h2><span class="sec-num">9</span>Safety, Compliance &amp; Dispute Requirements</h2>
+
+      <h3>9.1 Prohibited Activities</h3>
+      <div class="badge-row">
+        <span class="badge">Drugs</span><span class="badge">Weapons &amp; explosives</span><span class="badge">Human trafficking</span>
+        <span class="badge">Sexual services / prostitution</span><span class="badge">Unlawful gambling</span><span class="badge">Stolen goods</span>
+        <span class="badge">Fraud</span><span class="badge">Dangerous/hazardous materials</span><span class="badge">Any unlawful use</span>
+      </div>
+
+      <h3>9.2 Reporting &amp; Enforcement</h3>
+      <ul class="reqs tight">
+        <li>Report listing/user/booking; complaint ID; evidence collection.</li>
+        <li>Admin investigation; restriction/suspension; resolution or escalation.</li>
+        <li>Audit log for sensitive actions.</li>
+      </ul>
+
+      <h3>9.3 Dispute Evidence</h3>
+      <ul class="reqs tight">
+        <li>Booking record; listing photos; accepted house-rule version.</li>
+        <li>Platform messages; check-in/out timestamps; payment/refund records.</li>
+        <li>Complaint history; user-submitted evidence where appropriate.</li>
+      </ul>
+
+      <h3>9.4 Emergency Handling</h3>
+      <ul class="reqs tight">
+        <li>Separate emergency information from normal support.</li>
+        <li>Do not represent Dya-Ghya as police, ambulance or emergency authority.</li>
+        <li>Show applicable emergency contacts and escalation guidance based on location/policy.</li>
+      </ul>
+    </section>
+
+    <section id="s10">
+      <h2><span class="sec-num">10</span>Data Model</h2>
+      <p class="lede">Geography must be modeled as <b>Country → State → District → City → Area</b>. Nashik must not be hard-coded.</p>
+      <div class="model-list">
+        <div>users</div><div>user_roles</div><div>user_profiles</div><div>owners</div>
+        <div>owner_verifications</div><div>owner_documents</div><div>properties</div><div>property_addresses</div>
+        <div>property_documents</div><div>property_verifications</div><div>rooms</div><div>parking_spaces</div>
+        <div>storage_spaces</div><div>amenities</div><div>property_amenities</div><div>availability</div>
+        <div>pricing_rules</div><div>bookings</div><div>booking_guests</div><div>booking_status_history</div>
+        <div>payments</div><div>payment_transactions</div><div>payouts</div><div>refunds</div>
+        <div>reviews</div><div>complaints</div><div>complaint_actions</div><div>support_tickets</div>
+        <div>notifications</div><div>audit_logs</div><div>admin_actions</div><div>consents</div>
+        <div>privacy_requests</div><div>blocked_users</div><div>blocked_properties</div>
+      </div>
+    </section>
+
+    <section id="s11">
+      <h2><span class="sec-num">11</span>Technical Architecture</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Layer</th><th>Recommended Approach</th></tr></thead>
+        <tbody>
+          <tr><td>Frontend</td><td>React / Next.js or equivalent responsive web/PWA</td></tr>
+          <tr><td>Backend</td><td>Node.js / NestJS or equivalent</td></tr>
+          <tr><td>Database</td><td>PostgreSQL</td></tr>
+          <tr><td>Object Storage</td><td>Private cloud/object storage for documents and images</td></tr>
+          <tr><td>Authentication</td><td>OTP + secure session/token management</td></tr>
+          <tr><td>Payments</td><td>Replaceable payment gateway integration</td></tr>
+          <tr><td>Maps</td><td>Replaceable map/location provider</td></tr>
+          <tr><td>Notifications</td><td>SMS + email + push</td></tr>
+          <tr><td>Monitoring</td><td>Application logs, metrics and alerts</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout">External vendors must be replaceable through service abstractions so the product is not locked to one provider.</div>
+    </section>
+
+    <section id="s12">
+      <h2><span class="sec-num">12</span>Security Requirements</h2>
+      <ul class="reqs tight">
+        <li>HTTPS everywhere; role-based access control; server-side authorization for every sensitive resource.</li>
+        <li>Input validation and output encoding; rate limiting and abuse protection.</li>
+        <li>Secure authentication/session handling; encryption where appropriate.</li>
+        <li>Secure file uploads with file-type validation and malware scanning where appropriate.</li>
+        <li>Secrets management — no API secrets in frontend code.</li>
+        <li>Audit logging of sensitive administrative actions.</li>
+        <li>Database backups and tested restore process; monitoring and error logging.</li>
+        <li>Protection against common web vulnerabilities.</li>
+        <li>Payment card data must not be stored by Dya-Ghya.</li>
+      </ul>
+    </section>
+
+    <section id="s13">
+      <h2><span class="sec-num">13</span>Privacy &amp; Data Governance</h2>
+      <ul class="reqs tight">
+        <li>Data minimization; clear privacy notice and consent records where required; purpose limitation.</li>
+        <li>Retention and deletion policy; appropriate data access/deletion workflow.</li>
+        <li>Do not unnecessarily retain raw Aadhaar/identity-document images.</li>
+        <li>Restrict access to sensitive documents using role-based controls.</li>
+        <li>Maintain data-processing and security audit records.</li>
+      </ul>
+    </section>
+
+    <section id="s14">
+      <h2><span class="sec-num">14</span>Notifications</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Audience</th><th>Events</th></tr></thead>
+        <tbody>
+          <tr><td>Customer</td><td>OTP, booking, payment, reminder, check-in/out, cancellation, refund, complaint.</td></tr>
+          <tr><td>Host</td><td>Verification, new booking, cancellation, payout, document expiry, complaint.</td></tr>
+          <tr><td>Admin</td><td>High-risk complaint, payment issue, suspicious activity, document issue, system alert.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="s15">
+      <h2><span class="sec-num">15</span>Reviews &amp; Reputation</h2>
+      <ul class="reqs tight">
+        <li>Only completed bookings can create reviews.</li>
+        <li>Customer reviews may cover accuracy, cleanliness, experience, host behavior and space condition.</li>
+        <li>Host may rate customer according to published policy.</li>
+        <li>Moderation and abuse-reporting workflow.</li>
+        <li>Review history should be linked to booking records.</li>
+      </ul>
+    </section>
+
+    <section id="s16">
+      <h2><span class="sec-num">16</span>Document &amp; Compliance Expiry</h2>
+      <ul class="reqs tight">
+        <li>30-day reminder before expiry; 7-day warning.</li>
+        <li>Expired document → listing automatically paused where required.</li>
+        <li>Updated document → admin review → listing restoration.</li>
+        <li>Keep document status and expiry history.</li>
+      </ul>
+    </section>
+
+    <section id="s17">
+      <h2><span class="sec-num">17</span>Financial Ledger &amp; Reconciliation</h2>
+      <p class="lede">A double-entry-style or otherwise auditable transaction ledger is strongly recommended so every financial movement can be reconciled.</p>
+      <ul class="reqs tight">
+        <li>Unique transaction ID; booking ID; user/host.</li>
+        <li>Transaction type; amount; timestamp; status.</li>
+        <li>Related refund/payout; actor and reason for manual adjustment.</li>
+        <li>Daily reconciliation between gateway, bookings, refunds, payouts and ledger.</li>
+      </ul>
+    </section>
+
+    <section id="s18">
+      <h2><span class="sec-num">18</span>Legal &amp; Regulatory Requirements</h2>
+      <p class="lede">The application must support applicable Indian and Maharashtra requirements, but legal obligations must be confirmed by qualified counsel before launch.</p>
+      <div class="badge-row">
+        <span class="badge">Customer T&amp;C</span><span class="badge">Host/Owner Agreement</span><span class="badge">Booking Terms</span>
+        <span class="badge">Cancellation &amp; Refund Policy</span><span class="badge">Prohibited Activities Policy</span><span class="badge">Safety Policy</span>
+        <span class="badge">Privacy Policy</span><span class="badge">Property Authorization Declaration</span><span class="badge">Verification Declaration</span>
+        <span class="badge">Payout Terms</span><span class="badge">Compliance Declaration</span><span class="badge">Accommodation Registration Requirements</span>
+        <span class="badge">Police/Guest Verification Requirements</span><span class="badge">Tax/GST Treatment (CA-advised)</span>
+        <span class="badge">Consumer/E-commerce Obligations</span><span class="badge">Insurance Requirements</span><span class="badge">Kumbh-specific Rules</span>
+      </div>
+      <div class="callout warn">A blanket "Dya-Ghya has no responsibility" disclaimer must not be treated as sufficient protection.</div>
+    </section>
+
+    <section id="s19">
+      <h2><span class="sec-num">19</span>Core Management KPIs</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>KPI</th><th>Definition / Use</th></tr></thead>
+        <tbody>
+          <tr><td>GMV</td><td>Total customer booking value before platform deductions.</td></tr>
+          <tr><td>Platform Revenue</td><td>Commission and other permitted platform revenue.</td></tr>
+          <tr><td>Net Host Earnings</td><td>Customer booking amount less applicable commission/refunds/adjustments.</td></tr>
+          <tr><td>Average Booking Value</td><td>Average value per completed booking.</td></tr>
+          <tr><td>Booking Conversion</td><td>Search/listing traffic converted into bookings.</td></tr>
+          <tr><td>Utilization</td><td>Booked time/days divided by available time/days, where meaningful.</td></tr>
+          <tr><td>Cancellation Rate</td><td>Cancelled bookings as a proportion of bookings.</td></tr>
+          <tr><td>Complaint Rate</td><td>Complaints relative to bookings.</td></tr>
+          <tr><td>Repeat Rate</td><td>Customers with more than one completed booking.</td></tr>
+          <tr><td>Host Acquisition Cost</td><td>Acquisition spend divided by newly activated hosts.</td></tr>
+          <tr><td>Customer Acquisition Cost</td><td>Acquisition spend divided by newly acquired customers.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="s20">
+      <h2><span class="sec-num">20</span>MVP Acceptance Scope</h2>
+      <ol class="reqs">
+        <li>Customer can register/login and search rooms and parking.</li>
+        <li>Customer can filter by date, duration, location and relevant attributes.</li>
+        <li>Customer can view only approved/live listings.</li>
+        <li>Customer can see price and important rules before payment.</li>
+        <li>Customer can complete a booking and payment.</li>
+        <li>Customer can view booking history and cancellation/refund status.</li>
+        <li>Host can register and complete verification workflow.</li>
+        <li>Host can create room/parking listings and submit them for approval.</li>
+        <li>Admin can approve/reject/suspend listings and hosts.</li>
+        <li>Availability prevents double booking.</li>
+        <li>Host can view booking-level earnings and payout status.</li>
+        <li>Admin can view financial ledger, payments, refunds, payouts and commission.</li>
+        <li>Admin can generate daily/monthly financial and management reports.</li>
+        <li>Complaint/reporting and suspension workflow is operational.</li>
+        <li>Audit logs exist for sensitive actions.</li>
+        <li>Security, privacy and backup controls are tested before live launch.</li>
+      </ol>
+    </section>
+
+    <section id="s21">
+      <h2><span class="sec-num">21</span>Development Roadmap</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Sprint</th><th>Module</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Architecture, database and project setup</td></tr>
+          <tr><td>2</td><td>Authentication, users and RBAC</td></tr>
+          <tr><td>3</td><td>Host onboarding and verification</td></tr>
+          <tr><td>4</td><td>Property/listing module</td></tr>
+          <tr><td>5</td><td>Search, filters and maps</td></tr>
+          <tr><td>6</td><td>Availability and pricing</td></tr>
+          <tr><td>7</td><td>Booking engine</td></tr>
+          <tr><td>8</td><td>Payment and transaction ledger</td></tr>
+          <tr><td>9</td><td>Host dashboard and earnings</td></tr>
+          <tr><td>10</td><td>Customer bookings and reviews</td></tr>
+          <tr><td>11</td><td>Admin operations</td></tr>
+          <tr><td>12</td><td>Financial and management reporting</td></tr>
+          <tr><td>13</td><td>Complaints, safety and enforcement</td></tr>
+          <tr><td>14</td><td>Notifications and document expiry</td></tr>
+          <tr><td>15</td><td>Kumbh event configuration</td></tr>
+          <tr><td>16</td><td>Security testing, UAT and pilot</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="s22">
+      <h2><span class="sec-num">22</span>Claude Development Rules</h2>
+      <ul class="reqs tight">
+        <li>Build one module at a time; do not generate the entire application in one response.</li>
+        <li>Before coding each module, define requirements, data model, API contracts, validation rules and acceptance criteria.</li>
+        <li>Never invent legal/regulatory requirements; mark assumptions and request professional confirmation where necessary.</li>
+        <li>Use migrations for database changes; use server-side authorization for all protected resources.</li>
+        <li>Write tests for critical booking, payment, payout, refund and permission logic.</li>
+        <li>Keep integrations behind replaceable service interfaces; never expose secrets.</li>
+        <li>Use consistent IDs, timestamps, statuses and audit fields.</li>
+        <li>Document every API and important business rule.</li>
+        <li>Do not change confirmed-booking rules retrospectively without a controlled versioning approach.</li>
+        <li>Keep commission, tax configuration, cancellation policies and event rules configurable.</li>
+      </ul>
+    </section>
+
+    <section id="s23">
+      <h2><span class="sec-num">23</span>Automated Reporting</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Schedule</th><th>Report</th></tr></thead>
+        <tbody>
+          <tr><td>Daily</td><td>Previous-day bookings, GMV, revenue, payouts, refunds, complaints and verification backlog.</td></tr>
+          <tr><td>Weekly</td><td>Growth, revenue, best locations/categories/hosts, cancellations and complaints.</td></tr>
+          <tr><td>Monthly</td><td>GMV, revenue, expenses, contribution, customers, hosts, utilization, repeat rate and acquisition metrics.</td></tr>
+          <tr><td>Annual</td><td>Yearly management summary and host/customer transaction statements.</td></tr>
+          <tr><td>Kumbh Period</td><td>Daily demand, inventory, bookings, revenue, peak dates, cancellations and complaints.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="s24">
+      <h2><span class="sec-num">24</span>Go-Live Checklist</h2>
+      <ul class="reqs tight">
+        <li>Legal documents reviewed by Maharashtra counsel.</li>
+        <li>Accommodation and local permission requirements confirmed.</li>
+        <li>Tax/GST treatment reviewed by CA/tax professional.</li>
+        <li>Payment gateway and payout process tested.</li>
+        <li>Financial reconciliation tested.</li>
+        <li>Identity/property verification process tested.</li>
+        <li>Complaint/dispute workflow tested.</li>
+        <li>Security assessment completed.</li>
+        <li>Privacy/data retention controls completed.</li>
+        <li>Backups and restore test completed.</li>
+        <li>Emergency/support information configured.</li>
+        <li>Kumbh rules and official-source information verified before event use.</li>
+        <li>Pilot completed with a small number of verified hosts before wider launch.</li>
+      </ul>
+    </section>
+
+    <section id="s25">
+      <h2><span class="sec-num">25</span>Final Product Definition</h2>
+      <p>Dya-Ghya is a verified marketplace for monetizing underused resources. The MVP connects customers with verified hosts offering rooms and private/authorized parking. Customers receive transparent pricing, booking and support; hosts receive a transparent earnings and payout system; administrators receive operational, financial, safety and management controls. Storage and additional asset categories can be added through the same configurable architecture.</p>
+      <div class="callout"><b>Brand:</b> DYA-GHYA | द्या • घ्या • कमवा | Give • Take • Earn<br><b>Core promise:</b> Own something unused? Dya-Ghya it.</div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  Dya-Ghya — Product &amp; Technical Requirements Specification · Reference document for module-by-module build-out per Section 21 (Development Roadmap) and Section 22 (Claude Development Rules).
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var links = Array.prototype.slice.call(document.querySelectorAll("#tocList a"));
+  var sections = links.map(function(a){ return document.querySelector(a.getAttribute("href")); });
+
+  function onScroll(){
+    var pos = window.scrollY + 100;
+    var activeIdx = 0;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i] && sections[i].offsetTop <= pos) activeIdx = i;
+    }
+    links.forEach(function(a, i){ a.classList.toggle("active", i === activeIdx); });
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+</body>
+</html>
