@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <link rel="manifest" href="assets/site.webmanifest">
-<meta name="theme-color" content="#084b68">
+<meta name="theme-color" content="#0B4956">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -18,12 +18,12 @@
     --console:#0E1B33;
     --paper:#F7F5F0;
     --paper-2:#EFEBE1;
-    --teal:#2A6F77;
-    --teal-dark:#1D4F55;
-    --amber:#D68C45;
-    --sage:#6E8F73;
-    --red:#B4523F;
-    --red-dark:#8C3C2C;
+    --teal:#0E7C91;
+    --teal-dark:#0B4956;
+    --amber:#E2953D;
+    --sage:#3F9468;
+    --red:#C74A34;
+    --red-dark:#9A3423;
     --slate:#5B6570;
     --line: rgba(20,33,61,0.12);
     --card-shadow: 0 1px 2px rgba(20,33,61,0.06), 0 2px 8px rgba(20,33,61,0.04);
@@ -31,7 +31,8 @@
   *{box-sizing:border-box;}
   body{
     margin:0;
-    background:var(--paper);
+    min-height:100vh;
+    background:linear-gradient(160deg, #F8F5EF 0%, #EAF3F2 45%, #F7EFE2 100%);
     color:var(--ink);
     font-family:'Inter',sans-serif;
     -webkit-font-smoothing:antialiased;
@@ -40,7 +41,7 @@
   .wrap{max-width:1240px; margin:0 auto; padding:0 24px 80px;}
 
   /* Console header */
-  .console{background:var(--console); color:var(--paper); margin-bottom:24px;}
+  .console{background:linear-gradient(120deg, #0E1B33 0%, #163B4A 100%); color:var(--paper); margin-bottom:24px;}
   .console-inner{max-width:1240px; margin:0 auto; padding:20px 24px; display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap;}
   .brand-logo{height:40px; width:auto; display:block;}
   .brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); margin:0 0 6px;}
