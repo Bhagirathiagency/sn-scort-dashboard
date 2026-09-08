@@ -31,7 +31,8 @@
   *{box-sizing:border-box;}
   body{
     margin:0;
-    background:var(--paper);
+    min-height:100vh;
+    background:linear-gradient(160deg, #F8F5EF 0%, #EAF3F2 45%, #F7EFE2 100%);
     color:var(--ink);
     font-family:'Inter',sans-serif;
     -webkit-font-smoothing:antialiased;
@@ -40,7 +41,7 @@
   .wrap{max-width:1240px; margin:0 auto; padding:0 24px 80px;}
 
   /* Console header */
-  .console{background:var(--console); color:var(--paper); margin-bottom:24px;}
+  .console{background:linear-gradient(120deg, #0E1B33 0%, #163B4A 100%); color:var(--paper); margin-bottom:24px;}
   .console-inner{max-width:1240px; margin:0 auto; padding:20px 24px; display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap;}
   .brand-logo{height:40px; width:auto; display:block;}
   .brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); margin:0 0 6px;}
