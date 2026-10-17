@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dya-Ghya — Marketplace Console</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14213D; --paper:#F7F5F0; --paper-2:#EFEBE1; --teal:#2A6F77; --teal-dark:#1D4F55;
+    --amber:#D68C45; --sage:#6E8F73; --slate:#5B6570; --red:#B4523F;
+    --line: rgba(20,33,61,0.12); --card-shadow: 0 1px 2px rgba(20,33,61,0.06), 0 2px 8px rgba(20,33,61,0.04);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;}
+  a{color:var(--teal-dark);}
+  h1,h2,h3{font-family:'Fraunces',serif; font-weight:600;}
+  button{font-family:'Inter',sans-serif;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  .btn-primary{background:var(--teal); border:none; color:#fff; font-weight:600; font-size:13px; padding:9px 16px; border-radius:6px; cursor:pointer;}
+  .btn-primary:hover{background:var(--teal-dark);}
+  .btn-secondary{background:var(--paper); border:1px solid var(--line); color:var(--ink); font-size:12.5px; padding:7px 13px; border-radius:6px; cursor:pointer;}
+  .btn-secondary:hover{background:var(--paper-2);}
+  .btn-danger{background:none; border:1px solid rgba(180,82,63,0.4); color:var(--red); font-size:12px; padding:6px 12px; border-radius:6px; cursor:pointer;}
+  .btn-sm{font-size:11.5px; padding:5px 10px;}
+  button:disabled{opacity:0.5; cursor:not-allowed;}
+
+  /* Auth gate */
+  .auth-gate{position:fixed; inset:0; background:var(--ink); display:flex; align-items:center; justify-content:center; z-index:200; padding:20px;}
+  .auth-gate[hidden]{display:none;}
+  .auth-card{background:var(--paper); border-radius:14px; padding:32px 30px; width:min(400px,94vw); box-shadow:0 10px 40px rgba(0,0,0,0.3);}
+  .auth-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; color:var(--amber); text-transform:uppercase; margin:0 0 4px;}
+  .auth-card h2{font-size:22px; margin:0 0 4px;}
+  .auth-card p.sub{font-size:12.5px; color:var(--slate); margin:0 0 18px;}
+  .auth-tabs{display:flex; gap:0; margin-bottom:16px; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  .auth-tab{flex:1; padding:9px; text-align:center; font-size:12.5px; font-weight:600; background:var(--paper); border:none; cursor:pointer; color:var(--slate);}
+  .auth-tab.active{background:var(--teal); color:#fff;}
+  .form-field{margin-bottom:12px;}
+  .form-field label{font-size:11px; color:var(--slate); font-weight:500; display:block; margin-bottom:4px;}
+  .form-field input, .form-field select, .form-field textarea{width:100%; border:1px solid var(--line); border-radius:6px; padding:9px 10px; font-family:'Inter',sans-serif; font-size:13.5px; background:var(--paper); color:var(--ink);}
+  .form-field textarea{min-height:60px; resize:vertical;}
+  .role-choice{display:flex; gap:8px;}
+  .role-choice label{flex:1; border:1px solid var(--line); border-radius:6px; padding:8px; font-size:12px; text-align:center; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;}
+  .role-choice input{width:auto;}
+  .auth-error{color:var(--red); font-size:12px; min-height:14px; margin:2px 0 8px;}
+  .auth-note{font-size:11.5px; color:var(--slate); margin-top:14px; line-height:1.5;}
+
+  /* Console shell */
+  .console{background:var(--ink); color:var(--paper);}
+  .console-inner{max-width:1280px; margin:0 auto; padding:18px 24px; display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap;}
+  .brand-logo{height:34px; width:auto; display:block;}
+  .brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--amber); margin:0 0 3px;}
+  .console h1{font-size:20px; margin:0;}
+  .back-link{font-size:11px; color:rgba(247,245,240,0.55); text-decoration:none; font-family:'IBM Plex Mono',monospace;}
+  .account-strip{display:flex; align-items:center; gap:12px; font-size:12px;}
+  .role-badge{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; background:rgba(247,245,240,0.12); padding:4px 10px; border-radius:20px;}
+  .account-strip button{background:none; border:1px solid rgba(247,245,240,0.3); color:var(--paper); font-size:11.5px; padding:5px 10px; border-radius:6px; cursor:pointer;}
+  .account-strip button:hover{background:rgba(247,245,240,0.1);}
+  .sync-status{font-family:'IBM Plex Mono',monospace; font-size:11px; color:rgba(247,245,240,0.55);}
+  .sync-dot{display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:5px; background:var(--sage);}
+  .sync-dot.bad{background:var(--red);} .sync-dot.pending{background:var(--amber);}
+
+  .wrap{max-width:1280px; margin:0 auto; padding:26px 24px 90px;}
+  .tabs{display:flex; gap:8px; margin-bottom:22px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+  .tab-btn{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.05em; text-transform:uppercase; padding:10px 15px; cursor:pointer; border:none; background:none; color:var(--slate); border-bottom:2px solid transparent; margin-bottom:-1px;}
+  .tab-btn.active{color:var(--ink); border-bottom-color:var(--teal);}
+  .panel{display:none;} .panel.active{display:block;}
+  .panel-head{margin-bottom:16px;}
+  .panel-head h2{font-size:19px; margin:0 0 3px;}
+  .panel-sub{font-size:12.5px; color:var(--slate);}
+
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:24px;}
+  .stat{background:var(--paper); padding:15px 16px;}
+  .stat .num{font-family:'Fraunces',serif; font-size:24px; font-weight:600; line-height:1;}
+  .stat .lbl{font-size:11.5px; color:var(--slate); margin-top:5px;}
+  @media (max-width:820px){ .stats{grid-template-columns:repeat(2,1fr);} }
+
+  fieldset{border:1px solid var(--line); border-radius:8px; padding:14px 16px 16px; margin:0 0 16px;}
+  legend{font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--teal-dark); padding:0 6px;}
+  .form-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:10px;}
+  .form-grid .wide{grid-column:1/-1;}
+  .check-row{display:flex; flex-wrap:wrap; gap:10px; font-size:12.5px;}
+  .check-row label{display:flex; align-items:center; gap:5px; border:1px solid var(--line); border-radius:16px; padding:4px 10px; cursor:pointer;}
+  .check-row input{width:auto;}
+  .form-error{color:var(--red); font-size:12px; margin-top:6px;}
+  .form-error:empty{display:none;}
+  .form-ok{color:var(--sage); font-size:12px; margin-top:6px;}
+  .form-ok:empty{display:none;}
+
+  table.data-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  table.data-table th{text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); padding:8px 10px; border-bottom:1px solid var(--line); white-space:nowrap;}
+  table.data-table td{padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
+  table.data-table tr:last-child td{border-bottom:none;}
+  .table-scroll{overflow-x:auto; border:1px solid var(--line); border-radius:8px; margin-bottom:18px;}
+
+  .badge{font-family:'IBM Plex Mono',monospace; font-size:10px; padding:2px 8px; border-radius:20px; white-space:nowrap; display:inline-block;}
+  .badge.b-pending, .badge.b-submitted, .badge.b-under_review, .badge.b-open, .badge.b-processing, .badge.b-requested{background:rgba(214,140,69,0.16); color:var(--amber);}
+  .badge.b-draft{background:rgba(91,101,112,0.14); color:var(--slate);}
+  .badge.b-live, .badge.b-confirmed, .badge.b-completed, .badge.b-verified, .badge.b-paid, .badge.b-approved, .badge.b-resolved{background:rgba(110,143,115,0.16); color:var(--sage);}
+  .badge.b-checked_in{background:rgba(42,111,119,0.14); color:var(--teal-dark);}
+  .badge.b-rejected, .badge.b-cancelled, .badge.b-suspended, .badge.b-refunded, .badge.b-disputed, .badge.b-failed, .badge.b-escalated, .badge.b-dismissed, .badge.b-on_hold{background:rgba(180,82,63,0.14); color:var(--red);}
+  .badge.b-expired{background:rgba(20,33,61,0.08); color:var(--slate);}
+
+  .grid-2{display:grid; grid-template-columns:1.2fr 1fr; gap:20px;} @media (max-width:900px){ .grid-2{grid-template-columns:1fr;} }
+  .card-block{background:var(--paper-2); border-radius:10px; padding:16px; margin-bottom:18px;}
+  .card-block h3{font-size:13px; text-transform:uppercase; letter-spacing:0.05em; color:var(--slate); margin:0 0 12px; font-family:'IBM Plex Mono',monospace;}
+  .empty-note{color:var(--slate); font-style:italic; font-size:12.5px; padding:6px 0;}
+
+  /* Listing cards (customer browse) */
+  .listing-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; margin-bottom:20px;}
+  .listing-card{background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; box-shadow:var(--card-shadow); cursor:pointer; display:flex; flex-direction:column;}
+  .listing-card:hover{border-color:var(--teal);}
+  .listing-photo{height:140px; background:var(--paper-2) center/cover no-repeat; display:flex; align-items:center; justify-content:center; color:var(--slate); font-size:11px; font-family:'IBM Plex Mono',monospace;}
+  .listing-body{padding:12px 14px 14px; flex:1; display:flex; flex-direction:column; gap:6px;}
+  .listing-title{font-family:'Fraunces',serif; font-weight:600; font-size:15px;}
+  .listing-loc{font-size:12px; color:var(--slate);}
+  .listing-price{font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--teal-dark); font-weight:600; margin-top:auto;}
+  .badge-row{display:flex; flex-wrap:wrap; gap:4px; margin-top:2px;}
+
+  /* Modal */
+  .modal-backdrop{position:fixed; inset:0; background:rgba(20,33,61,0.55); z-index:150; display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto;}
+  .modal-backdrop[hidden]{display:none;}
+  .modal{background:var(--paper); border-radius:12px; width:min(640px,96vw); padding:26px 26px 22px; box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+  .modal-close{float:right; background:none; border:none; font-size:18px; cursor:pointer; color:var(--slate);}
+  .modal h2{font-size:19px; margin:0 0 4px;}
+  .price-line{display:flex; justify-content:space-between; font-size:13px; padding:4px 0; border-bottom:1px dashed var(--line);}
+  .price-line.total{font-weight:700; border-bottom:none; padding-top:8px; font-size:14.5px;}
+
+  .filters-row{display:flex; flex-wrap:wrap; gap:8px; align-items:end; margin-bottom:18px; background:var(--paper-2); border-radius:10px; padding:14px;}
+  .filters-row .form-field{margin-bottom:0; min-width:140px;}
+
+  @media (max-width:780px){ .grid-2{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <p class="auth-eyebrow">द्या • घ्या • कमवा — Give • Take • Earn</p>
+    <h2 id="authHeading">Welcome to Dya-Ghya</h2>
+    <p class="sub">Have something unused? List it. Let others use it. Earn from it.</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabSignIn" type="button">Sign in</button>
+      <button class="auth-tab" id="tabSignUp" type="button">Create account</button>
+    </div>
+
+    <form id="signInForm">
+      <div class="form-field"><label>Email</label><input type="email" id="siEmail" autocomplete="username" required></div>
+      <div class="form-field"><label>Password</label><input type="password" id="siPassword" autocomplete="current-password" required></div>
+      <div class="auth-error" id="siError"></div>
+      <button type="submit" class="btn-primary" style="width:100%;" id="siSubmit">Sign in</button>
+    </form>
+
+    <form id="signUpForm" hidden>
+      <div class="form-field"><label>Full name</label><input type="text" id="suName" required></div>
+      <div class="form-field"><label>Email</label><input type="email" id="suEmail" autocomplete="username" required></div>
+      <div class="form-field"><label>Phone</label><input type="tel" id="suPhone" placeholder="+91…"></div>
+      <div class="form-field"><label>Password</label><input type="password" id="suPassword" autocomplete="new-password" minlength="6" required></div>
+      <div class="form-field">
+        <label>I am joining as</label>
+        <div class="role-choice">
+          <label><input type="radio" name="suRole" value="customer" checked> Customer</label>
+          <label><input type="radio" name="suRole" value="host"> Host / Owner</label>
+        </div>
+      </div>
+      <div class="auth-error" id="suError"></div>
+      <button type="submit" class="btn-primary" style="width:100%;" id="suSubmit">Create account</button>
+      <p class="auth-note">By continuing you accept the (placeholder) Customer Terms / Host Agreement. Real legal documents must be reviewed by counsel before launch — see the <a href="dya-ghya.html#s18" target="_blank">PRD, Section 18</a>.</p>
+    </form>
+    <p class="auth-note" id="authFooterNote">First account on this platform may claim the Admin role once, for bootstrap purposes — see the account menu after signing up.</p>
+  </div>
+</div>
+
+<div class="console" id="consoleShell" hidden>
+  <div class="console-inner">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <img src="assets/logo.png" alt="" class="brand-logo" onerror="this.style.display='none'">
+      <div>
+        <p class="brand-eyebrow">Dya-Ghya</p>
+        <h1>Marketplace Console</h1>
+        <a href="dya-ghya.html" class="back-link">&larr; PRD</a> &nbsp;·&nbsp;
+        <a href="index.html" class="back-link">Execution Board</a>
+      </div>
+    </div>
+    <div class="account-strip">
+      <span class="sync-status" id="syncStatus"><span class="sync-dot pending" id="syncDot"></span>Connecting…</span>
+      <span class="role-badge" id="roleBadge" hidden></span>
+      <span id="acctName" class="mono" style="font-size:12px;"></span>
+      <button id="becomeAdminBtn" hidden title="First account only">Claim Admin (bootstrap)</button>
+      <button id="signOutBtn">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="mainWrap" hidden>
+
+  <!-- ============== CUSTOMER ============== -->
+  <div id="roleCustomer" hidden>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="c-browse">Browse &amp; Book</button>
+      <button class="tab-btn" data-tab="c-bookings">My Bookings</button>
+      <button class="tab-btn" data-tab="c-complaints">Report / Complaints</button>
+    </div>
+
+    <section class="panel active" id="panel-c-browse">
+      <div class="panel-head"><h2>Find a room or parking spot</h2><p class="panel-sub">Only Live, admin-approved listings appear here.</p></div>
+      <div class="filters-row">
+        <div class="form-field"><label>Category</label><select id="fCategory"><option value="">Any</option><option value="room">Room</option><option value="parking">Parking</option></select></div>
+        <div class="form-field"><label>City</label><input type="text" id="fCity" placeholder="e.g. Nashik"></div>
+        <div class="form-field"><label>Duration type</label>
+          <select id="fDuration"><option value="">Any</option><option value="hourly">Hourly</option><option value="half_day">Half-day</option><option value="daily">Daily</option><option value="overnight">Overnight</option><option value="multi_day">Multi-day</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select>
+        </div>
+        <div class="form-field"><label>Max price (₹)</label><input type="number" id="fMaxPrice" min="0"></div>
+        <button class="btn-primary" id="fApply">Search</button>
+      </div>
+      <div class="listing-grid" id="browseGrid"></div>
+    </section>
+
+    <section class="panel" id="panel-c-bookings">
+      <div class="panel-head"><h2>My Bookings</h2><p class="panel-sub">Pending, confirmed, completed and cancelled bookings.</p></div>
+      <div class="table-scroll"><table class="data-table">
+        <thead><tr><th>Booking</th><th>Listing</th><th>Dates</th><th>Amount</th><th>Status</th><th>Payment</th><th></th></tr></thead>
+        <tbody id="custBookingsBody"></tbody>
+      </table></div>
+    </section>
+
+    <section class="panel" id="panel-c-complaints">
+      <div class="panel-head"><h2>Report a listing, user or booking</h2><p class="panel-sub">Filed complaints are reviewed by the Dya-Ghya safety team.</p></div>
+      <form id="complaintForm">
+        <fieldset>
+          <legend>New complaint</legend>
+          <div class="form-grid">
+            <div class="form-field"><label>What are you reporting?</label>
+              <select id="compTargetType"><option value="listing">A listing</option><option value="booking">A booking</option><option value="user">A user</option></select>
+            </div>
+            <div class="form-field" id="compBookingWrap"><label>Related booking (optional)</label><select id="compBookingId"><option value="">—</option></select></div>
+            <div class="form-field wide"><label>Category</label><input type="text" id="compCategory" placeholder="e.g. Safety, Fraud, Prohibited use, Inaccurate listing"></div>
+            <div class="form-field wide"><label>Description</label><textarea id="compDescription" required></textarea></div>
+          </div>
+          <div class="auth-error" id="compError"></div>
+          <button type="submit" class="btn-primary">File complaint</button>
+        </fieldset>
+      </form>
+      <div class="table-scroll"><table class="data-table">
+        <thead><tr><th>Complaint</th><th>Type</th><th>Category</th><th>Status</th><th>Filed</th><th>Resolution</th></tr></thead>
+        <tbody id="myComplaintsBody"></tbody>
+      </table></div>
+    </section>
+  </div>
+
+  <!-- ============== HOST ============== -->
+  <div id="roleHost" hidden>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="h-overview">Overview</button>
+      <button class="tab-btn" data-tab="h-verification">Verification</button>
+      <button class="tab-btn" data-tab="h-listings">My Listings</button>
+      <button class="tab-btn" data-tab="h-bookings">Bookings</button>
+      <button class="tab-btn" data-tab="h-earnings">Earnings</button>
+    </div>
+
+    <section class="panel active" id="panel-h-overview">
+      <div class="panel-head"><h2>Host Overview</h2><p class="panel-sub">Snapshot of your listings and bookings.</p></div>
+      <div class="stats" id="hostStats"></div>
+      <div class="grid-2">
+        <div class="card-block"><h3>Bookings needing action</h3><div id="hostActionList"></div></div>
+        <div class="card-block"><h3>Verification status</h3><div id="hostVerifSummary"></div></div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-h-verification">
+      <div class="panel-head"><h2>Host Verification</h2><p class="panel-sub">Admin reviews this information before your listings can go live. Bank fields are stored as reference notes only — never store full account numbers here.</p></div>
+      <form id="hostForm">
+        <fieldset>
+          <legend>Business &amp; identity</legend>
+          <div class="form-grid">
+            <div class="form-field"><label>Business / display name</label><input type="text" id="hBusinessName"></div>
+            <div class="form-field"><label>ID proof type</label><select id="hIdType"><option value="">—</option><option>Aadhaar</option><option>PAN</option><option>Passport</option><option>Voter ID</option><option>Driving Licence</option></select></div>
+            <div class="form-field"><label>ID proof reference / last 4</label><input type="text" id="hIdRef" placeholder="e.g. XXXX-XXXX-1234"></div>
+            <div class="form-field wide"><label>Ownership / authorization note</label><textarea id="hOwnership" placeholder="Describe your proof of ownership or lawful authorization to list this resource"></textarea></div>
+            <div class="form-field"><label>Upload ID proof (image/PDF, private — admin only)</label><input type="file" id="hIdFile" accept="image/*,application/pdf"><span id="hIdFileStatus" class="mono" style="font-size:11px;"></span></div>
+            <div class="form-field"><label>Upload ownership/authorization proof (private — admin only)</label><input type="file" id="hOwnershipFile" accept="image/*,application/pdf"><span id="hOwnershipFileStatus" class="mono" style="font-size:11px;"></span></div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Payout details (reference only)</legend>
+          <div class="form-grid">
+            <div class="form-field"><label>Account holder name</label><input type="text" id="hBankName"></div>
+            <div class="form-field"><label>Account — last 4 digits</label><input type="text" id="hBankLast4" maxlength="4"></div>
+            <div class="form-field"><label>IFSC</label><input type="text" id="hBankIfsc"></div>
+            <div class="form-field"><label>UPI ID</label><input type="text" id="hUpi"></div>
+            <div class="form-field wide"><label>PAN / tax note</label><input type="text" id="hPanNote"></div>
+          </div>
+        </fieldset>
+        <div class="form-field"><label><input type="checkbox" id="hAgreement" style="width:auto;"> I accept the Host Agreement and platform policies</label></div>
+        <div class="auth-error" id="hError"></div>
+        <div class="form-ok" id="hOk"></div>
+        <button type="submit" class="btn-primary">Save verification info</button>
+      </form>
+    </section>
+
+    <section class="panel" id="panel-h-listings">
+      <div class="panel-head"><h2>My Listings</h2><p class="panel-sub">Create rooms or parking listings. Submit drafts for admin review before they go live.</p></div>
+      <button class="btn-primary" id="newListingBtn" style="margin-bottom:14px;">+ New listing</button>
+      <div class="table-scroll"><table class="data-table">
+        <thead><tr><th>Title</th><th>Category</th><th>City</th><th>Status</th><th>Badges</th><th></th></tr></thead>
+        <tbody id="hostListingsBody"></tbody>
+      </table></div>
+    </section>
+
+    <section class="panel" id="panel-h-bookings">
+      <div class="panel-head"><h2>Bookings for my listings</h2></div>
+      <div class="table-scroll"><table class="data-table">
+        <thead><tr><th>Booking</th><th>Listing</th><th>Dates</th><th>Amount</th><th>Your earning</th><th>Status</th><th></th></tr></thead>
+        <tbody id="hostBookingsBody"></tbody>
+      </table></div>
+    </section>
+
+    <section class="panel" id="panel-h-earnings">
+      <div class="panel-head"><h2>Earnings</h2><p class="panel-sub">Exactly how each payout is calculated.</p></div>
+      <div class="stats" id="hostEarnStats"></div>
+      <div style="display:flex; justify-content:flex-end; margin-bottom:8px;"><button class="btn-secondary btn-sm" id="hostExportCsv">Download statement (CSV)</button></div>
+      <div class="table-scroll"><table class="data-table">
+        <thead><tr><th>Booking</th><th>Listing</th><th>Customer paid</th><th>Commission</th><th>Your earning</th><th>Status</th><th>Payout</th></tr></thead>
+        <tbody id="hostEarningsBody"></tbody>
+      </table></div>
+    </section>
+  </div>
+
+  <!-- ============== ADMIN ============== -->
+  <div id="roleAdmin" hidden>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="a-overview">Overview</button>
+      <button class="tab-btn" data-tab="a-hosts">Hosts</button>
+      <button class="tab-btn" data-tab="a-listings">Listings</button>
+      <button class="tab-btn" data-tab="a-bookings">Bookings</button>
+      <button class="tab-btn" data-tab="a-finance">Finance</button>
+      <button class="tab-btn" data-tab="a-complaints">Complaints</button>
+      <button class="tab-btn" data-tab="a-events">Event Config</button>
+      <button class="tab-btn" data-tab="a-audit">Audit Log</button>
+    </div>
+
+    <section class="panel active" id="panel-a-overview">
+      <div class="panel-head"><h2>Executive Overview</h2></div>
+      <div class="stats" id="adminStats"></div>
+      <div class="grid-2">
+        <div class="card-block"><h3>Verification backlog</h3><div id="adminBacklog"></div></div>
+        <div class="card-block"><h3>Open complaints</h3><div id="adminOpenComplaints"></div></div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-a-hosts">
+      <div class="panel-head"><h2>Host Verification Queue</h2></div>
+      <div class="table-scroll"><table class="data-table">
+        <thead><tr><th>Host</th><th>Business</th><th>ID proof</th><th>Documents</th><th>Agreement</th><th>Status</th><th></th></tr></thead>
+        <tbody id="adminHostsBody"></tbody>
+      </table></div>
+    </section>
+
+    <section class="panel" id="panel-a-listings">
+      <div class="panel-head"><h2>Listing Review</h2><p class="panel-sub">Approve, reject or suspend listings. Only Live listings are bookable.</p></div>
+      <div class="table-scroll"><table class="data-table">
+        <thead><tr><th>Title</th><th>Host</th><th>Category</th><th>City</th><th>Status</th><th></th></tr></thead>
+        <tbody id="adminListingsBody"></tbody>
+      </table></div>
+    </section>
+
+    <section class="panel" id="panel-a-bookings">
+      <div class="panel-head"><h2>All Bookings</h2></div>
+      <div class="table-scroll"><table class="data-table">
+        <thead><tr><th>Booking</th><th>Listing</th><th>Customer</th><th>Host</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody id="adminBookingsBody"></tbody>
+      </table></div>
+    </section>
+
+    <section class="panel" id="panel-a-finance">
+      <div class="panel-head"><h2>Finance</h2></div>
+      <div class="stats" id="financeStats"></div>
+      <div class="grid-2">
+        <div class="card-block">
+          <h3>Payouts</h3>
+          <div class="table-scroll"><table class="data-table">
+            <thead><tr><th>Booking</th><th>Host</th><th>Earning</th><th>Status</th><th></th></tr></thead>
+            <tbody id="payoutsBody"></tbody>
+          </table></div>
+        </div>
+        <div class="card-block">
+          <h3>Refunds</h3>
+          <div class="table-scroll"><table class="data-table">
+            <thead><tr><th>Booking</th><th>Amount</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+            <tbody id="refundsBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-a-complaints">
+      <div class="panel-head"><h2>Complaints &amp; Enforcement</h2></div>
+      <div class="table-scroll"><table class="data-table">
+        <thead><tr><th>Complaint</th><th>Reporter</th><th>Type</th><th>Category</th><th>Status</th><th>Filed</th><th></th></tr></thead>
+        <tbody id="adminComplaintsBody"></tbody>
+      </table></div>
+    </section>
+
+    <section class="panel" id="panel-a-events">
+      <div class="panel-head"><h2>Event / Command Center Config</h2><p class="panel-sub">Configurable event rules (e.g. Kumbh 2027). Nothing is hard-coded — set source, dates and last-verified explicitly.</p></div>
+      <form id="eventForm">
+        <fieldset>
+          <legend>New / update event config</legend>
+          <div class="form-grid">
+            <div class="form-field wide"><label>Name</label><input type="text" id="evName" required></div>
+            <div class="form-field"><label>City</label><input type="text" id="evCity"></div>
+            <div class="form-field"><label>Starts on</label><input type="date" id="evStart"></div>
+            <div class="form-field"><label>Ends on</label><input type="date" id="evEnd"></div>
+            <div class="form-field"><label>Source URL</label><input type="url" id="evSource"></div>
+            <div class="form-field"><label>Last verified on</label><input type="date" id="evVerified"></div>
+            <div class="form-field wide"><label>Rules summary</label><textarea id="evRules"></textarea></div>
+          </div>
+          <button type="submit" class="btn-primary">Save event config</button>
+        </fieldset>
+      </form>
+      <div class="table-scroll"><table class="data-table">
+        <thead><tr><th>Name</th><th>City</th><th>Window</th><th>Last verified</th><th>Active</th><th></th></tr></thead>
+        <tbody id="eventsBody"></tbody>
+      </table></div>
+    </section>
+
+    <section class="panel" id="panel-a-audit">
+      <div class="panel-head"><h2>Audit Log</h2><p class="panel-sub">Sensitive admin actions are recorded here automatically.</p></div>
+      <div class="table-scroll"><table class="data-table">
+        <thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Entity</th><th>Details</th></tr></thead>
+        <tbody id="auditBody"></tbody>
+      </table></div>
+    </section>
+  </div>
+</div>
+
+<!-- Listing detail / booking modal -->
+<div class="modal-backdrop" id="listingModalBackdrop" hidden>
+  <div class="modal">
+    <button class="modal-close" id="listingModalClose">&times;</button>
+    <div id="listingModalBody"></div>
+  </div>
+</div>
+
+<!-- Listing edit modal (host) -->
+<div class="modal-backdrop" id="editModalBackdrop" hidden>
+  <div class="modal" style="width:min(720px,96vw);">
+    <button class="modal-close" id="editModalClose">&times;</button>
+    <h2 id="editModalTitle">New listing</h2>
+    <form id="editListingForm">
+      <input type="hidden" id="elId">
+      <div class="form-grid">
+        <div class="form-field"><label>Category</label><select id="elCategory" required><option value="room">Room</option><option value="parking">Parking</option></select></div>
+        <div class="form-field wide"><label>Title</label><input type="text" id="elTitle" required></div>
+        <div class="form-field wide"><label>Description</label><textarea id="elDescription"></textarea></div>
+        <div class="form-field"><label>City</label><input type="text" id="elCity" required></div>
+        <div class="form-field"><label>Area</label><input type="text" id="elArea"></div>
+        <div class="form-field wide"><label>Address</label><input type="text" id="elAddress"></div>
+        <div class="form-field wide">
+          <label>Photo</label>
+          <input type="url" id="elPhoto" placeholder="https://… (or upload below)">
+          <div style="margin-top:6px;"><input type="file" id="elPhotoFile" accept="image/*"> <span id="elPhotoFileStatus" class="mono" style="font-size:11px;"></span></div>
+          <img id="elPhotoPreview" style="max-width:100%;max-height:140px;margin-top:6px;border-radius:6px;display:none;">
+        </div>
+
+        <div class="form-field elRoomOnly"><label>Max occupancy (guests)</label><input type="number" id="elGuests" min="1"></div>
+        <div class="form-field elRoomOnly"><label>Food</label>
+          <select id="elFood"><option value="">—</option><option>Vegetarian</option><option>Non-vegetarian</option><option>Jain</option><option>Vegan</option><option>Both</option><option>No food</option></select>
+        </div>
+        <div class="form-field elParkingOnly"><label>Vehicle type</label><select id="elVehicle"><option value="car">Car</option><option value="bike">Bike</option><option value="other">Other</option></select></div>
+        <div class="form-field elParkingOnly"><label>Covered?</label><select id="elCovered"><option value="true">Covered</option><option value="false">Open</option></select></div>
+
+        <div class="form-field wide"><label>Amenities</label><div class="check-row" id="elAmenities"></div></div>
+
+        <div class="form-field"><label>Price / hour (₹)</label><input type="number" id="elPriceHourly" min="0"></div>
+        <div class="form-field"><label>Price / half-day (₹)</label><input type="number" id="elPriceHalfDay" min="0"></div>
+        <div class="form-field"><label>Price / day (₹)</label><input type="number" id="elPriceDaily" min="0"></div>
+        <div class="form-field"><label>Price / overnight (₹)</label><input type="number" id="elPriceOvernight" min="0"></div>
+        <div class="form-field"><label>Price / week (₹)</label><input type="number" id="elPriceWeekly" min="0"></div>
+        <div class="form-field"><label>Price / month (₹)</label><input type="number" id="elPriceMonthly" min="0"></div>
+
+        <div class="form-field"><label>Min duration (hrs)</label><input type="number" id="elMinDur" min="0"></div>
+        <div class="form-field"><label>Max duration (hrs)</label><input type="number" id="elMaxDur" min="0"></div>
+
+        <div class="form-field wide"><label>House rules</label><textarea id="elHouseRules"></textarea></div>
+        <div class="form-field wide"><label>Cancellation policy</label><textarea id="elCancelPolicy">Flexible — full refund up to 24 hours before start time.</textarea></div>
+      </div>
+      <div class="auth-error" id="elError"></div>
+      <div style="display:flex; gap:8px; margin-top:6px;">
+        <button type="submit" class="btn-primary">Save draft</button>
+        <button type="button" class="btn-secondary" id="elSubmitForReview">Save &amp; submit for review</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+"use strict";
+
+var SUPABASE_URL = "https://sqmvnebnathateurqfeq.supabase.co";
+var SUPABASE_ANON_KEY = "sb_publishable_onNu45I1iy7rLdbn3uum5Q_hfgHoLRt";
+var supabase = null;
+try { if (window.supabase) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e){ console.error(e); }
+
+var ROOM_AMENITIES = ["AC","Fan","Wi-Fi","Hot water","Bedding","Drinking water","Parking","Power backup"];
+var PARKING_AMENITIES = ["Lighting","Security guard","CCTV","Wide entry","24x7 access"];
+var DURATION_LABELS = {hourly:"Hourly", half_day:"Half-day", daily:"Daily", overnight:"Overnight", multi_day:"Multi-day", weekly:"Weekly", monthly:"Monthly"};
+var STATUS_LABELS = {pending:"Pending", confirmed:"Confirmed", checked_in:"Checked-in", completed:"Completed", cancelled:"Cancelled", refunded:"Refunded", disputed:"Disputed"};
+
+var state = { user: null, profile: null, host: null, pendingSignup: null };
+
+function $(id){ return document.getElementById(id); }
+function money(n){ n = Number(n||0); return "₹" + n.toLocaleString("en-IN", {maximumFractionDigits:2}); }
+function fmtDate(s){ if(!s) return "—"; var d = new Date(s); return d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}); }
+function fmtDateTime(s){ if(!s) return "—"; var d = new Date(s); return d.toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}); }
+function escapeHtml(s){ var d = document.createElement("div"); d.textContent = (s==null?"":String(s)); return d.innerHTML; }
+function escapeAttr(s){ return escapeHtml(s).replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+function safeUrl(u){ if(!u) return ""; try{ var url = new URL(String(u), window.location.href); if (url.protocol==="http:"||url.protocol==="https:") return url.href; }catch(e){} return ""; }
+function badge(status){ return '<span class="badge b-'+status+'">'+escapeHtml((STATUS_LABELS[status]||status||"").toString())+'</span>'; }
+function setSync(mode, text){
+  var dot = $("syncDot"); if(!dot) return;
+  dot.className = "sync-dot" + (mode==="bad" ? " bad" : mode==="pending" ? " pending" : "");
+  $("syncStatus").lastChild.textContent = " " + text;
+}
+
+// ---------------- AUTH ----------------
+$("tabSignIn").addEventListener("click", function(){
+  $("tabSignIn").classList.add("active"); $("tabSignUp").classList.remove("active");
+  $("signInForm").hidden = false; $("signUpForm").hidden = true;
+  $("authHeading").textContent = "Welcome back";
+});
+$("tabSignUp").addEventListener("click", function(){
+  $("tabSignUp").classList.add("active"); $("tabSignIn").classList.remove("active");
+  $("signUpForm").hidden = false; $("signInForm").hidden = true;
+  $("authHeading").textContent = "Create your account";
+});
+
+$("signInForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  $("siError").textContent = "";
+  $("siSubmit").disabled = true;
+  supabase.auth.signInWithPassword({ email: $("siEmail").value.trim(), password: $("siPassword").value })
+    .then(function(res){
+      $("siSubmit").disabled = false;
+      if (res.error) { $("siError").textContent = res.error.message; return; }
+    })
+    .catch(function(err){ $("siSubmit").disabled = false; $("siError").textContent = String(err); });
+});
+
+$("signUpForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  $("suError").textContent = "";
+  $("suSubmit").disabled = true;
+  var email = $("suEmail").value.trim();
+  var role = document.querySelector('input[name="suRole"]:checked').value;
+  var payload = { full_name: $("suName").value.trim(), phone: $("suPhone").value.trim(), role: role, email: email };
+  supabase.auth.signUp({ email: email, password: $("suPassword").value })
+    .then(function(res){
+      $("suSubmit").disabled = false;
+      if (res.error) { $("suError").textContent = res.error.message; return; }
+      try { localStorage.setItem("dg_pending_profile_" + email.toLowerCase(), JSON.stringify(payload)); } catch(e){}
+      if (res.data && res.data.session) {
+        return ensureProfile(res.data.user, payload);
+      } else {
+        $("suError").style.color = "var(--sage)";
+        $("suError").textContent = "Account created. Check your email to confirm, then sign in.";
+      }
+    })
+    .catch(function(err){ $("suSubmit").disabled = false; $("suError").textContent = String(err); });
+});
+
+$("signOutBtn").addEventListener("click", function(){ supabase.auth.signOut(); });
+
+$("becomeAdminBtn").addEventListener("click", function(){
+  if (!confirm("Claim the Admin role for this account? This only works if no admin exists yet.")) return;
+  supabase.from("dg_profiles").update({ role: "admin" }).eq("id", state.user.id).select().single()
+    .then(function(res){
+      if (res.error) { alert("Could not claim admin: " + res.error.message); return; }
+      state.profile = res.data;
+      applyRoleView();
+    });
+});
+
+function ensureProfile(user, pendingPayload){
+  return supabase.from("dg_profiles").select("*").eq("id", user.id).maybeSingle().then(function(res){
+    if (res.error) throw res.error;
+    if (res.data) return res.data;
+    var payload = pendingPayload;
+    if (!payload) {
+      try { payload = JSON.parse(localStorage.getItem("dg_pending_profile_" + (user.email||"").toLowerCase()) || "null"); } catch(e){}
+    }
+    payload = payload || { full_name: user.email, phone: "", role: "customer", email: user.email };
+    return supabase.from("dg_profiles").insert({
+      id: user.id, email: user.email, full_name: payload.full_name || user.email, phone: payload.phone || null, role: payload.role || "customer"
+    }).select().single().then(function(ins){
+      if (ins.error) throw ins.error;
+      try { localStorage.removeItem("dg_pending_profile_" + (user.email||"").toLowerCase()); } catch(e){}
+      return ins.data;
+    });
+  });
+}
+
+supabase.auth.onAuthStateChange(function(event, session){
+  if (session && session.user) { onSignedIn(session.user); }
+  else { onSignedOut(); }
+});
+supabase.auth.getSession().then(function(res){
+  if (res.data && res.data.session) onSignedIn(res.data.session.user); else onSignedOut();
+});
+
+function onSignedOut(){
+  state.user = null; state.profile = null; state.host = null;
+  $("authGate").hidden = false;
+  $("consoleShell").hidden = true;
+  $("mainWrap").hidden = true;
+}
+
+function onSignedIn(user){
+  state.user = user;
+  setSync("pending", "Loading profile…");
+  ensureProfile(user, null).then(function(profile){
+    state.profile = profile;
+    $("authGate").hidden = true;
+    $("consoleShell").hidden = false;
+    $("mainWrap").hidden = false;
+    $("acctName").textContent = profile.full_name || profile.email;
+    var rb = $("roleBadge"); rb.hidden = false; rb.textContent = profile.role;
+    setSync("ok", "Synced with Supabase");
+    return supabase.rpc("dg_admin_exists");
+  }).then(function(res){
+    var adminExists = res && res.data;
+    $("becomeAdminBtn").hidden = !(state.profile.role !== "admin" && adminExists === false);
+    applyRoleView();
+  }).catch(function(err){
+    console.error(err);
+    setSync("bad", "Could not load profile: " + (err.message||err));
+  });
+}
+
+function applyRoleView(){
+  $("roleCustomer").hidden = state.profile.role !== "customer";
+  $("roleHost").hidden = state.profile.role !== "host";
+  $("roleAdmin").hidden = state.profile.role !== "admin";
+  $("roleBadge").textContent = state.profile.role;
+  if (state.profile.role === "customer") { loadBrowse(); loadCustomerBookings(); loadMyComplaints(); populateComplaintBookingSelect(); }
+  if (state.profile.role === "host") { loadHost(); }
+  if (state.profile.role === "admin") { loadAdminOverview(); }
+}
+
+// ---------------- TAB SWITCHING ----------------
+document.addEventListener("click", function(e){
+  var btn = e.target.closest(".tab-btn");
+  if (!btn) return;
+  var group = btn.closest(".tabs");
+  group.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.toggle("active", b === btn); });
+  var wrap = group.parentElement;
+  wrap.querySelectorAll(".panel").forEach(function(p){ p.classList.remove("active"); });
+  var target = $("panel-" + btn.dataset.tab);
+  if (target) target.classList.add("active");
+  onTabShown(btn.dataset.tab);
+});
+
+function onTabShown(tab){
+  if (tab === "c-browse") loadBrowse();
+  if (tab === "c-bookings") loadCustomerBookings();
+  if (tab === "c-complaints") { loadMyComplaints(); populateComplaintBookingSelect(); }
+  if (tab === "h-overview") loadHost();
+  if (tab === "h-verification") loadHostVerification();
+  if (tab === "h-listings") loadHostListings();
+  if (tab === "h-bookings") loadHostBookings();
+  if (tab === "h-earnings") loadHostEarnings();
+  if (tab === "a-overview") loadAdminOverview();
+  if (tab === "a-hosts") loadAdminHosts();
+  if (tab === "a-listings") loadAdminListings();
+  if (tab === "a-bookings") loadAdminBookings();
+  if (tab === "a-finance") loadFinance();
+  if (tab === "a-complaints") loadAdminComplaints();
+  if (tab === "a-events") loadEvents();
+  if (tab === "a-audit") loadAudit();
+}
+
+function logAudit(action, entityType, entityId, details){
+  supabase.from("dg_audit_logs").insert({
+    actor_id: state.user.id, actor_role: state.profile.role, action: action,
+    entity_type: entityType, entity_id: entityId || null, details: details || null
+  }).then(function(res){ if (res.error) console.error("audit log failed", res.error); });
+}
+
+// ================= CUSTOMER: BROWSE =================
+var lastBrowseResults = [];
+$("fApply").addEventListener("click", function(){ loadBrowse(); });
+
+function loadBrowse(){
+  var q = supabase.from("dg_properties").select("*").eq("status", "live");
+  var cat = $("fCategory").value; if (cat) q = q.eq("category", cat);
+  var city = $("fCity").value.trim(); if (city) q = q.ilike("city", "%"+city+"%");
+  q.order("created_at", {ascending:false}).then(function(res){
+    if (res.error) { console.error(res.error); return; }
+    var rows = res.data || [];
+    var dur = $("fDuration").value;
+    var maxPrice = $("fMaxPrice").value ? Number($("fMaxPrice").value) : null;
+    rows = rows.filter(function(p){
+      if (dur && !priceFor(p, dur)) return false;
+      if (maxPrice != null) {
+        var best = bestPrice(p);
+        if (best == null || best > maxPrice) return false;
+      }
+      return true;
+    });
+    lastBrowseResults = rows;
+    renderBrowseGrid(rows);
+  });
+}
+
+function priceFor(p, dur){
+  var map = { hourly:p.price_hourly, half_day:p.price_half_day, daily:p.price_daily, overnight:p.price_overnight || p.price_daily, multi_day:p.price_daily, weekly:p.price_weekly, monthly:p.price_monthly };
+  return map[dur] || null;
+}
+function bestPrice(p){
+  var vals = [p.price_hourly,p.price_daily,p.price_half_day,p.price_overnight,p.price_weekly,p.price_monthly].filter(function(v){return v!=null;});
+  if (!vals.length) return null;
+  return Math.min.apply(null, vals);
+}
+
+function renderBrowseGrid(rows){
+  var grid = $("browseGrid");
+  if (!rows.length) { grid.innerHTML = '<p class="empty-note">No live listings match your filters yet.</p>'; return; }
+  grid.innerHTML = rows.map(function(p){
+    var best = bestPrice(p);
+    var badges = (p.verification_badges||[]).map(function(b){ return '<span class="badge b-verified">'+escapeHtml(b)+'</span>'; }).join("");
+    var photoSrc = safeUrl(p.photo_url);
+    var photo = photoSrc ? 'style="background-image:url(&quot;'+escapeAttr(photoSrc)+'&quot;);"' : "";
+    return '<div class="listing-card" data-id="'+p.id+'">' +
+      '<div class="listing-photo" '+photo+'>' + (photoSrc ? "" : (p.category==="room"?"No photo — room":"No photo — parking")) + '</div>' +
+      '<div class="listing-body">' +
+        '<div class="listing-title">'+escapeHtml(p.title)+'</div>' +
+        '<div class="listing-loc">'+escapeHtml(p.category)+' · '+escapeHtml(p.area?p.area+", ":"")+escapeHtml(p.city)+'</div>' +
+        '<div class="badge-row">'+badges+'</div>' +
+        '<div class="listing-price">'+(best!=null ? "from " + money(best) : "Contact for price")+'</div>' +
+      '</div></div>';
+  }).join("");
+  grid.querySelectorAll(".listing-card").forEach(function(card){
+    card.addEventListener("click", function(){ openListingModal(card.dataset.id); });
+  });
+}
+
+function openListingModal(id){
+  var p = lastBrowseResults.find(function(r){ return r.id === id; });
+  if (!p) return;
+  var durOptions = Object.keys(DURATION_LABELS).filter(function(d){ return priceFor(p, d); });
+  var amenities = (p.amenities||[]).map(function(a){ return '<span class="badge b-live">'+escapeHtml(a)+'</span>'; }).join(" ");
+  var body =
+    '<h2>'+escapeHtml(p.title)+'</h2>' +
+    '<p class="panel-sub">'+escapeHtml(p.category)+' · '+escapeHtml(p.area?p.area+", ":"")+escapeHtml(p.city)+'</p>' +
+    (safeUrl(p.photo_url) ? '<img src="'+escapeAttr(safeUrl(p.photo_url))+'" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin:10px 0;">' : "") +
+    '<p style="font-size:13px;">'+escapeHtml(p.description||"")+'</p>' +
+    '<div class="badge-row" style="margin:8px 0;">'+amenities+'</div>' +
+    '<p style="font-size:12.5px;"><b>House rules:</b> '+escapeHtml(p.house_rules||"—")+'</p>' +
+    '<p style="font-size:12.5px;"><b>Cancellation policy:</b> '+escapeHtml(p.cancellation_policy||"—")+'</p>' +
+    '<fieldset style="margin-top:14px;"><legend>Book this listing</legend>' +
+      '<div class="form-grid">' +
+        '<div class="form-field"><label>Start</label><input type="datetime-local" id="bkStart"></div>' +
+        '<div class="form-field"><label>End</label><input type="datetime-local" id="bkEnd"></div>' +
+        '<div class="form-field"><label>Duration type</label><select id="bkDuration">'+durOptions.map(function(d){return '<option value="'+d+'">'+DURATION_LABELS[d]+'</option>';}).join("")+'</select></div>' +
+        (p.category==="room" ? '<div class="form-field"><label>Guests</label><input type="number" id="bkCount" min="1" value="1"></div>' : '<div class="form-field"><label>Vehicles</label><input type="number" id="bkCount" min="1" value="1"></div>') +
+      '</div>' +
+      '<div id="bkPricePreview" style="font-size:13px; margin:8px 0; color:var(--slate);"></div>' +
+      '<div class="auth-error" id="bkError"></div>' +
+      '<button type="button" class="btn-primary" id="bkSubmit">Reserve — pay at property</button>' +
+      '<p class="auth-note">MVP payment model: reserve now, pay the host directly at check-in. A real payment gateway (no card data stored by Dya-Ghya) can be plugged in later — see <a href="dya-ghya.html#s5" target="_blank">PRD 5.7</a>.</p>' +
+    '</fieldset>';
+  $("listingModalBody").innerHTML = body;
+  $("listingModalBackdrop").hidden = false;
+
+  function updatePreview(){
+    var dur = $("bkDuration").value;
+    var price = priceFor(p, dur);
+    $("bkPricePreview").textContent = price != null ? ("Estimated price: " + money(price) + " (final price confirmed on booking)") : "";
+  }
+  $("bkDuration").addEventListener("change", updatePreview);
+  updatePreview();
+
+  $("bkSubmit").addEventListener("click", function(){
+    var startEl = $("bkStart"), endEl = $("bkEnd");
+    if (!startEl.value || !endEl.value) { $("bkError").textContent = "Choose start and end times."; return; }
+    var payload = {
+      property_id: p.id,
+      customer_id: state.user.id,
+      start_at: new Date(startEl.value).toISOString(),
+      end_at: new Date(endEl.value).toISOString(),
+      duration_type: $("bkDuration").value,
+      guests_count: p.category === "room" ? Number($("bkCount").value||1) : null,
+      vehicle_count: p.category === "parking" ? Number($("bkCount").value||1) : null
+    };
+    $("bkSubmit").disabled = true;
+    supabase.from("dg_bookings").insert(payload).select().single().then(function(res){
+      $("bkSubmit").disabled = false;
+      if (res.error) {
+        if (res.error.code === "23P01") { $("bkError").textContent = "That slot was just booked by someone else. Please pick another time."; }
+        else { $("bkError").textContent = res.error.message; }
+        return;
+      }
+      $("listingModalBackdrop").hidden = true;
+      alert("Booking " + res.data.booking_code + " confirmed as Pending. Total: " + money(res.data.total_amount) + ". See My Bookings for status.");
+      loadCustomerBookings();
+    });
+  });
+}
+
+$("listingModalClose").addEventListener("click", function(){ $("listingModalBackdrop").hidden = true; });
+$("listingModalBackdrop").addEventListener("click", function(e){ if (e.target === $("listingModalBackdrop")) $("listingModalBackdrop").hidden = true; });
+
+// ================= CUSTOMER: BOOKINGS =================
+function loadCustomerBookings(){
+  supabase.from("dg_bookings").select("*").eq("customer_id", state.user.id).order("created_at",{ascending:false}).then(function(res){
+    if (res.error) { console.error(res.error); return; }
+    var body = $("custBookingsBody");
+    if (!res.data.length) { body.innerHTML = '<tr><td colspan="7" class="empty-note">No bookings yet.</td></tr>'; return; }
+    body.innerHTML = res.data.map(function(b){
+      var title = b.listing_snapshot ? b.listing_snapshot.title : b.property_id;
+      var canCancel = b.status === "pending" || b.status === "confirmed";
+      var canReview = b.status === "completed";
+      return '<tr>' +
+        '<td class="mono">'+escapeHtml(b.booking_code)+'</td>' +
+        '<td>'+escapeHtml(title)+'</td>' +
+        '<td>'+fmtDateTime(b.start_at)+' → '+fmtDateTime(b.end_at)+'</td>' +
+        '<td>'+money(b.total_amount)+'</td>' +
+        '<td>'+badge(b.status)+'</td>' +
+        '<td>'+ (b.status==="cancelled"||b.status==="refunded" ? badge(b.status==="refunded"?"refunded":"cancelled") : '<span class="badge b-pending">reserve, pay at property</span>') +'</td>' +
+        '<td>' +
+          (canCancel ? '<button class="btn-danger btn-sm cust-cancel" data-id="'+b.id+'">Cancel</button>' : '') +
+          (canReview ? '<button class="btn-secondary btn-sm cust-review" data-id="'+b.id+'">Review</button>' : '') +
+        '</td>' +
+      '</tr>';
+    }).join("");
+    body.querySelectorAll(".cust-cancel").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var reason = prompt("Cancellation reason (optional):") || null;
+        supabase.from("dg_bookings").update({status:"cancelled", cancellation_reason: reason}).eq("id", btn.dataset.id).then(function(r){
+          if (r.error) alert(r.error.message); else loadCustomerBookings();
+        });
+      });
+    });
+    body.querySelectorAll(".cust-review").forEach(function(btn){
+      btn.addEventListener("click", function(){ openReviewPrompt(btn.dataset.id); });
+    });
+  });
+}
+
+function openReviewPrompt(bookingId){
+  var rating = prompt("Rating 1-5:", "5");
+  if (!rating) return;
+  var comment = prompt("Comment (optional):") || null;
+  supabase.from("dg_reviews").insert({ booking_id: bookingId, customer_id: state.user.id, rating: Number(rating), comment: comment })
+    .then(function(res){ if (res.error) alert(res.error.message); else alert("Review submitted."); });
+}
+
+// ================= CUSTOMER: COMPLAINTS =================
+function populateComplaintBookingSelect(){
+  supabase.from("dg_bookings").select("id, booking_code").eq("customer_id", state.user.id).then(function(res){
+    if (res.error) return;
+    var sel = $("compBookingId");
+    sel.innerHTML = '<option value="">—</option>' + (res.data||[]).map(function(b){ return '<option value="'+b.id+'">'+escapeHtml(b.booking_code)+'</option>'; }).join("");
+  });
+}
+
+$("complaintForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  $("compError").textContent = "";
+  var payload = {
+    reporter_id: state.user.id,
+    target_type: $("compTargetType").value,
+    booking_id: $("compBookingId").value || null,
+    category: $("compCategory").value.trim() || null,
+    description: $("compDescription").value.trim()
+  };
+  supabase.from("dg_complaints").insert(payload).select().single().then(function(res){
+    if (res.error) { $("compError").textContent = res.error.message; return; }
+    $("complaintForm").reset();
+    loadMyComplaints();
+    alert("Complaint filed: " + res.data.complaint_code);
+  });
+});
+
+function loadMyComplaints(){
+  supabase.from("dg_complaints").select("*").eq("reporter_id", state.user.id).order("created_at",{ascending:false}).then(function(res){
+    if (res.error) return;
+    var body = $("myComplaintsBody");
+    if (!res.data.length) { body.innerHTML = '<tr><td colspan="6" class="empty-note">No complaints filed.</td></tr>'; return; }
+    body.innerHTML = res.data.map(function(c){
+      return '<tr><td class="mono">'+escapeHtml(c.complaint_code)+'</td><td>'+escapeHtml(c.target_type)+'</td><td>'+escapeHtml(c.category||"—")+'</td><td>'+badge(c.status)+'</td><td>'+fmtDate(c.created_at)+'</td><td>'+escapeHtml(c.resolution_notes||"—")+'</td></tr>';
+    }).join("");
+  });
+}
+
+// ================= HOST =================
+function loadHost(){
+  Promise.all([
+    supabase.from("dg_properties").select("*").eq("host_id", state.user.id),
+    supabase.from("dg_bookings").select("*").eq("host_id", state.user.id),
+    supabase.from("dg_hosts").select("*").eq("id", state.user.id).maybeSingle()
+  ]).then(function(results){
+    var props = results[0].data || [];
+    var bookings = results[1].data || [];
+    state.host = results[2].data || null;
+
+    var live = props.filter(function(p){return p.status==="live";}).length;
+    var pendingReview = props.filter(function(p){return p.status==="submitted"||p.status==="under_review";}).length;
+    var actionable = bookings.filter(function(b){return b.status==="pending";});
+    var lifetime = bookings.filter(function(b){return b.status==="completed";}).reduce(function(s,b){return s+Number(b.host_earning||0);},0);
+
+    $("hostStats").innerHTML = [
+      ["Live listings", live], ["Awaiting review", pendingReview],
+      ["Bookings to confirm", actionable.length], ["Lifetime earnings", money(lifetime)]
+    ].map(function(s){ return '<div class="stat"><div class="num">'+s[1]+'</div><div class="lbl">'+s[0]+'</div></div>'; }).join("");
+
+    var al = $("hostActionList");
+    al.innerHTML = actionable.length ? actionable.map(function(b){
+      return '<div style="padding:6px 0; border-bottom:1px solid var(--line); font-size:12.5px;">'+escapeHtml(b.booking_code)+' — '+money(b.total_amount)+' '+badge(b.status)+'</div>';
+    }).join("") : '<p class="empty-note">Nothing pending.</p>';
+
+    var vs = $("hostVerifSummary");
+    if (state.host) {
+      vs.innerHTML = '<p style="font-size:13px;">Status: '+badge(state.host.verification_status)+'</p>' +
+        (state.host.verification_notes ? '<p style="font-size:12.5px; color:var(--slate);">Admin notes: '+escapeHtml(state.host.verification_notes)+'</p>' : '');
+    } else {
+      vs.innerHTML = '<p class="empty-note">Complete the Verification tab to get reviewed.</p>';
+    }
+  });
+}
+
+function loadHostVerification(){
+  state.pendingIdProofPath = null;
+  state.pendingOwnershipPath = null;
+  $("hIdFileStatus").textContent = ""; $("hOwnershipFileStatus").textContent = "";
+  supabase.from("dg_hosts").select("*").eq("id", state.user.id).maybeSingle().then(function(res){
+    var h = res.data;
+    state.host = h;
+    if (h) {
+      $("hBusinessName").value = h.business_name || "";
+      $("hIdType").value = h.id_proof_type || "";
+      $("hIdRef").value = h.id_proof_ref || "";
+      $("hOwnership").value = h.ownership_proof_note || "";
+      $("hBankName").value = h.bank_account_name || "";
+      $("hBankLast4").value = h.bank_account_last4 || "";
+      $("hBankIfsc").value = h.bank_ifsc || "";
+      $("hUpi").value = h.upi_id || "";
+      $("hPanNote").value = h.pan_note || "";
+      $("hAgreement").checked = !!h.agreement_accepted;
+      $("hIdFileStatus").textContent = h.id_proof_file_path ? "On file ✓ (upload to replace)" : "";
+      $("hOwnershipFileStatus").textContent = h.ownership_proof_file_path ? "On file ✓ (upload to replace)" : "";
+      $("hOk").textContent = "Status: " + h.verification_status + (h.verification_notes ? " — " + h.verification_notes : "");
+    }
+  });
+}
+
+function uploadToStorage(bucket, path, file){
+  return supabase.storage.from(bucket).upload(path, file, { upsert: true, contentType: file.type || undefined });
+}
+function safeFileName(name){ return String(name).replace(/[^a-zA-Z0-9_.-]/g, "_"); }
+
+$("hIdFile").addEventListener("change", function(){
+  var f = this.files[0]; if (!f) return;
+  $("hIdFileStatus").textContent = "Uploading…";
+  var path = state.user.id + "/id-proof-" + Date.now() + "-" + safeFileName(f.name);
+  uploadToStorage("dg-host-documents", path, f).then(function(res){
+    if (res.error) { $("hIdFileStatus").textContent = "Upload failed: " + res.error.message; return; }
+    state.pendingIdProofPath = path;
+    $("hIdFileStatus").textContent = "Uploaded ✓ (save form to attach)";
+  });
+});
+$("hOwnershipFile").addEventListener("change", function(){
+  var f = this.files[0]; if (!f) return;
+  $("hOwnershipFileStatus").textContent = "Uploading…";
+  var path = state.user.id + "/ownership-proof-" + Date.now() + "-" + safeFileName(f.name);
+  uploadToStorage("dg-host-documents", path, f).then(function(res){
+    if (res.error) { $("hOwnershipFileStatus").textContent = "Upload failed: " + res.error.message; return; }
+    state.pendingOwnershipPath = path;
+    $("hOwnershipFileStatus").textContent = "Uploaded ✓ (save form to attach)";
+  });
+});
+
+$("hostForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  $("hError").textContent = ""; $("hOk").textContent = "";
+  var payload = {
+    id: state.user.id,
+    business_name: $("hBusinessName").value.trim() || null,
+    id_proof_type: $("hIdType").value || null,
+    id_proof_ref: $("hIdRef").value.trim() || null,
+    ownership_proof_note: $("hOwnership").value.trim() || null,
+    id_proof_file_path: state.pendingIdProofPath || (state.host && state.host.id_proof_file_path) || null,
+    ownership_proof_file_path: state.pendingOwnershipPath || (state.host && state.host.ownership_proof_file_path) || null,
+    bank_account_name: $("hBankName").value.trim() || null,
+    bank_account_last4: $("hBankLast4").value.trim() || null,
+    bank_ifsc: $("hBankIfsc").value.trim() || null,
+    upi_id: $("hUpi").value.trim() || null,
+    pan_note: $("hPanNote").value.trim() || null,
+    agreement_accepted: $("hAgreement").checked,
+    agreement_accepted_at: $("hAgreement").checked ? new Date().toISOString() : null
+  };
+  supabase.from("dg_hosts").upsert(payload).select().single().then(function(res){
+    if (res.error) { $("hError").textContent = res.error.message; return; }
+    $("hOk").textContent = "Saved. Status: " + res.data.verification_status;
+    state.host = res.data;
+    state.pendingIdProofPath = null; state.pendingOwnershipPath = null;
+  });
+});
+
+function loadHostListings(){
+  supabase.from("dg_properties").select("*").eq("host_id", state.user.id).order("created_at",{ascending:false}).then(function(res){
+    if (res.error) return;
+    var body = $("hostListingsBody");
+    if (!res.data.length) { body.innerHTML = '<tr><td colspan="6" class="empty-note">No listings yet.</td></tr>'; return; }
+    body.innerHTML = res.data.map(function(p){
+      var badges = (p.verification_badges||[]).map(function(b){return escapeHtml(b);}).join(", ") || "—";
+      var canSubmit = p.status === "draft" || p.status === "rejected";
+      return '<tr><td>'+escapeHtml(p.title)+'</td><td>'+escapeHtml(p.category)+'</td><td>'+escapeHtml(p.city)+'</td><td>'+badge(p.status)+
+        (p.status==="rejected" && p.rejection_reason ? '<div style="font-size:11px;color:var(--red);">'+escapeHtml(p.rejection_reason)+'</div>' : '') +
+        '</td><td style="font-size:11.5px;">'+badges+'</td><td>' +
+        '<button class="btn-secondary btn-sm host-edit" data-id="'+p.id+'">Edit</button> ' +
+        (canSubmit ? '<button class="btn-primary btn-sm host-submit" data-id="'+p.id+'">Submit</button>' : '') +
+        '</td></tr>';
+    }).join("");
+    body.querySelectorAll(".host-edit").forEach(function(btn){ btn.addEventListener("click", function(){ openEditListing(res.data.find(function(p){return p.id===btn.dataset.id;})); }); });
+    body.querySelectorAll(".host-submit").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        supabase.from("dg_properties").update({status:"submitted"}).eq("id", btn.dataset.id).then(function(r){
+          if (r.error) alert(r.error.message); else loadHostListings();
+        });
+      });
+    });
+  });
+}
+
+function loadHostBookings(){
+  supabase.from("dg_bookings").select("*").eq("host_id", state.user.id).order("created_at",{ascending:false}).then(function(res){
+    if (res.error) return;
+    var body = $("hostBookingsBody");
+    if (!res.data.length) { body.innerHTML = '<tr><td colspan="7" class="empty-note">No bookings yet.</td></tr>'; return; }
+    body.innerHTML = res.data.map(function(b){
+      var title = b.listing_snapshot ? b.listing_snapshot.title : b.property_id;
+      var actions = "";
+      if (b.status === "pending") actions += '<button class="btn-secondary btn-sm host-status" data-id="'+b.id+'" data-status="confirmed">Confirm</button> <button class="btn-danger btn-sm host-status" data-id="'+b.id+'" data-status="cancelled">Cancel</button>';
+      if (b.status === "confirmed") actions += '<button class="btn-secondary btn-sm host-status" data-id="'+b.id+'" data-status="checked_in">Check-in</button> <button class="btn-danger btn-sm host-status" data-id="'+b.id+'" data-status="cancelled">Cancel</button>';
+      if (b.status === "checked_in") actions += '<button class="btn-secondary btn-sm host-status" data-id="'+b.id+'" data-status="completed">Complete</button>';
+      return '<tr><td class="mono">'+escapeHtml(b.booking_code)+'</td><td>'+escapeHtml(title)+'</td><td>'+fmtDateTime(b.start_at)+' → '+fmtDateTime(b.end_at)+'</td><td>'+money(b.total_amount)+'</td><td>'+money(b.host_earning)+'</td><td>'+badge(b.status)+'</td><td>'+actions+'</td></tr>';
+    }).join("");
+    body.querySelectorAll(".host-status").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        supabase.from("dg_bookings").update({status: btn.dataset.status}).eq("id", btn.dataset.id).then(function(r){
+          if (r.error) alert(r.error.message); else loadHostBookings();
+        });
+      });
+    });
+  });
+}
+
+function loadHostEarnings(){
+  supabase.from("dg_bookings").select("*").eq("host_id", state.user.id).order("created_at",{ascending:false}).then(function(res){
+    if (res.error) return;
+    var rows = res.data || [];
+    var now = new Date(); var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    var completed = rows.filter(function(b){return b.status==="completed";});
+    var lifetime = completed.reduce(function(s,b){return s+Number(b.host_earning||0);},0);
+    var thisMonth = completed.filter(function(b){return new Date(b.created_at) >= monthStart;}).reduce(function(s,b){return s+Number(b.host_earning||0);},0);
+    var pending = rows.filter(function(b){return b.status==="confirmed"||b.status==="checked_in";}).reduce(function(s,b){return s+Number(b.host_earning||0);},0);
+    var paid = rows.filter(function(b){return b.payout_status==="paid";}).reduce(function(s,b){return s+Number(b.host_earning||0);},0);
+
+    $("hostEarnStats").innerHTML = [["This month", money(thisMonth)],["Pending", money(pending)],["Paid", money(paid)],["Lifetime", money(lifetime)]]
+      .map(function(s){return '<div class="stat"><div class="num">'+s[1]+'</div><div class="lbl">'+s[0]+'</div></div>';}).join("");
+
+    var body = $("hostEarningsBody");
+    body.innerHTML = rows.length ? rows.map(function(b){
+      var title = b.listing_snapshot ? b.listing_snapshot.title : b.property_id;
+      return '<tr><td class="mono">'+escapeHtml(b.booking_code)+'</td><td>'+escapeHtml(title)+'</td><td>'+money(b.total_amount)+'</td><td>-'+money(b.commission_amount)+' ('+b.commission_pct+'%)</td><td><b>'+money(b.host_earning)+'</b></td><td>'+badge(b.status)+'</td><td>'+badge(b.payout_status)+'</td></tr>';
+    }).join("") : '<tr><td colspan="7" class="empty-note">No transactions yet.</td></tr>';
+
+    $("hostExportCsv").onclick = function(){ exportCsv(rows.map(function(b){
+      return { booking: b.booking_code, listing: b.listing_snapshot?b.listing_snapshot.title:"", customer_paid: b.total_amount, commission_pct: b.commission_pct, commission_amount: b.commission_amount, host_earning: b.host_earning, status: b.status, payout_status: b.payout_status, date: b.created_at };
+    }), "dya-ghya-host-earnings.csv"); };
+  });
+}
+
+// ---------------- HOST: LISTING EDIT MODAL ----------------
+function renderAmenityChecklist(category, selected){
+  var list = category === "parking" ? PARKING_AMENITIES : ROOM_AMENITIES;
+  selected = selected || [];
+  $("elAmenities").innerHTML = list.map(function(a){
+    var checked = selected.indexOf(a) > -1 ? "checked" : "";
+    return '<label><input type="checkbox" value="'+escapeHtml(a)+'" '+checked+'> '+escapeHtml(a)+'</label>';
+  }).join("");
+}
+function toggleCategoryFields(cat){
+  document.querySelectorAll(".elRoomOnly").forEach(function(f){ f.style.display = cat==="room" ? "" : "none"; });
+  document.querySelectorAll(".elParkingOnly").forEach(function(f){ f.style.display = cat==="parking" ? "" : "none"; });
+}
+$("elCategory").addEventListener("change", function(){ toggleCategoryFields(this.value); renderAmenityChecklist(this.value, []); });
+
+$("newListingBtn").addEventListener("click", function(){ openEditListing(null); });
+
+function openEditListing(p){
+  $("elError").textContent = "";
+  $("editListingForm").reset();
+  $("elPhotoFileStatus").textContent = "";
+  $("elPhotoPreview").style.display = "none";
+  $("elId").value = p ? p.id : "";
+  $("editModalTitle").textContent = p ? "Edit listing" : "New listing";
+  var cat = p ? p.category : "room";
+  $("elCategory").value = cat;
+  toggleCategoryFields(cat);
+  renderAmenityChecklist(cat, p ? p.amenities : []);
+  if (p) {
+    $("elTitle").value = p.title || "";
+    $("elDescription").value = p.description || "";
+    $("elCity").value = p.city || "";
+    $("elArea").value = p.area || "";
+    $("elAddress").value = p.address || "";
+    $("elPhoto").value = p.photo_url || "";
+    if (safeUrl(p.photo_url)) { $("elPhotoPreview").src = safeUrl(p.photo_url); $("elPhotoPreview").style.display = "block"; }
+    $("elGuests").value = p.capacity_guests || "";
+    $("elFood").value = p.food_pref || "";
+    $("elVehicle").value = p.vehicle_type || "car";
+    $("elCovered").value = p.covered ? "true" : "false";
+    $("elPriceHourly").value = p.price_hourly || "";
+    $("elPriceHalfDay").value = p.price_half_day || "";
+    $("elPriceDaily").value = p.price_daily || "";
+    $("elPriceOvernight").value = p.price_overnight || "";
+    $("elPriceWeekly").value = p.price_weekly || "";
+    $("elPriceMonthly").value = p.price_monthly || "";
+    $("elMinDur").value = p.min_duration_hours || "";
+    $("elMaxDur").value = p.max_duration_hours || "";
+    $("elHouseRules").value = p.house_rules || "";
+    $("elCancelPolicy").value = p.cancellation_policy || "";
+  }
+  $("editModalBackdrop").hidden = false;
+}
+$("editModalClose").addEventListener("click", function(){ $("editModalBackdrop").hidden = true; });
+$("editModalBackdrop").addEventListener("click", function(e){ if (e.target === $("editModalBackdrop")) $("editModalBackdrop").hidden = true; });
+
+$("elPhotoFile").addEventListener("change", function(){
+  var f = this.files[0]; if (!f) return;
+  $("elPhotoFileStatus").textContent = "Uploading…";
+  var path = state.user.id + "/" + Date.now() + "-" + safeFileName(f.name);
+  uploadToStorage("dg-listing-photos", path, f).then(function(res){
+    if (res.error) { $("elPhotoFileStatus").textContent = "Upload failed: " + res.error.message; return; }
+    var pub = supabase.storage.from("dg-listing-photos").getPublicUrl(path);
+    var url = pub && pub.data ? pub.data.publicUrl : "";
+    $("elPhoto").value = url;
+    $("elPhotoFileStatus").textContent = "Uploaded ✓";
+    if (url) { $("elPhotoPreview").src = url; $("elPhotoPreview").style.display = "block"; }
+  });
+});
+
+function collectListingPayload(){
+  var cat = $("elCategory").value;
+  var amenities = Array.from($("elAmenities").querySelectorAll("input:checked")).map(function(i){return i.value;});
+  return {
+    category: cat,
+    title: $("elTitle").value.trim(),
+    description: $("elDescription").value.trim() || null,
+    city: $("elCity").value.trim(),
+    area: $("elArea").value.trim() || null,
+    address: $("elAddress").value.trim() || null,
+    photo_url: $("elPhoto").value.trim() || null,
+    capacity_guests: cat==="room" ? (Number($("elGuests").value)||null) : null,
+    food_pref: cat==="room" ? ($("elFood").value || null) : null,
+    vehicle_type: cat==="parking" ? $("elVehicle").value : null,
+    covered: cat==="parking" ? ($("elCovered").value === "true") : null,
+    amenities: amenities,
+    price_hourly: $("elPriceHourly").value ? Number($("elPriceHourly").value) : null,
+    price_half_day: $("elPriceHalfDay").value ? Number($("elPriceHalfDay").value) : null,
+    price_daily: $("elPriceDaily").value ? Number($("elPriceDaily").value) : null,
+    price_overnight: $("elPriceOvernight").value ? Number($("elPriceOvernight").value) : null,
+    price_weekly: $("elPriceWeekly").value ? Number($("elPriceWeekly").value) : null,
+    price_monthly: $("elPriceMonthly").value ? Number($("elPriceMonthly").value) : null,
+    min_duration_hours: $("elMinDur").value ? Number($("elMinDur").value) : null,
+    max_duration_hours: $("elMaxDur").value ? Number($("elMaxDur").value) : null,
+    house_rules: $("elHouseRules").value.trim() || null,
+    cancellation_policy: $("elCancelPolicy").value.trim() || "Flexible — full refund up to 24 hours before start time."
+  };
+}
+
+function saveListing(submitAfter){
+  var id = $("elId").value;
+  var payload = collectListingPayload();
+  if (!payload.title || !payload.city) { $("elError").textContent = "Title and city are required."; return; }
+  var op;
+  if (id) {
+    op = supabase.from("dg_properties").update(payload).eq("id", id).select().single();
+  } else {
+    payload.host_id = state.user.id;
+    op = supabase.from("dg_properties").insert(payload).select().single();
+  }
+  op.then(function(res){
+    if (res.error) { $("elError").textContent = res.error.message; return; }
+    var row = res.data;
+    if (submitAfter && (row.status === "draft" || row.status === "rejected")) {
+      return supabase.from("dg_properties").update({status:"submitted"}).eq("id", row.id).then(function(r2){
+        if (r2.error) { $("elError").textContent = r2.error.message; return; }
+        $("editModalBackdrop").hidden = true; loadHostListings();
+      });
+    }
+    $("editModalBackdrop").hidden = true; loadHostListings();
+  });
+}
+$("editListingForm").addEventListener("submit", function(e){ e.preventDefault(); saveListing(false); });
+$("elSubmitForReview").addEventListener("click", function(){ saveListing(true); });
+
+// ================= ADMIN =================
+function loadAdminOverview(){
+  Promise.all([
+    supabase.from("dg_profiles").select("id, role", {count:"exact"}),
+    supabase.from("dg_properties").select("id, status", {count:"exact"}),
+    supabase.from("dg_bookings").select("id, status, total_amount, commission_amount"),
+    supabase.from("dg_hosts").select("id, verification_status"),
+    supabase.from("dg_complaints").select("id, status")
+  ]).then(function(r){
+    var profiles = r[0].data || [], props = r[1].data || [], bookings = r[2].data || [], hosts = r[3].data || [], complaints = r[4].data || [];
+    var customers = profiles.filter(function(p){return p.role==="customer";}).length;
+    var hostCount = profiles.filter(function(p){return p.role==="host";}).length;
+    var live = props.filter(function(p){return p.status==="live";}).length;
+    var activeBookings = bookings.filter(function(b){return ["confirmed","checked_in","completed"].indexOf(b.status)>-1;});
+    var gmv = activeBookings.reduce(function(s,b){return s+Number(b.total_amount||0);},0);
+    var commission = activeBookings.reduce(function(s,b){return s+Number(b.commission_amount||0);},0);
+    var cancelled = bookings.filter(function(b){return b.status==="cancelled";}).length;
+    var cancelRate = bookings.length ? Math.round(cancelled/bookings.length*100) : 0;
+    var backlog = hosts.filter(function(h){return h.verification_status==="pending";}).length + props.filter(function(p){return p.status==="submitted"||p.status==="under_review";}).length;
+    var openComplaints = complaints.filter(function(c){return c.status==="open"||c.status==="investigating"||c.status==="escalated";}).length;
+
+    $("adminStats").innerHTML = [
+      ["Customers", customers], ["Hosts", hostCount], ["Live listings", live], ["Bookings", bookings.length],
+      ["GMV", money(gmv)], ["Commission revenue", money(commission)], ["Cancellation rate", cancelRate+"%"], ["Verification backlog", backlog]
+    ].map(function(s){return '<div class="stat"><div class="num">'+s[1]+'</div><div class="lbl">'+s[0]+'</div></div>';}).join("");
+
+    $("adminBacklog").innerHTML = backlog ? ('<p style="font-size:13px;">'+backlog+' item(s) awaiting review — see Hosts / Listings tabs.</p>') : '<p class="empty-note">Nothing pending.</p>';
+    $("adminOpenComplaints").innerHTML = openComplaints ? ('<p style="font-size:13px;">'+openComplaints+' open complaint(s) — see Complaints tab.</p>') : '<p class="empty-note">No open complaints.</p>';
+  });
+}
+
+function loadAdminHosts(){
+  supabase.from("dg_hosts").select("*, dg_profiles!dg_hosts_id_fkey(full_name, email, phone)").order("updated_at",{ascending:false}).then(function(res){
+    if (res.error) { console.error(res.error); return; }
+    var body = $("adminHostsBody");
+    if (!res.data.length) { body.innerHTML = '<tr><td colspan="7" class="empty-note">No host submissions yet.</td></tr>'; return; }
+    body.innerHTML = res.data.map(function(h){
+      var prof = h.dg_profiles || {};
+      var docBtns = "";
+      if (h.id_proof_file_path) docBtns += '<button class="btn-secondary btn-sm admin-view-doc" data-path="'+escapeAttr(h.id_proof_file_path)+'">ID proof</button> ';
+      if (h.ownership_proof_file_path) docBtns += '<button class="btn-secondary btn-sm admin-view-doc" data-path="'+escapeAttr(h.ownership_proof_file_path)+'">Ownership</button>';
+      if (!docBtns) docBtns = '<span class="empty-note">None uploaded</span>';
+      return '<tr><td>'+escapeHtml(prof.full_name||prof.email||h.id)+'<div style="font-size:11px;color:var(--slate);">'+escapeHtml(prof.email||"")+'</div></td>' +
+        '<td>'+escapeHtml(h.business_name||"—")+'</td>' +
+        '<td>'+escapeHtml((h.id_proof_type||"—")+" "+(h.id_proof_ref||""))+'</td>' +
+        '<td>'+docBtns+'</td>' +
+        '<td>'+(h.agreement_accepted ? "Accepted" : "Not yet")+'</td>' +
+        '<td>'+badge(h.verification_status)+'</td>' +
+        '<td>' +
+          '<button class="btn-secondary btn-sm admin-host-verify" data-id="'+h.id+'">Verify</button> ' +
+          '<button class="btn-danger btn-sm admin-host-reject" data-id="'+h.id+'">Reject</button>' +
+        '</td></tr>';
+    }).join("");
+    body.querySelectorAll(".admin-view-doc").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        supabase.storage.from("dg-host-documents").createSignedUrl(btn.dataset.path, 120).then(function(res2){
+          if (res2.error) { alert("Could not open document: " + res2.error.message); return; }
+          window.open(res2.data.signedUrl, "_blank", "noopener,noreferrer");
+        });
+      });
+    });
+    body.querySelectorAll(".admin-host-verify").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        supabase.from("dg_hosts").update({verification_status:"verified", verification_notes:null, badges:["Identity Verified"]}).eq("id", btn.dataset.id).then(function(r){
+          if (r.error) { alert(r.error.message); return; }
+          logAudit("host_verified","dg_hosts",btn.dataset.id,null);
+          loadAdminHosts();
+        });
+      });
+    });
+    body.querySelectorAll(".admin-host-reject").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var reason = prompt("Reason for rejection:"); if (reason===null) return;
+        supabase.from("dg_hosts").update({verification_status:"rejected", verification_notes:reason}).eq("id", btn.dataset.id).then(function(r){
+          if (r.error) { alert(r.error.message); return; }
+          logAudit("host_rejected","dg_hosts",btn.dataset.id,{reason:reason});
+          loadAdminHosts();
+        });
+      });
+    });
+  });
+}
+
+function loadAdminListings(){
+  supabase.from("dg_properties").select("*, dg_profiles!dg_properties_host_id_fkey(full_name,email)").order("updated_at",{ascending:false}).then(function(res){
+    if (res.error) { console.error(res.error); return; }
+    var body = $("adminListingsBody");
+    if (!res.data.length) { body.innerHTML = '<tr><td colspan="6" class="empty-note">No listings yet.</td></tr>'; return; }
+    body.innerHTML = res.data.map(function(p){
+      var host = p.dg_profiles || {};
+      var actions = "";
+      if (p.status === "submitted" || p.status === "under_review") {
+        actions += '<button class="btn-secondary btn-sm a-approve" data-id="'+p.id+'">Approve → Live</button> <button class="btn-danger btn-sm a-reject" data-id="'+p.id+'">Reject</button>';
+      } else if (p.status === "live") {
+        actions += '<button class="btn-danger btn-sm a-suspend" data-id="'+p.id+'">Suspend</button>';
+      } else if (p.status === "suspended") {
+        actions += '<button class="btn-secondary btn-sm a-approve" data-id="'+p.id+'">Reinstate → Live</button>';
+      }
+      return '<tr><td>'+escapeHtml(p.title)+'</td><td>'+escapeHtml(host.full_name||host.email||"—")+'</td><td>'+escapeHtml(p.category)+'</td><td>'+escapeHtml(p.city)+'</td><td>'+badge(p.status)+'</td><td>'+actions+'</td></tr>';
+    }).join("");
+    body.querySelectorAll(".a-approve").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        supabase.from("dg_properties").update({status:"live", rejection_reason:null, verification_badges:["Platform Safety Check"]}).eq("id", btn.dataset.id).then(function(r){
+          if (r.error) { alert(r.error.message); return; }
+          logAudit("listing_approved","dg_properties",btn.dataset.id,null);
+          loadAdminListings();
+        });
+      });
+    });
+    body.querySelectorAll(".a-reject").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var reason = prompt("Reason for rejection:"); if (reason===null) return;
+        supabase.from("dg_properties").update({status:"rejected", rejection_reason:reason}).eq("id", btn.dataset.id).then(function(r){
+          if (r.error) { alert(r.error.message); return; }
+          logAudit("listing_rejected","dg_properties",btn.dataset.id,{reason:reason});
+          loadAdminListings();
+        });
+      });
+    });
+    body.querySelectorAll(".a-suspend").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var reason = prompt("Reason for suspension:"); if (reason===null) return;
+        supabase.from("dg_properties").update({status:"suspended", rejection_reason:reason}).eq("id", btn.dataset.id).then(function(r){
+          if (r.error) { alert(r.error.message); return; }
+          logAudit("listing_suspended","dg_properties",btn.dataset.id,{reason:reason});
+          loadAdminListings();
+        });
+      });
+    });
+  });
+}
+
+function loadAdminBookings(){
+  supabase.from("dg_bookings").select("*, cust:dg_profiles!dg_bookings_customer_id_fkey(full_name,email), hostp:dg_profiles!dg_bookings_host_id_fkey(full_name,email)").order("created_at",{ascending:false}).limit(300).then(function(res){
+    if (res.error) { console.error(res.error); return; }
+    var body = $("adminBookingsBody");
+    if (!res.data.length) { body.innerHTML = '<tr><td colspan="6" class="empty-note">No bookings yet.</td></tr>'; return; }
+    body.innerHTML = res.data.map(function(b){
+      var title = b.listing_snapshot ? b.listing_snapshot.title : b.property_id;
+      return '<tr><td class="mono">'+escapeHtml(b.booking_code)+'</td><td>'+escapeHtml(title)+'</td><td>'+escapeHtml((b.cust&&(b.cust.full_name||b.cust.email))||"—")+'</td><td>'+escapeHtml((b.hostp&&(b.hostp.full_name||b.hostp.email))||"—")+'</td><td>'+money(b.total_amount)+'</td><td>'+badge(b.status)+'</td></tr>';
+    }).join("");
+  });
+}
+
+function loadFinance(){
+  Promise.all([
+    supabase.from("dg_bookings").select("*, hostp:dg_profiles!dg_bookings_host_id_fkey(full_name,email)"),
+    supabase.from("dg_refunds").select("*, dg_bookings(booking_code)")
+  ]).then(function(r){
+    var bookings = r[0].data || [];
+    var refunds = r[1].data || [];
+    var active = bookings.filter(function(b){return ["confirmed","checked_in","completed"].indexOf(b.status)>-1;});
+    var gmv = active.reduce(function(s,b){return s+Number(b.total_amount||0);},0);
+    var commission = active.reduce(function(s,b){return s+Number(b.commission_amount||0);},0);
+    var payoutsPaid = bookings.filter(function(b){return b.payout_status==="paid";}).reduce(function(s,b){return s+Number(b.host_earning||0);},0);
+    var refundsProcessed = refunds.filter(function(x){return x.status==="processed";}).reduce(function(s,x){return s+Number(x.amount||0);},0);
+    $("financeStats").innerHTML = [["GMV", money(gmv)],["Commission revenue", money(commission)],["Host payouts (paid)", money(payoutsPaid)],["Refunds processed", money(refundsProcessed)]]
+      .map(function(s){return '<div class="stat"><div class="num">'+s[1]+'</div><div class="lbl">'+s[0]+'</div></div>';}).join("");
+
+    var payoutCandidates = bookings.filter(function(b){return b.status==="completed";});
+    var pb = $("payoutsBody");
+    pb.innerHTML = payoutCandidates.length ? payoutCandidates.map(function(b){
+      var host = b.hostp || {};
+      return '<tr><td class="mono">'+escapeHtml(b.booking_code)+'</td><td>'+escapeHtml(host.full_name||host.email||"—")+'</td><td>'+money(b.host_earning)+'</td><td>'+badge(b.payout_status)+'</td><td>' +
+        (b.payout_status !== "paid" ? '<button class="btn-secondary btn-sm a-mark-paid" data-id="'+b.id+'">Mark Paid</button>' : '') +
+        '</td></tr>';
+    }).join("") : '<tr><td colspan="5" class="empty-note">No completed bookings yet.</td></tr>';
+    pb.querySelectorAll(".a-mark-paid").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var ref = prompt("Payout reference (e.g. UPI txn id):") || null;
+        supabase.from("dg_bookings").update({payout_status:"paid", payout_ref:ref, payout_date:new Date().toISOString().slice(0,10)}).eq("id", btn.dataset.id).then(function(r){
+          if (r.error) { alert(r.error.message); return; }
+          logAudit("payout_marked_paid","dg_bookings",btn.dataset.id,{ref:ref});
+          loadFinance();
+        });
+      });
+    });
+
+    var rb = $("refundsBody");
+    rb.innerHTML = refunds.length ? refunds.map(function(x){
+      return '<tr><td class="mono">'+escapeHtml((x.dg_bookings&&x.dg_bookings.booking_code)||x.booking_id)+'</td><td>'+money(x.amount)+'</td><td>'+escapeHtml(x.reason||"—")+'</td><td>'+badge(x.status)+'</td><td>' +
+        (x.status==="requested" ? '<button class="btn-secondary btn-sm a-refund-process" data-id="'+x.id+'">Process</button> <button class="btn-danger btn-sm a-refund-reject" data-id="'+x.id+'">Reject</button>' : '') +
+      '</td></tr>';
+    }).join("") : '<tr><td colspan="5" class="empty-note">No refund requests.</td></tr>';
+    rb.querySelectorAll(".a-refund-process").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        supabase.from("dg_refunds").update({status:"processed", processed_by: state.user.id, processed_at: new Date().toISOString()}).eq("id", btn.dataset.id).then(function(r){
+          if (r.error) { alert(r.error.message); return; }
+          logAudit("refund_processed","dg_refunds",btn.dataset.id,null);
+          loadFinance();
+        });
+      });
+    });
+    rb.querySelectorAll(".a-refund-reject").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        supabase.from("dg_refunds").update({status:"rejected", processed_by: state.user.id, processed_at: new Date().toISOString()}).eq("id", btn.dataset.id).then(function(r){
+          if (r.error) { alert(r.error.message); return; }
+          logAudit("refund_rejected","dg_refunds",btn.dataset.id,null);
+          loadFinance();
+        });
+      });
+    });
+  });
+}
+
+function loadAdminComplaints(){
+  supabase.from("dg_complaints").select("*, dg_profiles!dg_complaints_reporter_id_fkey(full_name,email)").order("created_at",{ascending:false}).then(function(res){
+    if (res.error) { console.error(res.error); return; }
+    var body = $("adminComplaintsBody");
+    if (!res.data.length) { body.innerHTML = '<tr><td colspan="7" class="empty-note">No complaints filed.</td></tr>'; return; }
+    body.innerHTML = res.data.map(function(c){
+      var reporter = c.dg_profiles || {};
+      return '<tr><td class="mono">'+escapeHtml(c.complaint_code)+'</td><td>'+escapeHtml(reporter.full_name||reporter.email||"—")+'</td><td>'+escapeHtml(c.target_type)+'</td><td>'+escapeHtml(c.category||"—")+'</td><td>'+badge(c.status)+'</td><td>'+fmtDate(c.created_at)+'</td>' +
+        '<td><button class="btn-secondary btn-sm a-complaint-act" data-id="'+c.id+'">Investigate / Resolve</button></td></tr>';
+    }).join("");
+    body.querySelectorAll(".a-complaint-act").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var status = prompt("New status (open, investigating, resolved, escalated, dismissed):", "investigating");
+        if (!status) return;
+        var notes = prompt("Resolution notes:") || null;
+        supabase.from("dg_complaints").update({status:status, resolution_notes:notes}).eq("id", btn.dataset.id).then(function(r){
+          if (r.error) { alert(r.error.message); return; }
+          supabase.from("dg_complaint_actions").insert({complaint_id: btn.dataset.id, actor_id: state.user.id, action: "status_change:"+status, notes: notes}).then(function(){});
+          logAudit("complaint_updated","dg_complaints",btn.dataset.id,{status:status});
+          loadAdminComplaints();
+        });
+      });
+    });
+  });
+}
+
+function loadEvents(){
+  supabase.from("dg_event_configs").select("*").order("created_at",{ascending:false}).then(function(res){
+    if (res.error) { console.error(res.error); return; }
+    var body = $("eventsBody");
+    body.innerHTML = res.data.length ? res.data.map(function(ev){
+      return '<tr><td>'+escapeHtml(ev.name)+'</td><td>'+escapeHtml(ev.city||"—")+'</td><td>'+fmtDate(ev.starts_on)+' → '+fmtDate(ev.ends_on)+'</td><td>'+fmtDate(ev.last_verified_on)+'</td><td>'+(ev.active?"Yes":"No")+'</td>' +
+        '<td><button class="btn-danger btn-sm a-event-toggle" data-id="'+ev.id+'" data-active="'+ev.active+'">'+(ev.active?"Deactivate":"Activate")+'</button></td></tr>';
+    }).join("") : '<tr><td colspan="6" class="empty-note">No event configs yet.</td></tr>';
+    body.querySelectorAll(".a-event-toggle").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var newActive = btn.dataset.active !== "true";
+        supabase.from("dg_event_configs").update({active:newActive}).eq("id", btn.dataset.id).then(function(r){
+          if (r.error) { alert(r.error.message); return; }
+          loadEvents();
+        });
+      });
+    });
+  });
+}
+$("eventForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  var payload = {
+    name: $("evName").value.trim(), city: $("evCity").value.trim()||null,
+    starts_on: $("evStart").value||null, ends_on: $("evEnd").value||null,
+    source_url: $("evSource").value.trim()||null, last_verified_on: $("evVerified").value||null,
+    rules_summary: $("evRules").value.trim()||null
+  };
+  supabase.from("dg_event_configs").insert(payload).select().single().then(function(res){
+    if (res.error) { alert(res.error.message); return; }
+    logAudit("event_config_created","dg_event_configs",res.data.id,null);
+    $("eventForm").reset();
+    loadEvents();
+  });
+});
+
+function loadAudit(){
+  supabase.from("dg_audit_logs").select("*, dg_profiles(full_name,email)").order("created_at",{ascending:false}).limit(200).then(function(res){
+    if (res.error) { console.error(res.error); return; }
+    var body = $("auditBody");
+    body.innerHTML = res.data.length ? res.data.map(function(a){
+      var actor = a.dg_profiles || {};
+      return '<tr><td class="mono" style="font-size:11px;">'+fmtDateTime(a.created_at)+'</td><td>'+escapeHtml(actor.full_name||actor.email||a.actor_id||"—")+'</td><td>'+escapeHtml(a.action)+'</td><td>'+escapeHtml((a.entity_type||"")+" "+(a.entity_id||""))+'</td><td style="font-size:11px;">'+escapeHtml(a.details?JSON.stringify(a.details):"")+'</td></tr>';
+    }).join("") : '<tr><td colspan="5" class="empty-note">No audit entries yet.</td></tr>';
+  });
+}
+
+// ---------------- CSV export ----------------
+function exportCsv(rows, filename){
+  if (!rows.length) { alert("Nothing to export."); return; }
+  var cols = Object.keys(rows[0]);
+  var lines = [cols.join(",")].concat(rows.map(function(r){
+    return cols.map(function(c){ var v = r[c]==null?"":String(r[c]); return '"'+v.replace(/"/g,'""')+'"'; }).join(",");
+  }));
+  var blob = new Blob([lines.join("\n")], {type:"text/csv"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+})();
+</script>
+</body>
+</html>
